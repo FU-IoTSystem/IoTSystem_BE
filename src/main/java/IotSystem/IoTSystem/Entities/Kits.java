@@ -1,8 +1,8 @@
 package IotSystem.IoTSystem.Entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import IotSystem.IoTSystem.Entities.Enum.KitStatus;
+import IotSystem.IoTSystem.Entities.Enum.KitType;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,12 +14,17 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "kits")
-public class Kits {
+public class Kits extends Base {
     @Id
     private Integer id;
 
-    private String type;
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private KitType type;
+
+    @Enumerated(EnumType.STRING)
+    private KitStatus status;
+
+    @Column(unique = true, nullable = false)  // QR code phải unique
     private String qrCode;
     private String description;
 }
