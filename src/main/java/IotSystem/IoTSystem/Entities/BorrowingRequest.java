@@ -1,5 +1,6 @@
 package IotSystem.IoTSystem.Entities;
 
+import IotSystem.IoTSystem.Entities.Enum.BorrowingRequestStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,29 +17,54 @@ import java.util.UUID;
 @AllArgsConstructor
 @Table(name = "borrowing_requests")
 public class BorrowingRequest {
+
     @Id
     @GeneratedValue
     private UUID id;
 
-    @ManyToOne
-    @JoinColumn(name = "kit_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "kit_id", nullable = false)
     private Kits kit;
 
-    @ManyToOne
-    @JoinColumn(name = "requested_by")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requested_by", nullable = false)
     private Account requestedBy;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")
     private StudentGroup group;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approved_by")
     private Account approvedBy;
 
     private LocalDateTime approvedDate;
     private LocalDateTime borrowDate;
     private LocalDateTime returnDate;
-    private String status;
-}
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private BorrowingRequestStatus status;
+
+    public void approve(Account approver) {
+        this.approvedBy = approver;
+        this.approvedDate = LocalDateTime.now();
+        this.status = BorrowingRequestStatus.APPROVED;
+    }
+
+    public void reject(Account approver) {
+        this.approvedBy = approver;
+        this.approvedDate = LocalDateTime.now();
+        this.status = BorrowingRequestStatus.REJECTED;
+    }
+
+    public void markAsReturned() {
+        this.returnDate = LocalDateTime.now();
+        this.status = BorrowingRequestStatus.RETURNED;
+    }
+
+    public void cancel() {
+        this.status = BorrowingRequestStatus.CANCELED;
+    }
+
+}
