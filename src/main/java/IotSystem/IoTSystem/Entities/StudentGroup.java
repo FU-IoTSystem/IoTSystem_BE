@@ -21,6 +21,9 @@ public class StudentGroup {
     private String name;
 
     @ManyToOne
+    @JoinColumn(name = "class_id")
+    private Classes clazz;
+    @ManyToOne
     @JoinColumn(name = "created_by")
     private Account createdBy;
 }

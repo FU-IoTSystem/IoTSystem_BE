@@ -14,7 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class ClassAssignmentId implements Serializable {
-    private Integer classId;
+    private UUID classId;
 
     private UUID lecturerId;
 }

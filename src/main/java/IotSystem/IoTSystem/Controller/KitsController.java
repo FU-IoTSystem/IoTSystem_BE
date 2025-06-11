@@ -1,6 +1,8 @@
 package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.DTOs.Response.KitResponseDTO;
+import IotSystem.IoTSystem.DTOs.UpdateStatusRequest;
+import IotSystem.IoTSystem.DTOs.UpdateTypeRequest;
 import IotSystem.IoTSystem.Entities.Kits;
 import IotSystem.IoTSystem.Service.KitsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,4 +46,19 @@ public class KitsController {
         kitsService.deleteKit(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<KitResponseDTO> updateStatus(
+            @PathVariable Integer id,
+            @RequestBody UpdateStatusRequest request) {
+        return ResponseEntity.ok(kitsService.updateKitStatus(id, request.getStatus()));
+    }
+
+    @PutMapping("/{id}/type")
+    public ResponseEntity<KitResponseDTO> updateType(
+            @PathVariable Integer id,
+            @RequestBody UpdateTypeRequest request) {
+        return ResponseEntity.ok(kitsService.updateKitType(id, request.getType()));
+    }
+
 }

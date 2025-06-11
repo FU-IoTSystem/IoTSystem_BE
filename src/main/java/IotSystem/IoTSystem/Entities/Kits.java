@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Entity
 @Getter
 @Setter
@@ -16,7 +18,8 @@ import lombok.Setter;
 @Table(name = "kits")
 public class Kits extends Base {
     @Id
-    private Integer id;
+    @GeneratedValue
+    private UUID id;
 
     @Enumerated(EnumType.STRING)
     private KitType type;

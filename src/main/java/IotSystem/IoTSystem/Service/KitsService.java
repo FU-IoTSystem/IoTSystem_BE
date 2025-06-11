@@ -3,6 +3,8 @@ package IotSystem.IoTSystem.Service;
 
 import IotSystem.IoTSystem.DTOs.Mappers.KitMapper;
 import IotSystem.IoTSystem.DTOs.Response.KitResponseDTO;
+import IotSystem.IoTSystem.Entities.Enum.KitStatus;
+import IotSystem.IoTSystem.Entities.Enum.KitType;
 import IotSystem.IoTSystem.Entities.Kits;
 import IotSystem.IoTSystem.Repository.KitsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +53,28 @@ public class KitsService {
         kitsRepository.delete(kit);
     }
 
+
+
+    //update riêng cho status
+    public KitResponseDTO updateKitStatus(Integer id, KitStatus status) {
+        Kits existingKit = kitsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Kit not found with id: " + id));
+
+        existingKit.setStatus(status);
+
+        Kits savedKit = kitsRepository.save(existingKit);
+        return KitMapper.toDTO(savedKit);
+    }
+    //update riêng cho type của một bộ kit
+    public KitResponseDTO updateKitType(Integer id, KitType type) {
+        Kits existingKit = kitsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Kit not found with id: " + id));
+
+        existingKit.setType(type);
+
+        Kits savedKit = kitsRepository.save(existingKit);
+        return KitMapper.toDTO(savedKit);
+    }
 
 
 }
