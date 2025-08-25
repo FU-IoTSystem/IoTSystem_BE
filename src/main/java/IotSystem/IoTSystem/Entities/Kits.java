@@ -30,5 +30,17 @@ public class Kits extends Base {
     @Column(unique = true, nullable = false)  // QR code phải unique
     private String qrCode;
     private String description;
+
+
+    String Kit_Name;
+    int quantity_total;
+
+    int quantity_avaliable;
+
+
+    String location;
+
+    String image_URL;
+
 }
 
