@@ -1,13 +1,14 @@
 package IotSystem.IoTSystem.Entities;
 
-import IotSystem.IoTSystem.Entities.Embedded.ClassAssignmentId;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -16,8 +17,11 @@ import java.io.Serializable;
 @AllArgsConstructor
 @Table(name = "class_assignments")
 public class ClassAssignment implements Serializable {
-    @EmbeddedId
-    private ClassAssignmentId id;
+    @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "classAssignment_id", updatable = false, nullable = false, columnDefinition = "uuid")
+    private UUID id;
 
     @ManyToOne
     @MapsId("classId")  // map classId của embeddedId

@@ -23,7 +23,11 @@ public class StudentGroup {
     @ManyToOne
     @JoinColumn(name = "class_id")
     private Classes clazz;
+
+
     @ManyToOne
-    @JoinColumn(name = "created_by")
+    @JoinColumn(name = "created_by", nullable = true) //cho hệ thống tạo nhưng vẫn có thể tạo thủ công
     private Account createdBy;
+
+    boolean status;
 }

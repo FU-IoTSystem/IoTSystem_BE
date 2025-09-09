@@ -13,6 +13,4 @@ public class ConfigPenalty {
 
     String value;  // e.g. “100000”, “5000”
 
-    @ManyToOne
-    Semester semester;
 }
