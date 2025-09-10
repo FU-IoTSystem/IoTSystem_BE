@@ -30,7 +30,7 @@ public class Account {
     // email dùng để đăng nhập, unique , ko đc null
 
     private String phone;
-
+    private String avatarUrl;
 
 
     @ManyToOne(targetEntity = Roles.class)
@@ -40,4 +40,17 @@ public class Account {
     private BigDecimal walletBalance;
     private String password;
     private Boolean isActive;
+
+    //Relationship
+    @OneToOne(mappedBy = "user")
+
+    private GroupMember groupMember;
+
+
+    @ManyToOne
+
+    private ClassAssignment classAssignment;
+
+
+
 }

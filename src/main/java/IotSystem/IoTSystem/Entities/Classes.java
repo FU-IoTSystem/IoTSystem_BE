@@ -22,6 +22,8 @@ public class Classes {
     @GeneratedValue
     private UUID id;
 
+
+    private String classCode;
     private String name;
     private String semester;
 }
