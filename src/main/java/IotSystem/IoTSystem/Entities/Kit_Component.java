@@ -47,7 +47,5 @@ public class Kit_Component {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // Quan hệ nhiều-nhiều với Report thông qua bảng phụ
-    @ManyToMany(mappedBy = "kitComponents")
-    private Set<Report> reports;
+
 }

@@ -26,7 +26,7 @@ public class GroupMember {
 
 
     @ManyToOne
-    @JoinColumn(name = "group_id", nullable = false)
+    @JoinColumn(name = "studentgroup_id", nullable = false)
     private StudentGroup group;
 
     @OneToOne
