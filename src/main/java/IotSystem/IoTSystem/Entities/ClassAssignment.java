@@ -20,17 +20,16 @@ public class ClassAssignment implements Serializable {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(name = "classAssignment_id", updatable = false, nullable = false, columnDefinition = "uuid")
+    @Column(name = "class_assignment_id", updatable = false, nullable = false, columnDefinition = "uuid")
     private UUID id;
 
     @ManyToOne
-    @MapsId("classId")  // map classId của embeddedId
-    @JoinColumn(name = "class_id")
+    @JoinColumn(name = "class_id", nullable = false)
     private Classes clazz;
 
     @ManyToOne
-    @MapsId("lecturerId")  // map lecturerId của embeddedId
-    @JoinColumn(name = "lecturer_id")
+    @JoinColumn(name = "lecturer_id", nullable = false)
     private Account lecturer;
+
 }
 

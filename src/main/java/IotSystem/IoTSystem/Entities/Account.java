@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -47,9 +48,9 @@ public class Account {
     private GroupMember groupMember;
 
 
-    @ManyToOne
+    @OneToMany(mappedBy = "lecturer")
+    private List<ClassAssignment> classAssignments;
 
-    private ClassAssignment classAssignment;
 
 
 
