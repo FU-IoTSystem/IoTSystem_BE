@@ -5,7 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -16,18 +18,22 @@ import java.util.UUID;
 @Table(name = "student_groups")
 public class StudentGroup {
     @Id
-    @GeneratedValue
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
+
     private String name;
 
     @ManyToOne
     @JoinColumn(name = "class_id")
     private Classes clazz;
 
-
     @ManyToOne
-    @JoinColumn(name = "created_by", nullable = true) //cho hệ thống tạo nhưng vẫn có thể tạo thủ công
+    @JoinColumn(name = "created_by")
     private Account createdBy;
 
-    boolean status;
+    private boolean status;
+
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<GroupMember> members;
 }

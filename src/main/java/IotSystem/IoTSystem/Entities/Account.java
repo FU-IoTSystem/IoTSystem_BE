@@ -21,37 +21,44 @@ public class Account {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
+    @Column(name = "id", nullable = false, columnDefinition = "uuid")
     private UUID id;
+
     private String fullName;
 
-
     @Column(name = "email", unique = true, nullable = false)
-    private String email;
-    // email dùng để đăng nhập, unique , ko đc null
+    private String email; // email dùng để đăng nhập, unique, không null
 
     private String phone;
     private String avatarUrl;
 
-
-    @ManyToOne(targetEntity = Roles.class)
+    @ManyToOne
+    @JoinColumn(name = "role_id", nullable = false)
     private Roles role;
-
 
     private BigDecimal walletBalance;
     private String password;
     private Boolean isActive;
 
-    //Relationship
-    @OneToOne(mappedBy = "user")
+    // Relationships
+    @OneToMany(mappedBy = "user")
+    private List<GroupMember> groupMembers;
 
-    private GroupMember groupMember;
-
-
-    @OneToMany(mappedBy = "lecturer")
+    @OneToMany(mappedBy = "account")
     private List<ClassAssignment> classAssignments;
 
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WalletTransaction> walletTransactions;
 
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Penalty> penalties;
 
+    @OneToMany(mappedBy ="user")
+    private List<Notification> notifications;
 
+    @OneToMany(mappedBy = "requestedBy")
+    private List<BorrowingRequest> borrowingRequestsSent;
+
+    @OneToMany(mappedBy = "approvedBy")
+    private List<BorrowingRequest> borrowingRequestsApproved;
 }

@@ -7,7 +7,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -16,31 +19,27 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "kits")
-public class Kits extends Base {
+public class Kits  {
     @Id
-    @GeneratedValue
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
 
-    @Enumerated(EnumType.STRING)
-    private KitType type;
-
-    @Enumerated(EnumType.STRING)
-    private KitStatus status;
-
-    @Column(unique = true, nullable = false)  // QR code phải unique
+    private String kitName;
+    private String type;
+    private String status;
     private String qrCode;
     private String description;
+    private String location;
+    private String refNumber;
+    private String imageUrl;
 
+    private Date lastMaintenanceDate;
+    private Date createdAt;
+    private Date updatedAt;
 
-    String Kit_Name;
-    int quantity_total;
-
-    int quantity_avaliable;
-
-
-    String location;
-
-    String image_URL;
+    @OneToMany(mappedBy = "kit", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Kit_Component> components;
 
 }
 

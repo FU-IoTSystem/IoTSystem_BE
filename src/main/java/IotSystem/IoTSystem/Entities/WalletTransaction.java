@@ -5,9 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.UUID;
 
 @Entity
@@ -18,16 +20,20 @@ import java.util.UUID;
 @Table(name = "wallet_transactions")
 public class WalletTransaction {
     @Id
-    @GeneratedValue
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private Account user;
-
-    private BigDecimal amount;
+    private Double amount;
     private String type;
     private String description;
-    private LocalDateTime createdAt;
+    private String paymentMethod;
+    private String transactionStatus;
+
+    private Date createdAt;
+
+    @ManyToOne
+    @JoinColumn(name = "wallet_id")
+    private Account account;
 }
 
