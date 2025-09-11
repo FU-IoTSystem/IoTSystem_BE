@@ -18,6 +18,5 @@ public class Roles  {
     private Long id;
 
     private String name;
-    @Column(nullable = false)
-    private boolean status;
+
 }

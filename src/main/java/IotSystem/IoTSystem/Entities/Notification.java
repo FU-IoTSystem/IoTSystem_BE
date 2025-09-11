@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.UUID;
 
 @Entity
@@ -20,11 +21,12 @@ public class Notification {
     @GeneratedValue
     private UUID id;
 
+    private String type;
+    private String message;
+    private Boolean isRead;
+    private Date createdAt;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private Account user;
-
-    private String message;
-    private Boolean isRead;
-    private LocalDateTime createdAt;
 }

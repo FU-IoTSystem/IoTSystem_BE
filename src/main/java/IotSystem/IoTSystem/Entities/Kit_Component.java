@@ -2,8 +2,12 @@ package IotSystem.IoTSystem.Entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -15,37 +19,32 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Kit_Component {
-
     @Id
-    @GeneratedValue
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
-
-    @Column(nullable = false)
-    private UUID kitId; // giả sử có bảng kits
 
     private String componentName;
     private String componentType;
-
-    @Column(length = 1000)
     private String description;
-
     private String unit;
-
     private Integer quantityTotal;
     private Integer quantityAvailable;
-
-    private BigDecimal unitPrice;
-    private BigDecimal totalValue;
-
-    private String linkReference;
+    private Double unitPrice;
+    private Double totalValue;
     private String status;
     private String location;
-
-    private LocalDateTime lastCheckedDate;
     private String imageUrl;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Date lastCheckedDate;
+    private Date createdAt;
+    private Date updatedAt;
+
+    @ManyToOne
+    @JoinColumn(name = "kit_id")
+    private Kits kit;
 
 
+    @OneToMany(mappedBy = "kitComponent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RequestKitComponent> requestKitComponents;
 }

@@ -16,49 +16,5 @@ import java.util.List;
 @RequestMapping("/api/kits")
 public class KitsController {
 
-    @Autowired
-    private KitsService kitsService;
-
-    // Lấy tất cả kits
-    @GetMapping
-    public ResponseEntity<List<KitResponseDTO>> getAllKits() {
-        List<KitResponseDTO> kits = kitsService.getAllKits();
-        return ResponseEntity.ok(kits);
-    }
-
-    // Lấy kit theo id
-    @GetMapping("/get/{id}")
-    public ResponseEntity<KitResponseDTO> getKitById(@PathVariable Integer id) {
-        KitResponseDTO kit = kitsService.getKitById(id);
-        return ResponseEntity.ok(kit);
-    }
-
-    // Cập nhật kit
-    @PutMapping("/update/{id}")
-    public ResponseEntity<KitResponseDTO> updateKit(@PathVariable Integer id, @RequestBody Kits updatedKit) {
-        KitResponseDTO updated = kitsService.updateKit(id, updatedKit);
-        return ResponseEntity.ok(updated);
-    }
-
-    // Xoá kit
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteKit(@PathVariable Integer id) {
-        kitsService.deleteKit(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PutMapping("/{id}/status")
-    public ResponseEntity<KitResponseDTO> updateStatus(
-            @PathVariable Integer id,
-            @RequestBody UpdateStatusRequest request) {
-        return ResponseEntity.ok(kitsService.updateKitStatus(id, request.getStatus()));
-    }
-
-    @PutMapping("/{id}/type")
-    public ResponseEntity<KitResponseDTO> updateType(
-            @PathVariable Integer id,
-            @RequestBody UpdateTypeRequest request) {
-        return ResponseEntity.ok(kitsService.updateKitType(id, request.getType()));
-    }
 
 }
