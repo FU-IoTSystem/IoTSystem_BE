@@ -10,15 +10,15 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 
-public interface KitsRepository extends JpaRepository<Kits, Integer> {
+public interface KitsRepository extends JpaRepository<Kits, UUID> {
 
 
 
-    Optional<Kits> findById(Integer id);
-    // Tìm theo type
+
     List<Kits> findByType(KitType type);
 
     // Tìm theo status

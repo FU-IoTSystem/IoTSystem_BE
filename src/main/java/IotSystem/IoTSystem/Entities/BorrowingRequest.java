@@ -49,8 +49,7 @@ public class BorrowingRequest {
     @JoinColumn(name = "approved_by")
     private Account approvedBy;
 
-    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<RequestKitComponent> requestKitComponents;
+
 
 
 
