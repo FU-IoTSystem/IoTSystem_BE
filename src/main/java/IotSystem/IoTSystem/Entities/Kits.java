@@ -38,8 +38,7 @@ public class Kits  {
     private Date createdAt;
     private Date updatedAt;
 
-    @OneToMany(mappedBy = "kit", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Kit_Component> components;
+
 
 }
 

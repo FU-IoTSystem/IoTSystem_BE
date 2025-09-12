@@ -34,6 +34,5 @@ public class StudentGroup {
 
     private boolean status;
 
-    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<GroupMember> members;
+
 }
