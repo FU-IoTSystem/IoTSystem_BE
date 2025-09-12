@@ -1,7 +1,48 @@
 package IotSystem.IoTSystem.Controller;
 
-import org.springframework.web.bind.annotation.RestController;
+import IotSystem.IoTSystem.Entities.Notification;
+import IotSystem.IoTSystem.Service.NotificationService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
+@RequestMapping("/api/notifications")
 public class NotificationController {
+
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @GetMapping("getAll")
+    public List<Notification> getAll() {
+        return notificationService.getAll();
+    }
+
+    @GetMapping("/getbyId/{id}")
+    public Notification getById(@PathVariable UUID id) {
+        return notificationService.getById(id);
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<Notification> getByUser(@PathVariable UUID userId) {
+        return notificationService.getByUser(userId);
+    }
+
+    @PostMapping("/create")
+    public Notification create(@RequestBody Notification notification) {
+        return notificationService.create(notification);
+    }
+
+    @PutMapping("/update/{id}")
+    public Notification update(@PathVariable UUID id, @RequestBody Notification notification) {
+        return notificationService.update(id, notification);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public void delete(@PathVariable UUID id) {
+        notificationService.delete(id);
+    }
 }

@@ -11,10 +11,37 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/kits")
 public class KitsController {
 
+    @Autowired
+    private KitsService kitsService;
 
+    @GetMapping
+    public List<Kits> getAll() {
+        return kitsService.getAll();
+    }
+
+    @GetMapping("/{id}")
+    public Kits getById(@PathVariable UUID id) {
+        return kitsService.getById(id);
+    }
+
+    @PostMapping
+    public Kits create(@RequestBody Kits kit) {
+        return kitsService.create(kit);
+    }
+
+    @PutMapping("/{id}")
+    public Kits update(@PathVariable UUID id, @RequestBody Kits kit) {
+        return kitsService.update(id, kit);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable UUID id) {
+        kitsService.delete(id);
+    }
 }
