@@ -42,6 +42,5 @@ public class Kit_Component {
     private Kits kit;
 
 
-    @OneToMany(mappedBy = "kitComponent", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<RequestKitComponent> requestKitComponents;
+
 }

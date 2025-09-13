@@ -22,7 +22,7 @@ public class Classes {
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(name = "id", nullable = false, columnDefinition = "uuid")
- private UUID id;
+    private UUID id;
     private String courseCode;
     private String name;
     private String semester;
@@ -31,7 +31,5 @@ public class Classes {
     private Date created_at;
     private boolean status;
     // FK đến giảng viên
-    @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ClassAssignment> assignments;
 }
 
