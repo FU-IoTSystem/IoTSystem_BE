@@ -1,6 +1,6 @@
 package IotSystem.IoTSystem.Repository;
 
-import IotSystem.IoTSystem.Entities.Roles;
+import IotSystem.IoTSystem.Model.Entities.Roles;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

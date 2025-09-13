@@ -2,8 +2,8 @@ package IotSystem.IoTSystem.Service;
 
 
 
-import IotSystem.IoTSystem.DTOs.KitComponentRequest;
-import IotSystem.IoTSystem.DTOs.Response.KitComponentResponse;
+import IotSystem.IoTSystem.Model.Request.KitComponentRequest;
+import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
 import jakarta.validation.Valid;
 
 import java.util.List;

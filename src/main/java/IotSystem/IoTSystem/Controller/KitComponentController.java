@@ -1,10 +1,7 @@
 package IotSystem.IoTSystem.Controller;
 
-import IotSystem.IoTSystem.DTOs.KitComponentRequest;
-import IotSystem.IoTSystem.DTOs.KitRequest;
-import IotSystem.IoTSystem.DTOs.Response.KitComponentResponse;
-import IotSystem.IoTSystem.DTOs.Response.KitResponse;
-import IotSystem.IoTSystem.Service.Implement.KitComponentServiceImpl;
+import IotSystem.IoTSystem.Model.Request.KitComponentRequest;
+import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
 import IotSystem.IoTSystem.Service.KitComponentService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;

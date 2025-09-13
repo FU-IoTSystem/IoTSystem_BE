@@ -1,10 +1,10 @@
 package IotSystem.IoTSystem.Service.Implement;
 
-import IotSystem.IoTSystem.DTOs.LoginRequest;
-import IotSystem.IoTSystem.DTOs.RegisterRequest;
-import IotSystem.IoTSystem.Entities.Account;
-import IotSystem.IoTSystem.Entities.Roles;
-import IotSystem.IoTSystem.Jwt.TokenProvider;
+import IotSystem.IoTSystem.Model.Request.LoginRequest;
+import IotSystem.IoTSystem.Model.Request.RegisterRequest;
+import IotSystem.IoTSystem.Model.Entities.Account;
+import IotSystem.IoTSystem.Model.Entities.Roles;
+import IotSystem.IoTSystem.Security.TokenProvider;
 import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.RolesRepository;
 import org.springframework.beans.factory.annotation.Autowired;

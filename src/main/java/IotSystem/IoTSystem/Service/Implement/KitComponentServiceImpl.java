@@ -1,7 +1,7 @@
 package IotSystem.IoTSystem.Service.Implement;
 
-import IotSystem.IoTSystem.DTOs.KitComponentRequest;
-import IotSystem.IoTSystem.DTOs.Response.KitComponentResponse;
+import IotSystem.IoTSystem.Model.Request.KitComponentRequest;
+import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
 import IotSystem.IoTSystem.Service.KitComponentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

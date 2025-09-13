@@ -1,10 +1,9 @@
 package IotSystem.IoTSystem.Repository;
 
 
-import IotSystem.IoTSystem.Entities.Account;
-import IotSystem.IoTSystem.Entities.Enum.KitStatus;
-import IotSystem.IoTSystem.Entities.Enum.KitType;
-import IotSystem.IoTSystem.Entities.Kits;
+import IotSystem.IoTSystem.Model.Entities.Enum.KitStatus;
+import IotSystem.IoTSystem.Model.Entities.Enum.KitType;
+import IotSystem.IoTSystem.Model.Entities.Kits;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
