@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-
 public interface KitsRepository extends JpaRepository<Kits, Integer> {
 
 

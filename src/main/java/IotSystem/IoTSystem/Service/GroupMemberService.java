@@ -1,4 +1,4 @@
 package IotSystem.IoTSystem.Service;
 
-public class GroupMemberService {
+public interface GroupMemberService {
 }
