@@ -1,6 +1,6 @@
 package IotSystem.IoTSystem.Repository;
 
-import IotSystem.IoTSystem.Entities.Account;
+import IotSystem.IoTSystem.Model.Entities.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,43 +1,61 @@
 package IotSystem.IoTSystem.Controller;
 
-import IotSystem.IoTSystem.Entities.Kit_Component;
+import IotSystem.IoTSystem.Model.Request.KitComponentRequest;
+import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
 import IotSystem.IoTSystem.Service.KitComponentService;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/kit-components")
+@RequestMapping("/api/kitComponent")
+@RequiredArgsConstructor
 public class KitComponentController {
 
+    private final KitComponentService kitComponentService;
 
-    @Autowired
-    private KitComponentService service;
-
-    @GetMapping("/getAll")
-    public List<Kit_Component> getAll() {
-        return service.getAll();
+    @Operation(summary = "Create KitComponent", description = "Create KitComponent")
+    @PostMapping
+    public ResponseEntity<Object> createKitComponent(@Valid @RequestBody KitComponentRequest kitComponentRequest) {
+        kitComponentService.createKitComponent(kitComponentRequest);
+        return ResponseEntity.ok( "Your KitComponent created successfully");
     }
 
-    @GetMapping("/getById/{id}")
-    public Kit_Component getById(@PathVariable UUID id) {
-        return service.getById(id);
+    @Operation(summary = "Get KitComponent By KitComponentID", description = "Get KitComponent By DrugID")
+    @GetMapping
+    public ResponseEntity<Object> getKitComponentById(@RequestParam("id") Long id) {
+
+        return ResponseEntity.ok(kitComponentService.getKitComponentId(id));
     }
 
-    @PostMapping("post")
-    public Kit_Component create(@RequestBody Kit_Component component) {
-        return service.create(component);
+    @Operation(summary = "Get All KitComponent ", description = "Get All KitComponent")
+    @GetMapping("/all")
+    public ResponseEntity<List<KitComponentResponse>> getAllKitComponent() {
+        List<KitComponentResponse> kitComponents = kitComponentService.getAllKitComponents();
+        return ResponseEntity.ok(kitComponents);
     }
 
-    @PutMapping("/update/{id}")
-    public Kit_Component update(@PathVariable UUID id, @RequestBody Kit_Component component) {
-        return service.update(id, component);
+    @Operation(summary = "Delete KitComponent", description = "Delete KitComponent")
+    @DeleteMapping
+    public ResponseEntity<Object> deleteKitComponent(@RequestParam("id") Long id,
+                                             @Valid @RequestBody KitComponentRequest kitComponentRequest) {
+
+        kitComponentService.deleteKitComponent(id, kitComponentRequest);
+        return ResponseEntity.ok("Your KitComponent is Delete successfully");
     }
 
-    @DeleteMapping("/delete/{id}")
-    public void delete(@PathVariable UUID id) {
-        service.delete(id);
+
+    @Operation(summary = "Update KitComponent By ID", description = "Get KitComponent By ID")
+    @PutMapping
+    public ResponseEntity<Object> updateKitComponent(@RequestParam("id") Long id,
+                                             @Valid @RequestBody KitComponentRequest kitComponentRequest) {
+
+        kitComponentService.updateKitComponent(id, kitComponentRequest);
+        return ResponseEntity.ok("Your KitComponent is update successfully");
     }
+
 }
