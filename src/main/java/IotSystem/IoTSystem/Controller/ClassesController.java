@@ -1,7 +1,8 @@
 package IotSystem.IoTSystem.Controller;
 
-import IotSystem.IoTSystem.Entities.ClassAssignment;
+import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
 import IotSystem.IoTSystem.Service.ClassAssignmentService;
+import IotSystem.IoTSystem.Service.Implement.ClassAssignmentServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

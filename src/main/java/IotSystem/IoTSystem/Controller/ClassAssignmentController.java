@@ -1,6 +1,6 @@
 package IotSystem.IoTSystem.Controller;
 
-import IotSystem.IoTSystem.Entities.ClassAssignment;
+import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
 import IotSystem.IoTSystem.Service.ClassAssignmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -13,30 +13,30 @@ import java.util.UUID;
 public class ClassAssignmentController {
 
     @Autowired
-    private ClassAssignmentService service;
+    private ClassAssignmentService classAssignmentService;
 
     @GetMapping
     public List<ClassAssignment> getAll() {
-        return service.getAll();
+        return classAssignmentService.getAll();
     }
 
     @GetMapping("/{id}")
     public ClassAssignment getById(@PathVariable UUID id) {
-        return service.getById(id);
+        return classAssignmentService.getById(id);
     }
 
     @PostMapping
     public ClassAssignment create(@RequestBody ClassAssignment assignment) {
-        return service.create(assignment);
+        return classAssignmentService.create(assignment);
     }
 
     @PutMapping("/{id}")
     public ClassAssignment update(@PathVariable UUID id, @RequestBody ClassAssignment assignment) {
-        return service.update(id, assignment);
+        return classAssignmentService.update(id, assignment);
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id) {
-        service.delete(id);
+        classAssignmentService.delete(id);
     }
 }

@@ -1,6 +1,6 @@
 package IotSystem.IoTSystem.Controller;
 
-import IotSystem.IoTSystem.Entities.Notification;
+import IotSystem.IoTSystem.Model.Entities.Notification;
 import IotSystem.IoTSystem.Service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

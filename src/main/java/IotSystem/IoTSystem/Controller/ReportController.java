@@ -1,6 +1,6 @@
 package IotSystem.IoTSystem.Controller;
 
-import IotSystem.IoTSystem.Entities.Report;
+import IotSystem.IoTSystem.Model.Entities.Report;
 import IotSystem.IoTSystem.Service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

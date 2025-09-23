@@ -3,6 +3,7 @@ package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
+import IotSystem.IoTSystem.Service.AccountService;
 import IotSystem.IoTSystem.Service.Implement.AccountServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,13 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/")
 public class AccountController {
     @Autowired
-    private AccountServiceImpl accountServiceImpl;
+    private AccountService accountService;
 
     // Endpoint đăng nhập
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
         try {
-            String token = accountServiceImpl.login(loginRequest);
+            String token = accountService.login(loginRequest);
             return ResponseEntity.ok(token);
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Login failed: " + e.getMessage());
@@ -32,7 +33,7 @@ public class AccountController {
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
         try {
-            String result = accountServiceImpl.register(registerRequest);
+            String result = accountService.register(registerRequest);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Register failed: " + e.getMessage());
