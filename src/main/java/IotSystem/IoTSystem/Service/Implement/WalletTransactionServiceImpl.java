@@ -20,33 +20,10 @@ public class WalletTransactionServiceImpl implements WalletTransactionService {
         return walletTransactionRepository.findAll();
     }
 
-    public WalletTransaction getById(UUID id) {
-        return walletTransactionRepository.getById(id);
-    }
 
-    public List<WalletTransaction> getByAccount(UUID accountId) {
-        return walletTransactionRepository.findByAccountId(accountId);
-    }
 
-    public WalletTransaction create(WalletTransaction transaction) {
-        transaction.setCreatedAt(new Date());
-        return walletTransactionRepository.save(transaction);
-    }
 
-    public WalletTransaction update(UUID id, WalletTransaction updated) {
-        WalletTransaction existing = walletTransactionRepository.getById(id);
-        if (existing != null) {
-            existing.setAmount(updated.getAmount());
-            existing.setType(updated.getType());
-            existing.setDescription(updated.getDescription());
-            existing.setPaymentMethod(updated.getPaymentMethod());
-            existing.setTransactionStatus(updated.getTransactionStatus());
-            existing.setAccount(updated.getAccount());
-            existing.setCreatedAt(updated.getCreatedAt());
-            return walletTransactionRepository.save(existing);
-        }
-        return null;
-    }
+
 
     public void delete(UUID id) {
         walletTransactionRepository.deleteById(id);

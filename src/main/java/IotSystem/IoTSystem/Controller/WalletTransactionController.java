@@ -21,25 +21,10 @@ public class WalletTransactionController {
         return service.getAll();
     }
 
-    @GetMapping("/getById/{id}")
-    public WalletTransaction getById(@PathVariable UUID id) {
-        return service.getById(id);
-    }
 
-    @GetMapping("/account/{accountId}")
-    public List<WalletTransaction> getByAccount(@PathVariable UUID accountId) {
-        return service.getByAccount(accountId);
-    }
 
-    @PostMapping("/create")
-    public WalletTransaction create(@RequestBody WalletTransaction transaction) {
-        return service.create(transaction);
-    }
 
-    @PutMapping("/update/{id}")
-    public WalletTransaction update(@PathVariable UUID id, @RequestBody WalletTransaction transaction) {
-        return service.update(id, transaction);
-    }
+
 
     @DeleteMapping("/delete/{id}")
     public void delete(@PathVariable UUID id) {

@@ -1,6 +1,7 @@
 package IotSystem.IoTSystem.Model.Entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "accounts")
-public class Account {
+public class Account extends Base {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
@@ -26,39 +27,29 @@ public class Account {
 
     private String fullName;
 
+
+
     @Column(name = "email", unique = true, nullable = false)
     private String email; // email dùng để đăng nhập, unique, không null
 
-    private String phone;
     private String avatarUrl;
+
+    private String phone;
+
+    private String studentCode;
+
+    private String passwordHash;
 
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
     private Roles role;
 
-    private BigDecimal walletBalance;
-    private String password;
+
+
     private Boolean isActive;
 
-    // Relationships
-    @OneToMany(mappedBy = "user")
-    private List<GroupMember> groupMembers;
+    @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Wallet wallet;
 
-    @OneToMany(mappedBy = "account")
-    private List<ClassAssignment> classAssignments;
 
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<WalletTransaction> walletTransactions;
-
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Penalty> penalties;
-
-    @OneToMany(mappedBy ="user")
-    private List<Notification> notifications;
-
-    @OneToMany(mappedBy = "requestedBy")
-    private List<BorrowingRequest> borrowingRequestsSent;
-
-    @OneToMany(mappedBy = "approvedBy")
-    private List<BorrowingRequest> borrowingRequestsApproved;
 }

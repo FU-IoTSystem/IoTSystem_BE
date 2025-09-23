@@ -8,29 +8,6 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class ClassesServiceImpl implements ClassAssignmentService {
-    @Override
-    public List<ClassAssignment> getAll() {
-        return List.of();
-    }
+public class ClassesServiceImpl  {
 
-    @Override
-    public ClassAssignment getById(UUID id) {
-        return null;
-    }
-
-    @Override
-    public ClassAssignment create(ClassAssignment assignment) {
-        return null;
-    }
-
-    @Override
-    public ClassAssignment update(UUID id, ClassAssignment assignment) {
-        return null;
-    }
-
-    @Override
-    public void delete(UUID id) {
-
-    }
 }

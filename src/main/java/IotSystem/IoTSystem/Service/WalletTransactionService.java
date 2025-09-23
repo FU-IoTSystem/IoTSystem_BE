@@ -8,13 +8,10 @@ import java.util.UUID;
 public interface WalletTransactionService {
     List<WalletTransaction> getAll();
 
-    WalletTransaction getById(UUID id);
 
-    List<WalletTransaction> getByAccount(UUID accountId);
 
-    WalletTransaction create(WalletTransaction transaction);
 
-    WalletTransaction update(UUID id, WalletTransaction transaction);
+
 
     void delete(UUID id);
 }

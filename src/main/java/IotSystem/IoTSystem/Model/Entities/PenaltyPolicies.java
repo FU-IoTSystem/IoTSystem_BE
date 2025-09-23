@@ -27,9 +27,6 @@ public class PenaltyPolicies {
     private Date issuedDate;
     private Date resolved;
 
-    @ManyToOne
-    @JoinColumn(name = "borrow_request_id")
-    private BorrowingRequest request;
 
     @ManyToOne
     @JoinColumn(name = "penalty_id")
