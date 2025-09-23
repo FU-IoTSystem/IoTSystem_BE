@@ -1,14 +1,18 @@
 package IotSystem.IoTSystem.Model.Entities;
 
-import jakarta.persistence.*;
+
+import IotSystem.IoTSystem.Model.Entities.Enum.Kit_Items_Types;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
-import java.util.Date;
-import java.util.List;
+import java.math.BigInteger;
 import java.util.UUID;
 
 @Entity
@@ -16,16 +20,20 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "kits")
-public class Kits  extends Base {
+@Table(name = "kits_items")
+public class Kit_Items extends Base {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
 
-    private String kitName;
-    private String type;
-    private String status;
+    private String Name;
+    private Kit_Items_Types component_Type;
+
+    private BigInteger quantity_total;
+    private BigInteger quantity_available;
+
+    private BigInteger price;
 
     private String description;
 
@@ -34,10 +42,4 @@ public class Kits  extends Base {
 
 
     private int quantity;
-
-
-
-
-
 }
-

@@ -16,20 +16,6 @@ public interface KitsRepository extends JpaRepository<Kits, Integer> {
 
 
     Optional<Kits> findById(Integer id);
-    // Tìm theo type
-    List<Kits> findByType(KitType type);
-
-    // Tìm theo status
-    List<Kits> findByStatus(KitStatus status);
-
-    // Tìm theo cả type và status
-    List<Kits> findByTypeAndStatus(KitType type, KitStatus status);
-
-    // Tìm theo QR code
-    Optional<Kits> findByQrCode(String qrCode);
-
-    // Đếm theo type
-    long countByType(KitType type);
 
 
 }

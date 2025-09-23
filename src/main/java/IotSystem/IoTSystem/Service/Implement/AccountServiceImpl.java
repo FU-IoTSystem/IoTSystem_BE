@@ -59,7 +59,7 @@ public class AccountServiceImpl implements AccountService {
         // Tạo đối tượng UserDetails
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 account.getEmail(),
-                account.getPassword(),
+                account.getPasswordHash(),
                 authorities
         );
 
@@ -77,7 +77,7 @@ public class AccountServiceImpl implements AccountService {
 
         Account account = new Account();
         account.setEmail(request.getUsername());
-        account.setPassword(passwordEncoder.encode(request.getPassword()));
+        account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         account.setIsActive(true);
         account.setRole(role);

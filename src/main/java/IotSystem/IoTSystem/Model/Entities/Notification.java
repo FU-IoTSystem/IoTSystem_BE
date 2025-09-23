@@ -23,7 +23,7 @@ public class Notification {
     private String type;
     private String message;
     private Boolean isRead;
-    private Date createdAt;
+
 
     @ManyToOne
     @JoinColumn(name = "user_id")

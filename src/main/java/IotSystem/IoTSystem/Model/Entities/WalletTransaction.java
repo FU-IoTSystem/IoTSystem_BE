@@ -1,5 +1,7 @@
 package IotSystem.IoTSystem.Model.Entities;
 
+import IotSystem.IoTSystem.Model.Entities.Enum.Wallet_Transaction_Status;
+import IotSystem.IoTSystem.Model.Entities.Enum.Wallet_Transaction_Type;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,22 +18,22 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "wallet_transactions")
-public class WalletTransaction {
+public class WalletTransaction extends Base {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
 
     private Double amount;
-    private String type;
+    private Wallet_Transaction_Type transactionType;
     private String description;
     private String paymentMethod;
-    private String transactionStatus;
+    private Wallet_Transaction_Status transactionStatus;
 
-    private Date createdAt;
+
 
     @ManyToOne
     @JoinColumn(name = "wallet_id")
-    private Account account;
+    private Wallet wallet;
 }
 
