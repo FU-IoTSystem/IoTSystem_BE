@@ -1,7 +1,7 @@
 package IotSystem.IoTSystem.Controller;
 
 
-import IotSystem.IoTSystem.Entities.BorrowingRequest;
+import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
 import IotSystem.IoTSystem.Service.BorrowingRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

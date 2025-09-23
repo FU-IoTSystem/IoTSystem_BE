@@ -1,6 +1,6 @@
 package IotSystem.IoTSystem.Controller;
 
-import IotSystem.IoTSystem.Entities.Penalty;
+import IotSystem.IoTSystem.Model.Entities.Penalty;
 import IotSystem.IoTSystem.Service.PenaltyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

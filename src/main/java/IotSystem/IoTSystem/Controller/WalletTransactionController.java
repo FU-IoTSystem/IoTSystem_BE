@@ -1,6 +1,7 @@
 package IotSystem.IoTSystem.Controller;
 
-import IotSystem.IoTSystem.Entities.WalletTransaction;
+import IotSystem.IoTSystem.Model.Entities.WalletTransaction;
+import IotSystem.IoTSystem.Service.Implement.WalletTransactionServiceImpl;
 import IotSystem.IoTSystem.Service.WalletTransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
