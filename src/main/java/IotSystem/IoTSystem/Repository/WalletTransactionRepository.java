@@ -15,7 +15,7 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
 
     WalletTransaction getById(UUID id);
 
-    List<WalletTransaction> findByAccountId(UUID accountId);
+
 
     WalletTransaction save(WalletTransaction transaction);
 

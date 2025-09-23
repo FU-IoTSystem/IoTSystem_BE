@@ -15,6 +15,6 @@ public interface RolesRepository extends JpaRepository<Roles, Long> {
     Optional<Roles> findByName(String name);
 
     // Kiểm tra role đã tồn tại chưa (phục vụ seed dữ liệu ban đầu)
-    boolean existsByName(String roleName);
+
 
 }

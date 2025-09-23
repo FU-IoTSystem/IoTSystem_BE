@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
-import java.util.Date;
-import java.util.List;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.UUID;
 
 @Entity
@@ -16,19 +16,26 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "classes")
-public class Classes extends Base {
+@Table(name = "wallet")
+public class Wallet extends Base {
+
+
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(name = "id", nullable = false, columnDefinition = "uuid")
+    @Column(name = "wallet_id",  columnDefinition = "uuid")
     private UUID id;
-    private String classCode;
 
-    private String semester;
+    private BigDecimal balance;
+
+    private String currency;
+    private String note;
+
+    private boolean is_active;
 
 
-    private boolean status;
-    // FK đến giảng viên
+    @OneToOne
+    @JoinColumn(name = "account_id", nullable = false, unique = true)
+    private Account account;
+
 }
-

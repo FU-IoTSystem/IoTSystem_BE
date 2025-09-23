@@ -1,5 +1,6 @@
 package IotSystem.IoTSystem.Model.Entities;
 
+import IotSystem.IoTSystem.Model.Entities.Enum.GroupRoles;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,23 +17,27 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "student_groups")
-public class StudentGroup {
+public class StudentGroup extends Base {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
 
-    private String name;
+    private String groupName;
 
     @ManyToOne
     @JoinColumn(name = "class_id")
     private Classes clazz;
 
     @ManyToOne
-    @JoinColumn(name = "created_by")
-    private Account createdBy;
+    @JoinColumn(name = "account_id")
+    private Account account;
 
     private boolean status;
+
+    private GroupRoles roles;
+
+
 
 
 }

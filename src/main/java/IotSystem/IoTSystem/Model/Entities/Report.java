@@ -16,7 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "reports")
-public class Report {
+public class Report extends Base {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
@@ -24,8 +24,8 @@ public class Report {
 
     private String title;
     private String status;
-    private Date createdAt;
-    private Date updatedAt;
+
+
 
     @ManyToOne
     @JoinColumn(name = "generated_by")

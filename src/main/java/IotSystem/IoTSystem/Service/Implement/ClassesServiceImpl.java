@@ -4,6 +4,6 @@ import IotSystem.IoTSystem.Service.ClassesService;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ClassesServiceImpl implements ClassesService {
+public class ClassesServiceImpl  {
 
 }
