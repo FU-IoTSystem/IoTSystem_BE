@@ -2,7 +2,7 @@ package IotSystem.IoTSystem.Controller;
 
 
 import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
-import IotSystem.IoTSystem.Service.BorrowingRequestService;
+import IotSystem.IoTSystem.Service.IBorrowingRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +14,7 @@ import java.util.UUID;
 public class BorrowingRequestController {
 
     @Autowired
-    private BorrowingRequestService borrowingRequestService;
+    private IBorrowingRequestService borrowingRequestService;
 
     @GetMapping
     public List<BorrowingRequest> getAll() {

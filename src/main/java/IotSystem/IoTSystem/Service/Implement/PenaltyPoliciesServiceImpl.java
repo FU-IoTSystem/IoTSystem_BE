@@ -1,14 +1,14 @@
 package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Model.Entities.PenaltyPolicies;
-import IotSystem.IoTSystem.Service.PenaltyPoliciesService;
+import IotSystem.IoTSystem.Service.IPenaltyPoliciesService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
-public class PenaltyPoliciesServiceImpl implements PenaltyPoliciesService {
+public class PenaltyPoliciesServiceImpl implements IPenaltyPoliciesService {
     @Override
     public List<PenaltyPolicies> getAll() {
         return List.of();

@@ -2,7 +2,7 @@ package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.Model.Request.KitComponentRequest;
 import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
-import IotSystem.IoTSystem.Service.KitComponentService;
+import IotSystem.IoTSystem.Service.IKitComponentService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class KitComponentController {
 
-    private final KitComponentService kitComponentService;
+    private final IKitComponentService kitComponentService;
 
     @Operation(summary = "Create KitComponent", description = "Create KitComponent")
     @PostMapping

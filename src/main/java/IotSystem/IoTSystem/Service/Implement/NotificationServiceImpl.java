@@ -1,14 +1,14 @@
 package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Model.Entities.Notification;
-import IotSystem.IoTSystem.Service.NotificationService;
+import IotSystem.IoTSystem.Service.INotificationService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
-public class NotificationServiceImpl implements NotificationService {
+public class NotificationServiceImpl implements INotificationService {
     @Override
     public List<Notification> getAll() {
         return List.of();

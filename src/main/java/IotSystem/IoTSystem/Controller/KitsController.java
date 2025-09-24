@@ -3,7 +3,7 @@ package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.Model.Request.KitRequest;
 import IotSystem.IoTSystem.Model.Response.KitResponse;
-import IotSystem.IoTSystem.Service.KitsService;
+import IotSystem.IoTSystem.Service.IKitsService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,7 @@ import java.util.List;
 @RequestMapping("/api/kits")
 public class KitsController {
     @Autowired
-    private KitsService kitsService;
+    private IKitsService kitsService;
 
     @Operation(summary = "Create KitComponent", description = "Create KitComponent")
     @PostMapping

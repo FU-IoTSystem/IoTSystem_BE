@@ -8,7 +8,7 @@ import jakarta.validation.Valid;
 
 import java.util.List;
 
-public interface KitComponentService {
+public interface IKitComponentService {
 
     void createKitComponent(@Valid KitComponentRequest kitComponentRequest);
 

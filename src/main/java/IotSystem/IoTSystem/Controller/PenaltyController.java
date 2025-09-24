@@ -1,7 +1,7 @@
 package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.Model.Entities.Penalty;
-import IotSystem.IoTSystem.Service.PenaltyService;
+import IotSystem.IoTSystem.Service.IPenaltyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,7 +13,7 @@ import java.util.UUID;
 public class PenaltyController {
 
     @Autowired
-    private PenaltyService penaltyService;
+    private IPenaltyService penaltyService;
 
     @GetMapping("getAll")
     public List<Penalty> getAll() {

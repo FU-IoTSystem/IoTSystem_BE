@@ -5,7 +5,7 @@ import IotSystem.IoTSystem.Model.Entities.StudentGroup;
 import java.util.List;
 import java.util.UUID;
 
-public interface StudentGroupService {
+public interface IStudentGroupService {
     List<StudentGroup> getAll();
 
     StudentGroup getById(UUID id);

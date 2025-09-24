@@ -5,7 +5,7 @@ import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
 import java.util.List;
 import java.util.UUID;
 
-public interface BorrowingRequestService {
+public interface IBorrowingRequestService {
     List<BorrowingRequest> getAll();
 
     BorrowingRequest create(BorrowingRequest request);

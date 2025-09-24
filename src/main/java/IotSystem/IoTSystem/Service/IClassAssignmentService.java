@@ -5,7 +5,7 @@ import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
 import java.util.List;
 import java.util.UUID;
 
-public interface ClassAssignmentService {
+public interface IClassAssignmentService {
     List<ClassAssignment> getAll();
 
     ClassAssignment getById(UUID id);

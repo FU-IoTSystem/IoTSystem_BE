@@ -1,16 +1,14 @@
 package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Model.Entities.StudentGroup;
-import IotSystem.IoTSystem.Repository.StudentGroupRepository;
-import IotSystem.IoTSystem.Service.StudentGroupService;
-import org.springframework.beans.factory.annotation.Autowired;
+import IotSystem.IoTSystem.Service.IStudentGroupService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
-public class StudentGroupServiceImpl implements StudentGroupService {
+public class StudentGroupServiceImpl implements IStudentGroupService {
 
 
 

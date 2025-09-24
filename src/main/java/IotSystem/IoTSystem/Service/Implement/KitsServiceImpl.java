@@ -3,13 +3,13 @@ package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Model.Request.KitRequest;
 import IotSystem.IoTSystem.Model.Response.KitResponse;
-import IotSystem.IoTSystem.Service.KitsService;
+import IotSystem.IoTSystem.Service.IKitsService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class KitsServiceImpl implements KitsService {
+public class KitsServiceImpl implements IKitsService {
 
 
     @Override

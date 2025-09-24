@@ -1,4 +1,4 @@
 package IotSystem.IoTSystem.Service;
 
-public interface ConfigPenaltyService {
+public interface IClassesService {
 }
