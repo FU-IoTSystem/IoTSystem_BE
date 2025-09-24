@@ -1,7 +1,7 @@
 package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.Model.Entities.Notification;
-import IotSystem.IoTSystem.Service.NotificationService;
+import IotSystem.IoTSystem.Service.INotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +14,7 @@ public class NotificationController {
 
 
     @Autowired
-    private NotificationService notificationService;
+    private INotificationService notificationService;
 
     @GetMapping("getAll")
     public List<Notification> getAll() {

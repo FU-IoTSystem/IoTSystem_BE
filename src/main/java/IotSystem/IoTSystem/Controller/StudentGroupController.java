@@ -2,8 +2,7 @@ package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.Model.Entities.StudentGroup;
 
-import IotSystem.IoTSystem.Service.Implement.StudentGroupServiceImpl;
-import IotSystem.IoTSystem.Service.StudentGroupService;
+import IotSystem.IoTSystem.Service.IStudentGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +13,7 @@ import java.util.UUID;
 @RequestMapping("/api/student-groups")
 public class StudentGroupController {
     @Autowired
-    private StudentGroupService studentGroupService;
+    private IStudentGroupService studentGroupService;
 
     @GetMapping("/getAll")
     public List<StudentGroup> getAll() {

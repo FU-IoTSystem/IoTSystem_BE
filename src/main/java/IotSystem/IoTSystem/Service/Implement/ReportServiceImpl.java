@@ -1,14 +1,14 @@
 package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Model.Entities.Report;
-import IotSystem.IoTSystem.Service.ReportService;
+import IotSystem.IoTSystem.Service.IReportService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
-public class ReportServiceImpl implements ReportService {
+public class ReportServiceImpl implements IReportService {
     @Override
     public List<Report> getAll() {
         return List.of();

@@ -5,7 +5,7 @@ import IotSystem.IoTSystem.Model.Entities.Notification;
 import java.util.List;
 import java.util.UUID;
 
-public interface NotificationService {
+public interface INotificationService {
     List<Notification> getAll();
 
     Notification getById(UUID id);

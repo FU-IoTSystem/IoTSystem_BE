@@ -1,5 +1,4 @@
 package IotSystem.IoTSystem.Controller;
 
-
-public class GroupMemberController {
+public class WalletController {
 }

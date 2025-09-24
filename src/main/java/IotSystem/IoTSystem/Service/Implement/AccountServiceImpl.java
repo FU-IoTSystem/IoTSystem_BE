@@ -7,7 +7,7 @@ import IotSystem.IoTSystem.Model.Entities.Roles;
 import IotSystem.IoTSystem.Security.TokenProvider;
 import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.RolesRepository;
-import IotSystem.IoTSystem.Service.AccountService;
+import IotSystem.IoTSystem.Service.IAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class AccountServiceImpl implements AccountService {
+public class AccountServiceImpl implements IAccountService {
     @Autowired
     private AccountRepository accountRepository;
 

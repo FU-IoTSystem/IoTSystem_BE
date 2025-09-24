@@ -1,7 +1,7 @@
 package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.Model.Entities.Report;
-import IotSystem.IoTSystem.Service.ReportService;
+import IotSystem.IoTSystem.Service.IReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +14,7 @@ public class ReportController {
 
 
     @Autowired
-    private ReportService reportService;
+    private IReportService reportService;
 
     @GetMapping("/getAll")
     public List<Report> getAll() {

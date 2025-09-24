@@ -3,8 +3,7 @@ package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
-import IotSystem.IoTSystem.Service.AccountService;
-import IotSystem.IoTSystem.Service.Implement.AccountServiceImpl;
+import IotSystem.IoTSystem.Service.IAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/")
 public class AccountController {
     @Autowired
-    private AccountService accountService;
+    private IAccountService accountService;
 
     // Endpoint đăng nhập
     @PostMapping("/login")

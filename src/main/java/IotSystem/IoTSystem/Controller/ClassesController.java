@@ -1,8 +1,7 @@
 package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
-import IotSystem.IoTSystem.Service.ClassAssignmentService;
-import IotSystem.IoTSystem.Service.Implement.ClassAssignmentServiceImpl;
+import IotSystem.IoTSystem.Service.IClassAssignmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +13,7 @@ import java.util.UUID;
 public class ClassesController {
 
     @Autowired
-    private ClassAssignmentService service;
+    private IClassAssignmentService service;
 
     @GetMapping("/get_All")
     public List<ClassAssignment> getAll() {

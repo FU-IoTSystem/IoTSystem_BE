@@ -2,17 +2,16 @@ package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Model.Entities.WalletTransaction;
 import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
-import IotSystem.IoTSystem.Service.WalletTransactionService;
+import IotSystem.IoTSystem.Service.IWalletTransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 
-public class WalletTransactionServiceImpl implements WalletTransactionService {
+public class WalletTransactionServiceImpl implements IWalletTransactionService {
     @Autowired
     private WalletTransactionRepository walletTransactionRepository;
 

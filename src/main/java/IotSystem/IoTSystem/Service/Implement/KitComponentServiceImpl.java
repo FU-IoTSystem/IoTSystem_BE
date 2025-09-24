@@ -2,7 +2,7 @@ package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Model.Request.KitComponentRequest;
 import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
-import IotSystem.IoTSystem.Service.KitComponentService;
+import IotSystem.IoTSystem.Service.IKitComponentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -10,7 +10,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class KitComponentServiceImpl implements KitComponentService {
+public class KitComponentServiceImpl implements IKitComponentService {
 
     @Override
     public void createKitComponent(KitComponentRequest kitComponentRequest) {

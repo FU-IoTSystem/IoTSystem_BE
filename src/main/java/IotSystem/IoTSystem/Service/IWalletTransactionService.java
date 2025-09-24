@@ -5,7 +5,7 @@ import IotSystem.IoTSystem.Model.Entities.WalletTransaction;
 import java.util.List;
 import java.util.UUID;
 
-public interface WalletTransactionService {
+public interface IWalletTransactionService {
     List<WalletTransaction> getAll();
 
 

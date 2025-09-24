@@ -6,7 +6,7 @@ import jakarta.validation.Valid;
 
 import java.util.List;
 
-public interface KitsService {
+public interface IKitsService {
     void createKit(@Valid KitRequest kitRequest);
 
     Object getKitId(Long id);

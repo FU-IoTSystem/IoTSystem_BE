@@ -5,7 +5,7 @@ import IotSystem.IoTSystem.Model.Entities.Penalty;
 import java.util.List;
 import java.util.UUID;
 
-public interface PenaltyService {
+public interface IPenaltyService {
     List<Penalty> getAll();
 
     Penalty getById(UUID id);

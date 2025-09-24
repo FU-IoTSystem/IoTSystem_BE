@@ -1,8 +1,7 @@
 package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.Model.Entities.WalletTransaction;
-import IotSystem.IoTSystem.Service.Implement.WalletTransactionServiceImpl;
-import IotSystem.IoTSystem.Service.WalletTransactionService;
+import IotSystem.IoTSystem.Service.IWalletTransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +13,7 @@ import java.util.UUID;
 public class WalletTransactionController {
 
     @Autowired
-    private WalletTransactionService service;
+    private IWalletTransactionService service;
 
     @GetMapping("/getAll")
     public List<WalletTransaction> getAll() {

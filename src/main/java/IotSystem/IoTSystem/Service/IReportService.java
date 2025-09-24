@@ -5,7 +5,7 @@ import IotSystem.IoTSystem.Model.Entities.Report;
 import java.util.List;
 import java.util.UUID;
 
-public interface ReportService {
+public interface IReportService {
     List<Report> getAll();
 
     Report getById(UUID id);
