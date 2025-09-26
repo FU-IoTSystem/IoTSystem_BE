@@ -1,6 +1,6 @@
 package IotSystem.IoTSystem.Controller;
 
-import IotSystem.IoTSystem.Model.Entities.Report;
+import IotSystem.IoTSystem.Model.Entities.DamageReport;
 import IotSystem.IoTSystem.Service.IReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -17,27 +17,27 @@ public class ReportController {
     private IReportService reportService;
 
     @GetMapping("/getAll")
-    public List<Report> getAll() {
+    public List<DamageReport> getAll() {
         return reportService.getAll();
     }
 
     @GetMapping("/getById/{id}")
-    public Report getById(@PathVariable UUID id) {
+    public DamageReport getById(@PathVariable UUID id) {
         return reportService.getById(id);
     }
 
     @GetMapping("/account/{accountId}")
-    public List<Report> getByAccount(@PathVariable UUID accountId) {
+    public List<DamageReport> getByAccount(@PathVariable UUID accountId) {
         return reportService.getByAccount(accountId);
     }
 
     @PostMapping("/create")
-    public Report create(@RequestBody Report report) {
+    public DamageReport create(@RequestBody DamageReport report) {
         return reportService.create(report);
     }
 
     @PutMapping("/update/{id}")
-    public Report update(@PathVariable UUID id, @RequestBody Report report) {
+    public DamageReport update(@PathVariable UUID id, @RequestBody DamageReport report) {
         return reportService.update(id, report);
     }
 
