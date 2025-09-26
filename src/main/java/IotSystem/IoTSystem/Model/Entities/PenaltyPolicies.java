@@ -21,7 +21,7 @@ public class PenaltyPolicies {
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
-
+    private String policyName;     // tên chính sách
     private String type;
     private Double amount;
     private Date issuedDate;
