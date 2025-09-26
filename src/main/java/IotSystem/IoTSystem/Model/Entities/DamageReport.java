@@ -1,6 +1,5 @@
 package IotSystem.IoTSystem.Model.Entities;
 
-
 import IotSystem.IoTSystem.Model.Entities.Enum.ReportStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -16,16 +15,20 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "Damage_Report")
-public class Damge_Report extends Base {
-
+@Table(name = "reports")
+public class DamageReport extends Base {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(name = "Report_id", nullable = false, columnDefinition = "uuid")
     private UUID id;
 
     private String description;
+    private ReportStatus status;
 
-    private ReportStatus reportStatus;
+
+
+    @ManyToOne
+    @JoinColumn(name = "generated_by")
+    private Account generatedBy;
 }
+

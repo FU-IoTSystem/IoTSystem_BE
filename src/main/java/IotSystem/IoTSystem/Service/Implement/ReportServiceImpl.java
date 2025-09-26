@@ -1,6 +1,6 @@
 package IotSystem.IoTSystem.Service.Implement;
 
-import IotSystem.IoTSystem.Model.Entities.Report;
+import IotSystem.IoTSystem.Model.Entities.DamageReport;
 import IotSystem.IoTSystem.Service.IReportService;
 import org.springframework.stereotype.Service;
 
@@ -10,27 +10,27 @@ import java.util.UUID;
 @Service
 public class ReportServiceImpl implements IReportService {
     @Override
-    public List<Report> getAll() {
+    public List<DamageReport> getAll() {
         return List.of();
     }
 
     @Override
-    public Report getById(UUID id) {
+    public DamageReport getById(UUID id) {
         return null;
     }
 
     @Override
-    public Report create(Report report) {
+    public DamageReport create(DamageReport report) {
         return null;
     }
 
     @Override
-    public List<Report> getByAccount(UUID accountId) {
+    public List<DamageReport> getByAccount(UUID accountId) {
         return List.of();
     }
 
     @Override
-    public Report update(UUID id, Report report) {
+    public DamageReport update(UUID id, DamageReport report) {
         return null;
     }
 

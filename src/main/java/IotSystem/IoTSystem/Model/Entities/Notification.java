@@ -1,5 +1,6 @@
 package IotSystem.IoTSystem.Model.Entities;
 
+import IotSystem.IoTSystem.Model.Entities.Enum.NotificationType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,7 +21,7 @@ public class Notification {
     @GeneratedValue
     private UUID id;
 
-    private String type;
+    private NotificationType type;
     private String message;
     private Boolean isRead;
 

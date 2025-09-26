@@ -33,8 +33,8 @@ public class Kits  extends Base {
     private String imageUrl;
 
 
-    private int quantity;
-
+    private Integer quantityTotal;
+    private Integer quantityAvailable;
 
 
 

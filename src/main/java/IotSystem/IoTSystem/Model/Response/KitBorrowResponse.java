@@ -1,17 +1,17 @@
 package IotSystem.IoTSystem.Model.Response;
+
+
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.UUID;
+
 @Getter
 @Setter
-public class KitResponse { // cho admin xu dung
+public class KitBorrowResponse {
     private UUID id;
     private String kitName;
-    private String type;
-    private String status;
     private String description;
     private String imageUrl;
-    private Integer quantityTotal;
-    private Integer quantityAvailable;
+    private Integer quantityAvailable; // số lượng còn có thể mượn
 }

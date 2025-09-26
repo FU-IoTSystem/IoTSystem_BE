@@ -1,20 +1,20 @@
 package IotSystem.IoTSystem.Service;
 
-import IotSystem.IoTSystem.Model.Entities.Report;
+import IotSystem.IoTSystem.Model.Entities.DamageReport;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface IReportService {
-    List<Report> getAll();
+    List<DamageReport> getAll();
 
-    Report getById(UUID id);
+    DamageReport getById(UUID id);
 
-    Report create(Report report);
+    DamageReport create(DamageReport report);
 
-    List<Report> getByAccount(UUID accountId);
+    List<DamageReport> getByAccount(UUID accountId);
 
-    Report update(UUID id, Report report);
+    DamageReport update(UUID id, DamageReport report);
 
     void delete(UUID id);
 }
