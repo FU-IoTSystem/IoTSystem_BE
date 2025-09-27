@@ -1,6 +1,6 @@
 package IotSystem.IoTSystem.Model.Entities;
 
-import IotSystem.IoTSystem.Model.Entities.Enum.Wallet_Transaction_Status;
+import IotSystem.IoTSystem.Model.Entities.Enum.Status.Wallet_Transaction_Status;
 import IotSystem.IoTSystem.Model.Entities.Enum.Wallet_Transaction_Type;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
-import java.util.Date;
 import java.util.UUID;
 
 @Entity

@@ -6,10 +6,8 @@ import IotSystem.IoTSystem.Model.Request.RegisterRequest;
 import IotSystem.IoTSystem.Service.IAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/")
@@ -38,5 +36,11 @@ public class AccountController {
             return ResponseEntity.badRequest().body("Register failed: " + e.getMessage());
         }
     }
+    @GetMapping("/me")
+    public String getCurrentUser(Authentication authentication) {
+        return "User: " + authentication.getName() +
+                " - Roles: " + authentication.getAuthorities();
+    }
+
 }
 

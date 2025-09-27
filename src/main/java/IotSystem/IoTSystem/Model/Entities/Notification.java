@@ -21,6 +21,8 @@ public class Notification {
     @GeneratedValue
     private UUID id;
 
+
+    @Enumerated(EnumType.STRING)
     private NotificationType type;
     private String message;
     private Boolean isRead;
