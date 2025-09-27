@@ -1,4 +1,4 @@
-package IotSystem.IoTSystem.Model.Entities.Enum;
+package IotSystem.IoTSystem.Model.Entities.Enum.Status;
 
 
 

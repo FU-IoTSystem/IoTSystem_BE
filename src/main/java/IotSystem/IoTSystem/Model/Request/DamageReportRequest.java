@@ -1,6 +1,6 @@
 package IotSystem.IoTSystem.Model.Request;
 
-import IotSystem.IoTSystem.Model.Entities.Enum.ReportStatus;
+import IotSystem.IoTSystem.Model.Entities.Enum.Status.ReportStatus;
 import lombok.Getter;
 import lombok.Setter;
 

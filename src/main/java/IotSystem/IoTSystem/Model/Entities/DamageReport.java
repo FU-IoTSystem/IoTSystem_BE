@@ -1,6 +1,6 @@
 package IotSystem.IoTSystem.Model.Entities;
 
-import IotSystem.IoTSystem.Model.Entities.Enum.ReportStatus;
+import IotSystem.IoTSystem.Model.Entities.Enum.Status.ReportStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
