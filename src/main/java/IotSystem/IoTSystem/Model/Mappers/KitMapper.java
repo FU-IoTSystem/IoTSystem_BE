@@ -1,4 +1,4 @@
-package IotSystem.IoTSystem.DTOs.Mappers;
+package IotSystem.IoTSystem.Model.Mappers;
 
 import IotSystem.IoTSystem.Model.Entities.Kits;
 import IotSystem.IoTSystem.Model.Request.KitRequest;
