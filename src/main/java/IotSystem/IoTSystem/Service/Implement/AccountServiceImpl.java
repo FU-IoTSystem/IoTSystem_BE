@@ -4,15 +4,20 @@ import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
 import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.Roles;
+import IotSystem.IoTSystem.Model.Request.UpdateAccountRequest;
+import IotSystem.IoTSystem.Model.Response.ProfileResponse;
 import IotSystem.IoTSystem.Security.TokenProvider;
 import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.RolesRepository;
 import IotSystem.IoTSystem.Service.IAccountService;
+import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class AccountServiceImpl implements IAccountService {
@@ -39,6 +45,13 @@ public class AccountServiceImpl implements IAccountService {
     private TokenProvider tokenProvider;
 
 
+    //lấy user hiện tại của hệ thống
+    private Account getCurrentAccount() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        return accountRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
     public String login(LoginRequest loginRequest) {
         // Xác thực người dùng
         authenticationManager.authenticate(
@@ -72,8 +85,8 @@ public class AccountServiceImpl implements IAccountService {
         }
 
         // Gán role mặc định là "USER"
-        Roles role = rolesRepository.findByName("USER")
-                .orElseThrow(() -> new RuntimeException("Default role USER not found"));
+        Roles role = rolesRepository.findByName("STUDENT")
+                .orElseThrow(() -> new RuntimeException("Default role STUDENT not found"));
 
         Account account = new Account();
         account.setEmail(request.getUsername());
@@ -85,6 +98,27 @@ public class AccountServiceImpl implements IAccountService {
         accountRepository.save(account);
         return "Register successful";
     }
+    @Override
+    public ProfileResponse updateProfile(UpdateAccountRequest request) {
+        Account account = getCurrentAccount();
+        account.setFullName(request.getFullName());
+        account.setAvatarUrl(request.getAvatarUrl());
+        account.setPhone(request.getPhone());
+
+        Account saved = accountRepository.save(account);
+
+        return new ProfileResponse(
+                saved.getId(),
+                saved.getFullName(),
+                saved.getEmail(),
+                saved.getAvatarUrl(),
+                saved.getPhone(),
+                saved.getStudentCode(),
+                saved.getRole().getName()
+        );
+    }
+
+
 
 
 }
