@@ -1,5 +1,6 @@
 package IotSystem.IoTSystem.Service.Implement;
 
+import IotSystem.IoTSystem.Model.Mappers.AccountMapper;
 import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
 import IotSystem.IoTSystem.Model.Entities.Account;
@@ -12,6 +13,8 @@ import IotSystem.IoTSystem.Repository.RolesRepository;
 import IotSystem.IoTSystem.Service.IAccountService;
 import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -117,8 +120,27 @@ public class AccountServiceImpl implements IAccountService {
                 saved.getRole().getName()
         );
     }
+    @Override
+    public ProfileResponse getProfile() {
+        Account account = getCurrentAccount(); // lấy từ SecurityContext
+        return AccountMapper.toProfileResponse(account);
+    }
+
+    @Override
+    public Page<ProfileResponse> getAllAccounts(Pageable pageable) {
+        Page<Account> accountsPage = accountRepository.findAll(pageable);
+
+        return accountsPage.map(AccountMapper::toProfileResponse);
+    }
 
 
+    @Override
+    public ProfileResponse getAccountById(UUID accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        return AccountMapper.toProfileResponse(account);
+    }
 
 
 }
