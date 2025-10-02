@@ -31,11 +31,11 @@ public class Wallet extends Base {
     private String currency;
     private String note;
 
-    private boolean is_active;
+    private boolean isActive;
 
 
-    @OneToOne
-    @JoinColumn(name = "account_id", nullable = false, unique = true)
+    @OneToOne(mappedBy = "wallet")
     private Account account;
+
 
 }

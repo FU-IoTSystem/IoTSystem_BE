@@ -1,5 +1,7 @@
 package IotSystem.IoTSystem.Service.Implement;
 
+import IotSystem.IoTSystem.Model.Entities.Wallet;
+import IotSystem.IoTSystem.Model.Mappers.AccountMapper;
 import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
 import IotSystem.IoTSystem.Model.Entities.Account;
@@ -12,6 +14,8 @@ import IotSystem.IoTSystem.Repository.RolesRepository;
 import IotSystem.IoTSystem.Service.IAccountService;
 import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,6 +27,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -65,6 +70,11 @@ public class AccountServiceImpl implements IAccountService {
         Account account = accountRepository.findByEmail(loginRequest.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+        // Kiểm tra trạng thái tài khoản
+        if (Boolean.FALSE.equals(account.getIsActive())) {
+            throw new RuntimeException("Tài khoản đã bị vô hiệu hóa");
+        }
+
         // Lấy role làm quyền truy cập (dạng ROLE_USER, ROLE_ADMIN...)
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority("ROLE_" + account.getRole().getName()));
@@ -79,25 +89,37 @@ public class AccountServiceImpl implements IAccountService {
         // Sinh token JWT
         return tokenProvider.generateToken(userDetails);
     }
+
     public String register(RegisterRequest request) {
         if (accountRepository.existsByEmail(request.getUsername())) {
             throw new RuntimeException("Username already taken");
         }
 
-        // Gán role mặc định là "USER"
         Roles role = rolesRepository.findByName("STUDENT")
                 .orElseThrow(() -> new RuntimeException("Default role STUDENT not found"));
 
+        // Tạo tài khoản trước
         Account account = new Account();
         account.setEmail(request.getUsername());
         account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-
         account.setIsActive(true);
         account.setRole(role);
 
-        accountRepository.save(account);
+        // Nếu là STUDENT hoặc LECTURER thì tạo ví
+        if (role.getName().equals("STUDENT") || role.getName().equals("LECTURER")) {
+            Wallet wallet = new Wallet();
+            wallet.setBalance(BigDecimal.ZERO);
+            wallet.setCurrency("VND");
+            wallet.setActive(true);
+
+            account.setWallet(wallet); // ✅ gắn ví vào tài khoản (Account là chủ sở hữu)
+        }
+
+        accountRepository.save(account); // ✅ cascade sẽ tự lưu Wallet
         return "Register successful";
     }
+
+
     @Override
     public ProfileResponse updateProfile(UpdateAccountRequest request) {
         Account account = getCurrentAccount();
@@ -117,8 +139,27 @@ public class AccountServiceImpl implements IAccountService {
                 saved.getRole().getName()
         );
     }
+    @Override
+    public ProfileResponse getProfile() {
+        Account account = getCurrentAccount(); // lấy từ SecurityContext
+        return AccountMapper.toProfileResponse(account);
+    }
+
+    @Override
+    public Page<ProfileResponse> getAllAccounts(Pageable pageable) {
+        Page<Account> accountsPage = accountRepository.findAll(pageable);
+
+        return accountsPage.map(AccountMapper::toProfileResponse);
+    }
 
 
+    @Override
+    public ProfileResponse getAccountById(UUID accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        return AccountMapper.toProfileResponse(account);
+    }
 
 
 }

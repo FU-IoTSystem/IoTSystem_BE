@@ -9,10 +9,16 @@ import IotSystem.IoTSystem.Model.Response.ApiResponse;
 import IotSystem.IoTSystem.Model.Response.ProfileResponse;
 import IotSystem.IoTSystem.Service.IAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/")
@@ -58,6 +64,50 @@ public class AccountController {
         response.setStatus(HttpStatus.OK.value());
         response.setMessage("Profile updated successfully");
         response.setData(updated);
+
+        return ResponseEntity.ok(response);
+    }
+    //get profile for all ueser
+    @GetMapping("/me/profile")
+    public ResponseEntity<ApiResponse<ProfileResponse>> getProfile() {
+        ProfileResponse profile = accountService.getProfile();
+
+        ApiResponse<ProfileResponse> response = new ApiResponse<>();
+        response.setStatus(HttpStatus.OK.value());
+        response.setMessage("Profile fetched successfully");
+        response.setData(profile);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/admin/accounts")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Page<ProfileResponse>>> getAllAccounts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<ProfileResponse> profiles = accountService.getAllAccounts(PageRequest.of(page, size));
+
+        ApiResponse<Page<ProfileResponse>> response = new ApiResponse<>();
+        response.setStatus(HttpStatus.OK.value());
+        response.setMessage("Fetched accounts with pagination");
+        response.setData(profiles);
+
+        return ResponseEntity.ok(response);
+
+
+
+}
+
+    @GetMapping("/admin/accounts/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ProfileResponse>> getAccountById(@PathVariable UUID id) {
+        ProfileResponse profile = accountService.getAccountById(id);
+
+        ApiResponse<ProfileResponse> response = new ApiResponse<>();
+        response.setStatus(HttpStatus.OK.value());
+        response.setMessage("Fetched account successfully");
+        response.setData(profile);
 
         return ResponseEntity.ok(response);
     }
