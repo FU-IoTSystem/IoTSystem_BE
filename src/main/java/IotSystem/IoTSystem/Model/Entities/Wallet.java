@@ -34,7 +34,8 @@ public class Wallet extends Base {
     private boolean isActive;
 
 
-    @OneToOne(mappedBy = "wallet")
+    @OneToOne
+    @JoinColumn(name = "account_id", nullable = false, unique = true)
     private Account account;
 
 

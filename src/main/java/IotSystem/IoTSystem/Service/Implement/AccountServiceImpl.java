@@ -105,14 +105,17 @@ public class AccountServiceImpl implements IAccountService {
         account.setIsActive(true);
         account.setRole(role);
 
+
         // Nếu là STUDENT hoặc LECTURER thì tạo ví
         if (role.getName().equals("STUDENT") || role.getName().equals("LECTURER")) {
             Wallet wallet = new Wallet();
             wallet.setBalance(BigDecimal.ZERO);
             wallet.setCurrency("VND");
             wallet.setActive(true);
+            wallet.setAccount(account); // Gắn account vào wallet
 
-            account.setWallet(wallet); // ✅ gắn ví vào tài khoản (Account là chủ sở hữu)
+            account.setWallet(wallet);
+
         }
 
         accountRepository.save(account); // ✅ cascade sẽ tự lưu Wallet

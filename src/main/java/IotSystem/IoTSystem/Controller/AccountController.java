@@ -2,6 +2,7 @@ package IotSystem.IoTSystem.Controller;
 
 
 import IotSystem.IoTSystem.Model.Entities.Account;
+import IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus;
 import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
 import IotSystem.IoTSystem.Model.Request.UpdateAccountRequest;
@@ -61,7 +62,7 @@ public class AccountController {
         ProfileResponse updated = accountService.updateProfile(request);
 
         ApiResponse<ProfileResponse> response = new ApiResponse<>();
-        response.setStatus(HttpStatus.OK.value());
+        response.setStatus(HTTPStatus.Ok);
         response.setMessage("Profile updated successfully");
         response.setData(updated);
 
@@ -73,7 +74,7 @@ public class AccountController {
         ProfileResponse profile = accountService.getProfile();
 
         ApiResponse<ProfileResponse> response = new ApiResponse<>();
-        response.setStatus(HttpStatus.OK.value());
+        response.setStatus(HTTPStatus.Ok);
         response.setMessage("Profile fetched successfully");
         response.setData(profile);
 
@@ -89,7 +90,7 @@ public class AccountController {
         Page<ProfileResponse> profiles = accountService.getAllAccounts(PageRequest.of(page, size));
 
         ApiResponse<Page<ProfileResponse>> response = new ApiResponse<>();
-        response.setStatus(HttpStatus.OK.value());
+        response.setStatus(HTTPStatus.Ok);
         response.setMessage("Fetched accounts with pagination");
         response.setData(profiles);
 
@@ -105,7 +106,7 @@ public class AccountController {
         ProfileResponse profile = accountService.getAccountById(id);
 
         ApiResponse<ProfileResponse> response = new ApiResponse<>();
-        response.setStatus(HttpStatus.OK.value());
+        response.setStatus(HTTPStatus.Ok);
         response.setMessage("Fetched account successfully");
         response.setData(profile);
 

@@ -48,8 +48,7 @@ public class Account extends Base {
 
     private Boolean isActive;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "wallet_id", unique = true) // ✅ tạo cột wallet_id trong bảng accounts
+    @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Wallet wallet;
 
 
