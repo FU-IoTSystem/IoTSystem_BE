@@ -1,6 +1,7 @@
 package IotSystem.IoTSystem.Controller;
 
 
+import IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus;
 import IotSystem.IoTSystem.Model.Response.ApiResponse;
 import IotSystem.IoTSystem.Model.Response.WalletResponse;
 import IotSystem.IoTSystem.Service.IWalletService;
@@ -24,7 +25,7 @@ public class WalletController {
         WalletResponse wallet = walletService.getMyWallet(); // ✅ gọi đúng instance
 
         ApiResponse<WalletResponse> response = new ApiResponse<>();
-        response.setStatus(HttpStatus.OK.value());
+        response.setStatus(HTTPStatus.Ok);
         response.setMessage("Fetched wallet successfully");
         response.setData(wallet);
 
