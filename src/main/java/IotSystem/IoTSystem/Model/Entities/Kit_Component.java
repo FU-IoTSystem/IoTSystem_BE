@@ -1,6 +1,7 @@
 package IotSystem.IoTSystem.Model.Entities;
 
 import IotSystem.IoTSystem.Model.Entities.Enum.Kit_Items_Types;
+import IotSystem.IoTSystem.Model.Entities.Enum.Status.KitComponentType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
@@ -24,7 +25,10 @@ public class Kit_Component extends Base {
     private UUID id;
 
     private String componentName;
-    private Kit_Items_Types componentType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "component_type")
+    private KitComponentType componentType;
     private String description;
 
     private Integer quantityTotal;

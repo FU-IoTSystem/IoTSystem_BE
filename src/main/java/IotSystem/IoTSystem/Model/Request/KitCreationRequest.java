@@ -1,14 +1,12 @@
-package IotSystem.IoTSystem.Model.Response;
+package IotSystem.IoTSystem.Model.Request;
+
 import IotSystem.IoTSystem.Model.Entities.Enum.KitType;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.util.List;
-import java.util.UUID;
+
 @Data
-public class KitResponse {
-    private UUID id;
+public class KitCreationRequest {
     private String kitName;
     private KitType type;
     private String status;
@@ -17,5 +15,5 @@ public class KitResponse {
     private Integer quantityTotal;
     private Integer quantityAvailable;
 
-    private List<KitComponentResponse> components;
+    private List<KitComponentRequest> components;
 }

@@ -1,7 +1,10 @@
 package IotSystem.IoTSystem.Controller;
 
 
+import IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus;
+import IotSystem.IoTSystem.Model.Request.KitCreationRequest;
 import IotSystem.IoTSystem.Model.Request.KitRequest;
+import IotSystem.IoTSystem.Model.Response.ApiResponse;
 import IotSystem.IoTSystem.Model.Response.KitResponse;
 import IotSystem.IoTSystem.Service.IKitsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/kits")
@@ -18,45 +22,31 @@ public class KitsController {
     @Autowired
     private IKitsService kitsService;
 
-    @Operation(summary = "Create KitComponent", description = "Create KitComponent")
-    @PostMapping
-    public ResponseEntity<Object> createKitComponent(@Valid @RequestBody KitRequest kitRequest) {
-        kitsService.createKit(kitRequest);
-        return ResponseEntity.ok( "Your Kit created successfully");
+
+    @GetMapping("/{kitId}")
+    @Operation(summary = "Lấy thông tin chi tiết của một Kit (bao gồm các component)")
+    public ResponseEntity<ApiResponse<KitResponse>> getKitById(@PathVariable("kitId") UUID kitId) {
+        KitResponse kitResponse = kitsService.getKitById(kitId);
+
+        ApiResponse<KitResponse> response = new ApiResponse<>();
+        response.setStatus(HTTPStatus.Ok);
+        response.setMessage("Lấy thông tin Kit thành công");
+        response.setData(kitResponse);
+
+        return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Get KitComponent By KitComponentID", description = "Get KitComponent By DrugID")
-    @GetMapping
-    public ResponseEntity<Object> getKitComponentById(@RequestParam("id") Long id) {
+    @PostMapping("/create")
+    @Operation(summary = "Tạo mới một Kit kèm các component")
+    public ResponseEntity<ApiResponse<KitResponse>> createKit(@RequestBody @Valid KitCreationRequest request) {
+        KitResponse kitResponse = kitsService.createKitWithComponents(request);
 
-        return ResponseEntity.ok(kitsService.getKitId(id));
+        ApiResponse<KitResponse> response = new ApiResponse<>();
+        response.setStatus(HTTPStatus.Ok);
+        response.setMessage("Tạo Kit thành công");
+        response.setData(kitResponse);
+
+        return ResponseEntity.ok(response);
     }
-
-    @Operation(summary = "Get All Kits ", description = "Get All Kits")
-    @GetMapping("/all")
-    public ResponseEntity<List<KitResponse>> getAllKits() {
-        List<KitResponse> kits = kitsService.getAllKits();
-        return ResponseEntity.ok(kits);
-    }
-
-    @Operation(summary = "Delete Kit", description = "Delete Kit")
-    @DeleteMapping
-    public ResponseEntity<Object> deleteKitComponent(@RequestParam("id") Long id,
-                                                     @Valid @RequestBody KitRequest kitRequest) {
-
-        kitsService.deleteKit(id, kitRequest);
-        return ResponseEntity.ok("Your Kit is Delete successfully");
-    }
-
-
-    @Operation(summary = "Update Kit By ID", description = "Get Kit By ID")
-    @PutMapping
-    public ResponseEntity<Object> updateKit(@RequestParam("id") Long id,
-                                                     @Valid @RequestBody KitRequest kitRequest) {
-
-        kitsService.updateKit(id, kitRequest);
-        return ResponseEntity.ok("Your Kit is update successfully");
-    }
-
-
 }
+

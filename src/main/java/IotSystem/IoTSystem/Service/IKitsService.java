@@ -1,19 +1,32 @@
 package IotSystem.IoTSystem.Service;
 
+import IotSystem.IoTSystem.Model.Entities.Kit_Component;
+import IotSystem.IoTSystem.Model.Entities.Kits;
+import IotSystem.IoTSystem.Model.Request.KitCreationRequest;
 import IotSystem.IoTSystem.Model.Request.KitRequest;
+import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
 import IotSystem.IoTSystem.Model.Response.KitResponse;
 import jakarta.validation.Valid;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface IKitsService {
-    void createKit(@Valid KitRequest kitRequest);
+    // Tạo mới một Kit kèm các component
+    KitResponse createKitWithComponents(KitCreationRequest request);
 
-    Object getKitId(Long id);
+    // Lấy thông tin chi tiết của một Kit (bao gồm các component)
+    KitResponse getKitById(UUID kitId);
 
+    // Lấy danh sách tất cả các Kit (có thể kèm component hoặc không)
     List<KitResponse> getAllKits();
 
-    void deleteKit(Long id, @Valid KitRequest kitRequest);
+    // Cập nhật thông tin Kit và các component
+    KitResponse updateKit(UUID kitId, KitRequest request);
 
-    void updateKit(Long id, @Valid KitRequest kitRequest);
+    // Xóa một Kit
+    void deleteKit(UUID kitId);
+
+    // Lấy riêng danh sách component của một Kit
+    List<KitComponentResponse> getComponentsByKitId(UUID kitId);
 }
