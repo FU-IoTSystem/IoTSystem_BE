@@ -1,15 +1,21 @@
 package IotSystem.IoTSystem.Model.Mappers;
 
+import IotSystem.IoTSystem.Model.Entities.Kit_Component;
 import IotSystem.IoTSystem.Model.Entities.Kits;
+import IotSystem.IoTSystem.Model.Request.KitComponentRequest;
+import IotSystem.IoTSystem.Model.Request.KitCreationRequest;
 import IotSystem.IoTSystem.Model.Request.KitRequest;
 import IotSystem.IoTSystem.Model.Response.KitBorrowResponse;
 import IotSystem.IoTSystem.Model.Response.KitResponse;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Component
 public class KitMapper {
 
-    public Kits toEntity(KitRequest request) {
+    public static Kits toKitEntity(KitCreationRequest request) {
         Kits kit = new Kits();
         kit.setKitName(request.getKitName());
         kit.setType(request.getType());
@@ -21,26 +27,19 @@ public class KitMapper {
         return kit;
     }
 
-    public KitResponse toResponse(Kits entity) {
-        KitResponse response = new KitResponse();
-        response.setId(entity.getId());
-        response.setKitName(entity.getKitName());
-        response.setType(entity.getType());
-        response.setStatus(entity.getStatus());
-        response.setDescription(entity.getDescription());
-        response.setImageUrl(entity.getImageUrl());
-        response.setQuantityTotal(entity.getQuantityTotal());
-        response.setQuantityAvailable(entity.getQuantityAvailable());
-        return response;
-    }
-
-    public KitBorrowResponse toBorrowResponse(Kits entity) {
-        KitBorrowResponse response = new KitBorrowResponse();
-        response.setId(entity.getId());
-        response.setKitName(entity.getKitName());
-        response.setDescription(entity.getDescription());
-        response.setImageUrl(entity.getImageUrl());
-        response.setQuantityAvailable(entity.getQuantityAvailable());
-        return response;
+    public static List<Kit_Component> toComponentEntities(List<KitComponentRequest> componentRequests, Kits kit) {
+        return componentRequests.stream().map(req -> {
+            Kit_Component component = new Kit_Component();
+            component.setComponentName(req.getComponentName());
+            component.setComponentType(req.getComponentType());
+            component.setDescription(req.getDescription());
+            component.setQuantityTotal(req.getQuantityTotal());
+            component.setQuantityAvailable(req.getQuantityAvailable());
+            component.setPricePerCom(req.getPricePerCom());
+            component.setStatus(req.getStatus());
+            component.setImageUrl(req.getImageUrl());
+            component.setKit(kit);
+            return component;
+        }).collect(Collectors.toList());
     }
 }

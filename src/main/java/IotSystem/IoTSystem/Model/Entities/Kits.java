@@ -1,5 +1,6 @@
 package IotSystem.IoTSystem.Model.Entities;
 
+import IotSystem.IoTSystem.Model.Entities.Enum.KitType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,7 +25,9 @@ public class Kits  extends Base {
     private UUID id;
 
     private String kitName;
-    private String type;
+    @Enumerated(EnumType.STRING)
+
+    private KitType type;
     private String status;
 
     private String description;
