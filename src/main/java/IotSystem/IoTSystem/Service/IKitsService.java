@@ -2,8 +2,7 @@ package IotSystem.IoTSystem.Service;
 
 import IotSystem.IoTSystem.Model.Entities.Kit_Component;
 import IotSystem.IoTSystem.Model.Entities.Kits;
-import IotSystem.IoTSystem.Model.Request.KitCreationRequest;
-import IotSystem.IoTSystem.Model.Request.KitRequest;
+import IotSystem.IoTSystem.Model.Request.*;
 import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
 import IotSystem.IoTSystem.Model.Response.KitResponse;
 import jakarta.validation.Valid;
@@ -29,4 +28,11 @@ public interface IKitsService {
 
     // Lấy riêng danh sách component của một Kit
     List<KitComponentResponse> getComponentsByKitId(UUID kitId);
+
+    KitResponse createSingleKit(KitSingleCreateRequest request);
+
+
+    KitComponentResponse addSingleComponentToKit(AddSingleComponentRequest request);
+    List<KitComponentResponse> addMultipleComponentsToKit(AddMultipleComponentsRequest request);
+
 }
