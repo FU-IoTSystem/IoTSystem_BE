@@ -39,5 +39,25 @@ public class KitResponseMapper {
         response.setComponents(componentResponses);
         return response;
     }
+    public static KitComponentResponse toComponentResponse(Kit_Component comp) {
+        KitComponentResponse cr = new KitComponentResponse();
+        cr.setId(comp.getId());
+        cr.setComponentName(comp.getComponentName());
+        cr.setComponentType(comp.getComponentType());
+        cr.setDescription(comp.getDescription());
+        cr.setQuantityTotal(comp.getQuantityTotal());
+        cr.setQuantityAvailable(comp.getQuantityAvailable());
+        cr.setPricePerCom(comp.getPricePerCom());
+        cr.setStatus(comp.getStatus());
+        cr.setImageUrl(comp.getImageUrl());
+        return cr;
+    }
+
+    public static List<KitComponentResponse> toComponentResponseList(List<Kit_Component> components) {
+        return components.stream()
+                .map(KitResponseMapper::toComponentResponse)
+                .collect(Collectors.toList());
+    }
+
 }
 

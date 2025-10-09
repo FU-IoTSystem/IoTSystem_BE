@@ -18,7 +18,8 @@ public class SwaggerBrowserOpener implements ApplicationListener<ApplicationRead
                     .getEnvironment()
                     .getProperty("local.server.port", "8080");
 
-            String url = "http://localhost:" + port + "/swagger-ui.html";
+            String url = "http://localhost:" + port + "/swagger-ui/index.html"; // ✅
+
 
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 Desktop.getDesktop().browse(new URI(url));

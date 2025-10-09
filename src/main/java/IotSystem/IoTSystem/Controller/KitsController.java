@@ -1,10 +1,11 @@
 package IotSystem.IoTSystem.Controller;
 
 
+import IotSystem.IoTSystem.Model.Entities.Enum.Status.ErrorCode;
 import IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus;
-import IotSystem.IoTSystem.Model.Request.KitCreationRequest;
-import IotSystem.IoTSystem.Model.Request.KitRequest;
+import IotSystem.IoTSystem.Model.Request.*;
 import IotSystem.IoTSystem.Model.Response.ApiResponse;
+import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
 import IotSystem.IoTSystem.Model.Response.KitResponse;
 import IotSystem.IoTSystem.Service.IKitsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,5 +49,49 @@ public class KitsController {
 
         return ResponseEntity.ok(response);
     }
-}
 
+    @PostMapping("/create-single")
+    @Operation(summary = "Tạo mới một Kit đơn lẻ không kèm component")
+    public ResponseEntity<ApiResponse<KitResponse>> createSingleKit(@RequestBody @Valid KitSingleCreateRequest request) {
+        KitResponse kitResponse = kitsService.createSingleKit(request);
+        ApiResponse<KitResponse> response = new ApiResponse<>();
+        response.setStatus(HTTPStatus.Ok);
+        response.setMessage("Tạo Kit đơn lẻ thành công");
+        response.setData(kitResponse);
+        return ResponseEntity.ok(response);
+    }
+
+    // ✅ Thêm một component vào Kit
+    @PostMapping("/add-one")
+    public ResponseEntity<ApiResponse<KitComponentResponse>> addSingleComponent(@RequestBody AddSingleComponentRequest request) {
+        KitComponentResponse result = kitsService.addSingleComponentToKit(request);
+
+        ApiResponse<KitComponentResponse> response = new ApiResponse<>();
+        response.setStatus(HTTPStatus.Created);
+        response.setErrorCode(ErrorCode.Success);
+        response.setSuccess(true);
+        response.setStatusText("Component added successfully");
+        response.setMessage("Thêm component thành công");
+        response.setTotal(1);
+        response.setData(result);
+
+        return ResponseEntity.status(response.getStatus().getCode()).body(response);
+    }
+
+    // ✅ Thêm nhiều component vào Kit
+    @PostMapping("/add-many")
+    public ResponseEntity<ApiResponse<List<KitComponentResponse>>> addMultipleComponents(@RequestBody AddMultipleComponentsRequest request) {
+        List<KitComponentResponse> result = kitsService.addMultipleComponentsToKit(request);
+
+        ApiResponse<List<KitComponentResponse>> response = new ApiResponse<>();
+        response.setStatus(HTTPStatus.Created);
+        response.setErrorCode(ErrorCode.Success);
+        response.setSuccess(true);
+        response.setStatusText("Components added successfully");
+        response.setMessage("Thêm nhiều component thành công");
+        response.setTotal(result.size());
+        response.setData(result);
+
+        return ResponseEntity.status(response.getStatus().getCode()).body(response);
+    }
+}
