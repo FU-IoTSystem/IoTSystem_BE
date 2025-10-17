@@ -3,9 +3,7 @@
 
     import IotSystem.IoTSystem.Model.Entities.Account;
     import IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus;
-    import IotSystem.IoTSystem.Model.Request.LoginRequest;
-    import IotSystem.IoTSystem.Model.Request.RegisterRequest;
-    import IotSystem.IoTSystem.Model.Request.UpdateAccountRequest;
+    import IotSystem.IoTSystem.Model.Request.*;
     import IotSystem.IoTSystem.Model.Response.ApiResponse;
     import IotSystem.IoTSystem.Model.Response.ProfileResponse;
     import IotSystem.IoTSystem.Service.IAccountService;
@@ -111,6 +109,19 @@
             response.setData(profile);
 
             return ResponseEntity.ok(response);
+        }
+
+        @PostMapping("/change-password")
+        public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequest request) {
+            accountService.changePassword(request);
+            return ResponseEntity.ok("Password changed successfully");
+        }
+
+
+        @PostMapping("/forgot-password")
+        public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+            accountService.sendResetPasswordEmail(request.getEmail());
+            return ResponseEntity.ok("Reset password email sent successfully");
         }
 
     }

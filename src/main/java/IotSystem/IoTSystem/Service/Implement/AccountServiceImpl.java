@@ -2,6 +2,7 @@ package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Model.Entities.Wallet;
 import IotSystem.IoTSystem.Model.Mappers.AccountMapper;
+import IotSystem.IoTSystem.Model.Request.ChangePasswordRequest;
 import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
 import IotSystem.IoTSystem.Model.Entities.Account;
@@ -16,6 +17,9 @@ import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,6 +30,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -49,6 +55,8 @@ public class AccountServiceImpl implements IAccountService {
     @Autowired
     private TokenProvider tokenProvider;
 
+    @Autowired
+    private JavaMailSender mailSender;
 
     //lấy user hiện tại của hệ thống
     private Account getCurrentAccount() {
@@ -164,5 +172,39 @@ public class AccountServiceImpl implements IAccountService {
         return AccountMapper.toProfileResponse(account);
     }
 
+    @Override
+    public void changePassword(ChangePasswordRequest request) {
+        Account account = accountRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), account.getPasswordHash())) {
+            throw new RuntimeException("Old password is incorrect");
+        }
+
+        account.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        accountRepository.save(account);
+    }
+
+
+    @Override
+    public void sendResetPasswordEmail(String email) {
+            Account account = accountRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Email not found"));
+
+            String token = UUID.randomUUID().toString(); // hoặc mã xác nhận
+
+            // Lưu token vào DB nếu cần (ví dụ: account.setResetToken(token))
+
+            String resetLink = "http://yourdomain.com/reset-password?token=" + token;
+
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(email);
+            message.setSubject("Reset Your Password");
+            message.setText("Click the link to reset your password: " + resetLink);
+
+            mailSender.send(message);
+        }
+
 
 }
+

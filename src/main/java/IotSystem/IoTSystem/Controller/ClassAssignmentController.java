@@ -1,6 +1,7 @@
 package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
+import IotSystem.IoTSystem.Model.Request.ClassAssignmentRequest;
 import IotSystem.IoTSystem.Service.IClassAssignmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,7 +19,8 @@ public class ClassAssignmentController {
     private IClassAssignmentService classAssignmentService;
 
     @GetMapping
-    public List<ClassAssignment> getAll() {
+    public List<ClassAssignmentRequest> getAll() {
+
         return classAssignmentService.getAll();
     }
 

@@ -1,6 +1,8 @@
 package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
+import IotSystem.IoTSystem.Model.Request.ClassAssignmentRequest;
+import IotSystem.IoTSystem.Model.Response.ClassAssignmentResponse;
 import IotSystem.IoTSystem.Service.IClassAssignmentService;
 import org.springframework.stereotype.Service;
 
@@ -10,7 +12,7 @@ import java.util.UUID;
 @Service
 public class ClassAssignmentServiceImpl implements IClassAssignmentService {
     @Override
-    public List<ClassAssignment> getAll() {
+    public List<ClassAssignmentRequest> getAll() {
         return List.of();
     }
 
