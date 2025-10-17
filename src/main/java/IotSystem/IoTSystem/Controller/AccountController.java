@@ -111,18 +111,6 @@
             return ResponseEntity.ok(response);
         }
 
-        @PostMapping("/change-password")
-        public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequest request) {
-            accountService.changePassword(request);
-            return ResponseEntity.ok("Password changed successfully");
-        }
-
-
-        @PostMapping("/forgot-password")
-        public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
-            accountService.sendResetPasswordEmail(request.getEmail());
-            return ResponseEntity.ok("Reset password email sent successfully");
-        }
 
     }
 

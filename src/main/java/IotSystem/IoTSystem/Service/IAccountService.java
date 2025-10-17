@@ -6,6 +6,7 @@ import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
 import IotSystem.IoTSystem.Model.Request.UpdateAccountRequest;
 import IotSystem.IoTSystem.Model.Response.ProfileResponse;
+import IotSystem.IoTSystem.Model.Response.ResetPasswordResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -30,5 +31,4 @@ public interface IAccountService {
 
     void changePassword(ChangePasswordRequest request);
 
-    void sendResetPasswordEmail(String email);
 }

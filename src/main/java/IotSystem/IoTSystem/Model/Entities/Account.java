@@ -9,6 +9,7 @@ import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,8 +44,6 @@ public class Account extends Base {
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
     private Roles role;
-
-
 
     private Boolean isActive;
 

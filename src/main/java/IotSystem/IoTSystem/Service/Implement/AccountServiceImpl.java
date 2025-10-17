@@ -9,6 +9,7 @@ import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.Roles;
 import IotSystem.IoTSystem.Model.Request.UpdateAccountRequest;
 import IotSystem.IoTSystem.Model.Response.ProfileResponse;
+import IotSystem.IoTSystem.Model.Response.ResetPasswordResponse;
 import IotSystem.IoTSystem.Security.TokenProvider;
 import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.RolesRepository;
@@ -34,8 +35,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 @Service
@@ -184,26 +187,6 @@ public class AccountServiceImpl implements IAccountService {
         account.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         accountRepository.save(account);
     }
-
-
-    @Override
-    public void sendResetPasswordEmail(String email) {
-            Account account = accountRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("Email not found"));
-
-            String token = UUID.randomUUID().toString(); // hoặc mã xác nhận
-
-            // Lưu token vào DB nếu cần (ví dụ: account.setResetToken(token))
-
-            String resetLink = "http://yourdomain.com/reset-password?token=" + token;
-
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(email);
-            message.setSubject("Reset Your Password");
-            message.setText("Click the link to reset your password: " + resetLink);
-
-            mailSender.send(message);
-        }
 
 
 }
