@@ -49,7 +49,4 @@ public class Account extends Base {
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Wallet wallet;
-
-
-
 }

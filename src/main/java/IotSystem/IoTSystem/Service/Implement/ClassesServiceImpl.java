@@ -1,7 +1,9 @@
 package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Model.Entities.Classes;
+import IotSystem.IoTSystem.Repository.ClassesRepository;
 import IotSystem.IoTSystem.Service.IClassesService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,9 +12,12 @@ import java.util.UUID;
 @Service
 public class ClassesServiceImpl  implements IClassesService {
 
+    @Autowired
+    private ClassesRepository classesRepository;
+
     @Override
     public List<Classes> getAll() {
-        return List.of();
+        return classesRepository.findAll();
     }
 
     @Override

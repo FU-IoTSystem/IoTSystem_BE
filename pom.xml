@@ -106,11 +106,7 @@
 			<version>2.8.9</version>
 		</dependency>
 		<!-- swagger authorize interface -->
-		<!--		Email 		-->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-mail</artifactId>
-		</dependency>
+
 
 
 

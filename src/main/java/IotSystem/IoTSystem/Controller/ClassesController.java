@@ -4,6 +4,7 @@ package IotSystem.IoTSystem.Controller;
 import IotSystem.IoTSystem.Model.Entities.Classes;
 import IotSystem.IoTSystem.Service.IClassesService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,11 +18,13 @@ public class ClassesController {
     private IClassesService service;
 
     @GetMapping("/get_All")
+    @PreAuthorize("LECTURER")
     public List<Classes> getAll() {
+
         return service.getAll();
     }
 
-    @GetMapping("/getbyId/{id}")
+    @GetMapping("/getById/{id}")
     public Classes getById(@PathVariable UUID id) {
         return service.getById(id);
     }

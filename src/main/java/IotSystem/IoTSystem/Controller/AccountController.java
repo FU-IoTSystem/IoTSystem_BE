@@ -112,5 +112,11 @@
         }
 
 
+        @PostMapping("/change-password")
+        public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequest request) {
+            accountService.changePassword(request);
+            return ResponseEntity.ok("Password changed successfully");
+        }
+
     }
 

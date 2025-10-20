@@ -18,9 +18,6 @@ import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -58,8 +55,7 @@ public class AccountServiceImpl implements IAccountService {
     @Autowired
     private TokenProvider tokenProvider;
 
-    @Autowired
-    private JavaMailSender mailSender;
+
 
     //lấy user hiện tại của hệ thống
     private Account getCurrentAccount() {
