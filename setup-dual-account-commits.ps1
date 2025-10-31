@@ -9,9 +9,8 @@ $ACCOUNT1_EMAIL = "hoangnvse150782@fpt.edu.vn"
 $ACCOUNT2_NAME = "vinhdangquang1301"
 $ACCOUNT2_EMAIL = "vinhdangquang1301@gmail.com"
 
-# GitHub repository URL (replace with your actual repo URL)
-# Create a new repository on GitHub first, then update this URL
-$GITHUB_REPO_URL = "https://github.com/username/repository.git"
+# GitHub repository URL
+$GITHUB_REPO_URL = "https://github.com/FU-IoTSystem/IoTSystem_BE.git"
 
 Write-Host "Starting dual-account commit setup..." -ForegroundColor Green
 
@@ -75,19 +74,20 @@ Write-Host "  git remote add origin $GITHUB_REPO_URL" -ForegroundColor Cyan
 Write-Host "  git branch -M main" -ForegroundColor Cyan
 Write-Host "  git push -u origin main" -ForegroundColor Cyan
 
-$push = Read-Host "Do you want to push to GitHub now? (y/n)"
-if ($push -eq "y" -or $push -eq "Y") {
-    Write-Host "Adding remote origin..." -ForegroundColor Yellow
-    git remote remove origin 2>$null
-    git remote add origin $GITHUB_REPO_URL
-    
-    Write-Host "Pushing to GitHub..." -ForegroundColor Yellow
-    git branch -M main
-    git push -u origin main
-    
+# Automatically push to GitHub
+Write-Host "Adding remote origin..." -ForegroundColor Yellow
+git remote remove origin 2>$null
+git remote add origin $GITHUB_REPO_URL
+
+Write-Host "Pushing to GitHub..." -ForegroundColor Yellow
+git branch -M main
+git push -u origin main
+
+if ($LASTEXITCODE -eq 0) {
     Write-Host "`nSuccessfully pushed to GitHub!" -ForegroundColor Green
 } else {
-    Write-Host "Skipping push. You can push manually later." -ForegroundColor Yellow
+    Write-Host "`nPush may require authentication. Please authenticate and push manually if needed." -ForegroundColor Yellow
+    Write-Host "Run: git push -u origin main" -ForegroundColor Cyan
 }
 
 Write-Host "`n=== Setup Complete ===" -ForegroundColor Green
