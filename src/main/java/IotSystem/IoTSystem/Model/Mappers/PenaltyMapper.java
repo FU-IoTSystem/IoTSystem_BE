@@ -1,7 +1,6 @@
 package IotSystem.IoTSystem.Model.Mappers;
 
 
-import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
 import IotSystem.IoTSystem.Model.Entities.Penalty;
 import IotSystem.IoTSystem.Model.Entities.PenaltyPolicies;

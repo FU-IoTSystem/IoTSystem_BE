@@ -23,10 +23,11 @@ public class BorrowingRequest extends Base {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(name = "borrowing_id",  columnDefinition = "uuid")
+//    @Column(name = "borrowing_id",  columnDefinition = "uuid")
+    @Column(name = "id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Column(name = "qr_code")
+    @Column(name = "qr_code", columnDefinition = "TEXT")
     private String qrCode;
 
     @Column(name = "approved_date")

@@ -1,35 +1,32 @@
 package IotSystem.IoTSystem.Model.Entities;
 
+import IotSystem.IoTSystem.Model.Entities.Enum.GroupRoles;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
-import java.util.Date;
 import java.util.UUID;
 
 @Entity
-@Getter
-@Setter
+@Table(name = "borrowing_group")
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "penalty_policies")
-public class PenaltyPolicies {
+public class BorrowingGroup extends Base{
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
-    private String policyName;     // tên chính sách
-    private String type; // damaged or lost or lated
-    private Double amount;
-    private Date issuedDate;
-    private Date resolved;
 
+    private GroupRoles roles;
 
     @ManyToOne
-    @JoinColumn(name = "penalty_id")
-    private Penalty penalty;
-}
+    @JoinColumn(name="student_id_group")
+    private StudentGroup studentGroup;
 
+    @ManyToOne
+    @JoinColumn(name="account_id")
+    private Account account;
+}

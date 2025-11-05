@@ -22,13 +22,25 @@ public class DamageReport extends Base {
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
 
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "status")
     private ReportStatus status;
 
-
+    @Column(name = "total_damage_value")
+    private Double totalDamageValue;
 
     @ManyToOne
     @JoinColumn(name = "generated_by")
     private Account generatedBy;
+
+    @ManyToOne
+    @JoinColumn(name = "kit_id")
+    private Kits kit;
+
+    @ManyToOne
+    @JoinColumn(name = "borrow_request_id")
+    private BorrowingRequest borrowRequest;
 }
 

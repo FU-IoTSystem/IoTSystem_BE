@@ -1,13 +1,11 @@
 package IotSystem.IoTSystem.Service;
 
-import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
 import IotSystem.IoTSystem.Model.Request.UpdateAccountRequest;
 import IotSystem.IoTSystem.Model.Response.ProfileResponse;
 import IotSystem.IoTSystem.Model.Response.RegisterResponse;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;

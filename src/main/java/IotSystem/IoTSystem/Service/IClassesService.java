@@ -2,18 +2,20 @@ package IotSystem.IoTSystem.Service;
 
 import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
 import IotSystem.IoTSystem.Model.Entities.Classes;
+import IotSystem.IoTSystem.Model.Request.ClassRequest;
+import IotSystem.IoTSystem.Model.Response.ClassResponse;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface IClassesService {
-    List<Classes> getAll();
+    List<ClassResponse> getAll();
 
     Classes getById(UUID id);
 
-    Classes create(Classes classes);
+    ClassResponse create(ClassRequest request, UUID teacherID);
 
-    Classes update(UUID id, Classes classes);
+    ClassResponse update(UUID id, ClassRequest request);
 
     void delete(UUID id);
 }

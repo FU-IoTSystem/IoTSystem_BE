@@ -16,11 +16,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "class_assignments")
-public class ClassAssignment implements Serializable {
+public class ClassAssignment extends Base {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(name = "class_assignment_id",  columnDefinition = "uuid")
+//    @Column(name = "class_assignment_id",  columnDefinition = "uuid")
+    @Column(name = "id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID id;
 
     @ManyToOne
@@ -36,4 +37,3 @@ public class ClassAssignment implements Serializable {
     private Roles role;
 
 }
-

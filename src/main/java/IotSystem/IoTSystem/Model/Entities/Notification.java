@@ -16,7 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "notifications")
-public class Notification {
+public class Notification extends Base{
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
@@ -24,6 +24,10 @@ public class Notification {
 
     @Enumerated(EnumType.STRING)
     private NotificationType type;
+
+    @Enumerated(EnumType.STRING)
+    private NotificationSubType subType;
+    private String title;
     private String message;
     private Boolean isRead;
 
@@ -31,4 +35,8 @@ public class Notification {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private Account user;
+
+    @ManyToOne
+    @JoinColumn(name = "role_id")
+    private Roles roles;
 }

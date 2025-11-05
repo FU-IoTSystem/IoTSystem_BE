@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
-import java.util.Date;
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -16,23 +15,27 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "classes")
-public class Classes extends Base {
+@Table(name = "penalty_details")
+public class PenaltyDetail extends Base {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-//    @Column(name = "id", nullable = false, columnDefinition = "uuid")
-    @Column(name = "id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID id;
 
-    private String classCode;
+    @Column(name = "amount")
+    private Double amount;
 
-    private String semester;
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
 
-    private boolean status;
-    // FK đến giảng viên
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
     @ManyToOne
-    @JoinColumn(name = "account_id", nullable = false)
-    private Account account;
-}
+    @JoinColumn(name = "policies_id")
+    private PenaltyPolicies policies;
 
+    @ManyToOne
+    @JoinColumn(name = "penalty_id")
+    private Penalty penalty;
+}
