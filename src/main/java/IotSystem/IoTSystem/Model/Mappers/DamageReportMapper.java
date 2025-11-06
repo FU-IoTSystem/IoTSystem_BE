@@ -1,5 +1,6 @@
 package IotSystem.IoTSystem.Model.Mappers;
 
+import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.DamageReport;
 import IotSystem.IoTSystem.Model.Request.DamageReportRequest;
 import IotSystem.IoTSystem.Model.Response.DamageReportResponse;
