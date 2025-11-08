@@ -1,16 +1,18 @@
 package IotSystem.IoTSystem.Service;
 
 import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
+import IotSystem.IoTSystem.Model.Request.ClassAssignmentRequest;
+import IotSystem.IoTSystem.Model.Response.ClassAssignmentResponse;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface IClassAssignmentService {
-    List<ClassAssignment> getAll();
+    List<ClassAssignmentResponse> getAll();
 
-    ClassAssignment getById(UUID id);
+    ClassAssignmentResponse getById(UUID id);
 
-    ClassAssignment create(ClassAssignment assignment);
+    ClassAssignmentResponse create(ClassAssignmentRequest request);
 
     ClassAssignment update(UUID id, ClassAssignment assignment);
 
