@@ -1,18 +1,20 @@
 package IotSystem.IoTSystem.Service.Implement;
 
+import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
+import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.Wallet;
 import IotSystem.IoTSystem.Model.Mappers.AccountMapper;
+import IotSystem.IoTSystem.Model.Mappers.ResponseRegisterMapper;
 import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
-import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.Roles;
 import IotSystem.IoTSystem.Model.Request.UpdateAccountRequest;
 import IotSystem.IoTSystem.Model.Response.ProfileResponse;
+import IotSystem.IoTSystem.Model.Response.RegisterResponse;
 import IotSystem.IoTSystem.Security.TokenProvider;
 import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.RolesRepository;
 import IotSystem.IoTSystem.Service.IAccountService;
-import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -90,21 +92,27 @@ public class AccountServiceImpl implements IAccountService {
         return tokenProvider.generateToken(userDetails);
     }
 
-    public String register(RegisterRequest request) {
+    @Override
+    public RegisterResponse register(RegisterRequest request) {
         if (accountRepository.existsByEmail(request.getUsername())) {
             throw new RuntimeException("Username already taken");
         }
 
-        Roles role = rolesRepository.findByName("STUDENT")
-                .orElseThrow(() -> new RuntimeException("Default role STUDENT not found"));
+        Roles role = rolesRepository.findByName(request.getRoles().toUpperCase())
+                .orElseThrow(() -> new RuntimeException("Default role" + request.getRoles().toUpperCase() + " not found"));
 
         // Tạo tài khoản trước
         Account account = new Account();
         account.setEmail(request.getUsername());
+        account.setFullName(request.getFullName());
         account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        account.setPhone(request.getPhoneNumber());
         account.setIsActive(true);
         account.setRole(role);
 
+        if(role.getName().equals("STUDENT")){
+            account.setStudentCode(request.getStudentCode());
+        }
 
         // Nếu là STUDENT hoặc LECTURER thì tạo ví
         if (role.getName().equals("STUDENT") || role.getName().equals("LECTURER")) {
@@ -117,11 +125,29 @@ public class AccountServiceImpl implements IAccountService {
             account.setWallet(wallet);
 
         }
-
         accountRepository.save(account); // ✅ cascade sẽ tự lưu Wallet
-        return "Register successful";
+        return ResponseRegisterMapper.toResponse(account);
     }
 
+    @Override
+    public RegisterResponse updating(RegisterRequest request, UUID id){
+        Account account = accountRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Did not found Account ID: " + id));
+        account.setPhone(request.getPhoneNumber());
+        account.setEmail(request.getUsername());
+        account.setFullName(request.getFullName());
+
+        Roles role = rolesRepository.findByName(request.getRoles().toUpperCase())
+                .orElseThrow(() -> new ResourceNotFoundException("Did not found the role: " + request.getRoles()));
+
+        if(role.getName().equals("STUDENT")){
+            account.setStudentCode(request.getStudentCode());
+        }
+
+        accountRepository.save(account);
+
+        return ResponseRegisterMapper.toResponse(account);
+
+    }
 
     @Override
     public ProfileResponse updateProfile(UpdateAccountRequest request) {
@@ -139,7 +165,9 @@ public class AccountServiceImpl implements IAccountService {
                 saved.getAvatarUrl(),
                 saved.getPhone(),
                 saved.getStudentCode(),
-                saved.getRole().getName()
+                saved.getRole().getName(),
+                saved.getCreatedAt(),
+                saved.getIsActive()
         );
     }
     @Override
@@ -155,6 +183,13 @@ public class AccountServiceImpl implements IAccountService {
         return accountsPage.map(AccountMapper::toProfileResponse);
     }
 
+    @Override
+    public List<ProfileResponse> getAllStudent(){
+        Roles role = rolesRepository.findByName("STUDENT").orElseThrow();
+        List<Account> accounts = accountRepository.findByRole(role);
+
+        return accounts.stream().map(AccountMapper::toProfileResponse).toList();
+    }
 
     @Override
     public ProfileResponse getAccountById(UUID accountId) {
@@ -163,6 +198,84 @@ public class AccountServiceImpl implements IAccountService {
 
         return AccountMapper.toProfileResponse(account);
     }
+    @Override
+    public List<ProfileResponse> getAllbyRoleLecture(){
 
+        Roles role = rolesRepository.findByName("LECTURER").orElseThrow(()
+                -> new ResourceNotFoundException("Did not found the role named: Lecturer"));
+
+        List<Account> lecturers = accountRepository.findByRole(role);
+
+        return lecturers.stream().map(AccountMapper::toProfileResponse).toList();
+    }
+
+    @Override
+    public ProfileResponse createAStudent(RegisterRequest request) {
+        Account account = new Account();
+        if (accountRepository.existsByEmail(request.getUsername())) {
+            throw new RuntimeException("Username already taken");
+        }
+
+
+        Roles role = rolesRepository.findByName("STUDENT").orElseThrow();
+
+
+        account.setStudentCode(request.getStudentCode());
+        account.setRole(role);
+        account.setPhone(request.getPhoneNumber());
+        account.setFullName(request.getFullName());
+        account.setEmail(request.getUsername());
+
+        // password default la email cua sinh vien
+
+//        account.setPasswordHash(passwordEncoder.encode(request.getUsername()));
+        account.setPasswordHash(passwordEncoder.encode("1"));
+        account.setIsActive(true);
+
+        Wallet wallet = new Wallet();
+        wallet.setBalance(BigDecimal.ZERO);
+        wallet.setCurrency("VND");
+        wallet.setActive(true);
+        wallet.setAccount(account); // Gắn account vào wallet
+
+        account.setWallet(wallet);
+
+        accountRepository.save(account);
+        return AccountMapper.toProfileResponse(account);
+    }
+
+    @Override
+    public ProfileResponse createALecturer(RegisterRequest request) {
+        Account account = new Account();
+        if (accountRepository.existsByEmail(request.getUsername())) {
+            throw new RuntimeException("Username already taken");
+        }
+
+
+        Roles role = rolesRepository.findByName("LECTURER").orElseThrow();
+
+
+        account.setStudentCode(request.getStudentCode());
+        account.setRole(role);
+        account.setPhone(request.getPhoneNumber());
+        account.setFullName(request.getFullName());
+        account.setEmail(request.getUsername());
+
+
+//        account.setPasswordHash(passwordEncoder.encode(request.getUsername()));
+        account.setPasswordHash(passwordEncoder.encode("1"));
+        account.setIsActive(true);
+
+        Wallet wallet = new Wallet();
+        wallet.setBalance(BigDecimal.ZERO);
+        wallet.setCurrency("VND");
+        wallet.setActive(true);
+        wallet.setAccount(account); // Gắn account vào wallet
+
+        account.setWallet(wallet);
+
+        accountRepository.save(account);
+        return AccountMapper.toProfileResponse(account);
+    }
 
 }

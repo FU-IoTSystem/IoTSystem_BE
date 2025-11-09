@@ -19,7 +19,9 @@ public class AccountMapper {
                 account.getAvatarUrl(),
                 account.getPhone(),
                 studentCode,
-                account.getRole().getName()
+                account.getRole().getName(),
+                account.getCreatedAt(),
+                account.getIsActive()
         );
     }
 }

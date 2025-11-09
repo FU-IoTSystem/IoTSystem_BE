@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -39,8 +40,10 @@ public class Kits  extends Base {
     private Integer quantityTotal;
     private Integer quantityAvailable;
 
+    private Float amount;
 
+    @OneToMany(mappedBy = "kit", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Kit_Component> components = new ArrayList<>();
 
 
 }
-

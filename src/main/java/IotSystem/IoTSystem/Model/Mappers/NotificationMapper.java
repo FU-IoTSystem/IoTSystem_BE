@@ -1,6 +1,5 @@
 package IotSystem.IoTSystem.Model.Mappers;
 
-import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.Notification;
 import IotSystem.IoTSystem.Model.Request.NotificationRequest;
 import IotSystem.IoTSystem.Model.Response.NotificationResponse;

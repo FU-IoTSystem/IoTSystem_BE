@@ -23,7 +23,8 @@ public class Wallet extends Base {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(name = "wallet_id",  columnDefinition = "uuid")
+//    @Column(name = "wallet_id",  columnDefinition = "uuid")
+    @Column(name = "id", columnDefinition = "BINARY(16)")
     private UUID id;
 
     private BigDecimal balance;
@@ -40,3 +41,4 @@ public class Wallet extends Base {
 
 
 }
+

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,9 +36,6 @@ public class StudentGroup extends Base {
 
     private boolean status;
 
-    private GroupRoles roles;
-
-
-
-
+    @OneToMany(mappedBy = "studentGroup", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<BorrowingGroup> borrowingGroup = new ArrayList<>();
 }

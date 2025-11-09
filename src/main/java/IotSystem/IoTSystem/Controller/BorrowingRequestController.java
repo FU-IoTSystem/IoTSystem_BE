@@ -2,8 +2,15 @@ package IotSystem.IoTSystem.Controller;
 
 
 import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
+import IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus;
+import IotSystem.IoTSystem.Model.Request.BorrowingRequestCreateRequest;
+import IotSystem.IoTSystem.Model.Request.ComponentRentalRequest;
+import IotSystem.IoTSystem.Model.Response.ApiResponse;
+import IotSystem.IoTSystem.Model.Response.BorrowingRequestResponse;
 import IotSystem.IoTSystem.Service.IBorrowingRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,40 +21,5 @@ import java.util.UUID;
 @RequestMapping("/api/borrowing-requests")
 public class BorrowingRequestController {
 
-    @Autowired
-    private IBorrowingRequestService borrowingRequestService;
 
-    @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public List<BorrowingRequest> getAll() {
-        return borrowingRequestService.getAll();
-    }
-
-    @GetMapping("/get_by/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-
-    public BorrowingRequest getById(@PathVariable UUID id) {
-        return borrowingRequestService.getById(id);
-    }
-
-    @PostMapping("/post")
-    @PreAuthorize("hasAnyRole('STUDENT','LECTURER')")
-
-    public BorrowingRequest create(@RequestBody BorrowingRequest request) {
-        return borrowingRequestService.create(request);
-    }
-
-    @PutMapping("/update/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-
-    public BorrowingRequest update(@PathVariable UUID id, @RequestBody BorrowingRequest request) {
-        return borrowingRequestService.update(id, request);
-    }
-
-    @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-
-    public void delete(@PathVariable UUID id) {
-        borrowingRequestService.delete(id);
-    }
 }

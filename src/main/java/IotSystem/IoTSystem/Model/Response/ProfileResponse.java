@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -19,4 +20,6 @@ public class ProfileResponse {
     private String phone;
     private String studentCode;
     private String role;
+    private LocalDateTime createdAt;
+    private Boolean isActive;
 }

@@ -2,8 +2,13 @@ package IotSystem.IoTSystem.Controller;
 
 
 import IotSystem.IoTSystem.Model.Entities.Classes;
+import IotSystem.IoTSystem.Model.Request.ClassRequest;
+import IotSystem.IoTSystem.Model.Response.ClassResponse;
+import IotSystem.IoTSystem.Model.Response.ProfileResponse;
+import IotSystem.IoTSystem.Service.IAccountService;
 import IotSystem.IoTSystem.Service.IClassesService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,9 +21,13 @@ public class ClassesController {
     @Autowired
     private IClassesService service;
 
+    @Autowired
+    private IAccountService accountService;
+
     @GetMapping("/get_All")
-    public List<Classes> getAll() {
-        return service.getAll();
+    public ResponseEntity<List<ClassResponse>> getAll() {
+        List<ClassResponse> responses = service.getAll();
+        return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/getbyId/{id}")
@@ -26,17 +35,25 @@ public class ClassesController {
         return service.getById(id);
     }
 
-    @PostMapping("/post")
-    public Classes create(@RequestBody Classes classes) {
-        return service.create(classes);
+    @PostMapping("/post/{teacherID}")
+    public ResponseEntity<ClassResponse> create(@RequestBody ClassRequest request, @PathVariable UUID teacherID) {
+        ClassResponse response = service.create(request, teacherID);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/getListLecturers")
+    public ResponseEntity<List<ProfileResponse>> getAllLecturers(){
+        List<ProfileResponse> response = accountService.getAllbyRoleLecture();
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/update/{id}")
-    public Classes update(@PathVariable UUID id, @RequestBody Classes classes) {
-        return service.update(id, classes);
+    public ResponseEntity<ClassResponse> update(@PathVariable UUID id, @RequestBody ClassRequest request) {
+        ClassResponse response = service.update(id, request);
+        return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("//delete{id}")
+    @DeleteMapping("/delete{id}")
     public void delete(@PathVariable UUID id) {
         service.delete(id);
     }

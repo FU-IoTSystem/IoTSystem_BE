@@ -9,7 +9,6 @@ import org.hibernate.annotations.GenericGenerator;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-
 @Entity
 @Table(name = "kit_components")
 @Getter
@@ -38,8 +37,6 @@ public class Kit_Component extends Base {
     private String status;
 
     private String imageUrl;
-
-
 
 
     @ManyToOne
