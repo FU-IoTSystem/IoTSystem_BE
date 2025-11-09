@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.UUID;
 
 @Entity
@@ -39,3 +40,4 @@ public class PenaltyDetail extends Base {
     @JoinColumn(name = "penalty_id")
     private Penalty penalty;
 }
+

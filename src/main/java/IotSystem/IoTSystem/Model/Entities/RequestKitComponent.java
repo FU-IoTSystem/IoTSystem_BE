@@ -44,3 +44,4 @@ public class RequestKitComponent extends Base {
     @JoinColumn(name = "kit_components_id", insertable = false, updatable = false)
     private Kit_Component kitComponent;
 }
+

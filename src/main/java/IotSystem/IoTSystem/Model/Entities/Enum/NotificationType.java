@@ -4,5 +4,6 @@ public enum NotificationType {
     SYSTEM,     // thông báo hệ thống
     USER,       // thông báo từ người dùng
     ALERT,      // cảnh báo
-    REMINDER    // nhắc nhở
+    REMINDER,   // nhắc nhở
+    DEPOSIT     // giao dịch nạp tiền
 }

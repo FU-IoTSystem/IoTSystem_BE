@@ -1,5 +1,6 @@
 package IotSystem.IoTSystem.Model.Entities;
 
+import IotSystem.IoTSystem.Model.Entities.Enum.NotificationSubType;
 import IotSystem.IoTSystem.Model.Entities.Enum.NotificationType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

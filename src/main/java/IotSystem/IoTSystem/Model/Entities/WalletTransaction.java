@@ -46,3 +46,4 @@ public class WalletTransaction extends Base {
     @JsonIgnore
     private Wallet wallet;
 }
+

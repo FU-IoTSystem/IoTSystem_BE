@@ -18,6 +18,6 @@ public class StudentGroupResponse {
     private String className;
 
     private UUID accountId;
-    private String studentName;
-    private String studentEmail;
+    private String lecturerName;
+    private String lecturerEmail;
 }

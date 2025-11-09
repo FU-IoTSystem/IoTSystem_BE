@@ -1,14 +1,12 @@
 package IotSystem.IoTSystem.Model.Entities;
 
-import IotSystem.IoTSystem.Model.Entities.Enum.Kit_Items_Types;
 import IotSystem.IoTSystem.Model.Entities.Enum.Status.KitComponentType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 
-import java.util.Date;
-import java.util.List;
 import java.util.UUID;
+
 @Entity
 @Table(name = "kit_components")
 @Getter

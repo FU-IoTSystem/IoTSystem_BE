@@ -41,4 +41,3 @@ public class Wallet extends Base {
 
 
 }
-
