@@ -1,12 +1,13 @@
 package IotSystem.IoTSystem.Model.Response;
 import IotSystem.IoTSystem.Model.Entities.Enum.KitType;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 import java.util.UUID;
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class KitResponse {
     private UUID id;
     private String kitName;
@@ -16,6 +17,10 @@ public class KitResponse {
     private String imageUrl;
     private Integer quantityTotal;
     private Integer quantityAvailable;
+    /**
+     * Tổng pricePerCom của tất cả components (tính động trên mapper; không map trực tiếp DB).
+     */
+    private Float amount;
 
     private List<KitComponentResponse> components;
 }

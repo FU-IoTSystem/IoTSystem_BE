@@ -13,5 +13,5 @@ public class StudentGroupRequest {
     private UUID classId;
     private UUID accountId;
     private boolean status;
-    private GroupRoles roles;
+//    private GroupRoles roles;
 }

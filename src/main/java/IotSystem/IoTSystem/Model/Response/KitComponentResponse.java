@@ -2,13 +2,14 @@ package IotSystem.IoTSystem.Model.Response;
 
 import IotSystem.IoTSystem.Model.Entities.Enum.Kit_Items_Types;
 import IotSystem.IoTSystem.Model.Entities.Enum.Status.KitComponentType;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.UUID;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class KitComponentResponse {
     private UUID id;
     private String componentName;

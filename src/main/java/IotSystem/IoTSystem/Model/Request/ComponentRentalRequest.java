@@ -18,3 +18,4 @@ public class ComponentRentalRequest {
     private Double depositAmount;
     private LocalDateTime expectReturnDate;
 }
+
