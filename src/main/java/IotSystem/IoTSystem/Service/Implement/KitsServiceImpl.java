@@ -1,6 +1,8 @@
 package IotSystem.IoTSystem.Service.Implement;
 
 
+import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
+import IotSystem.IoTSystem.Model.Entities.Enum.KitType;
 import IotSystem.IoTSystem.Model.Entities.Kit_Component;
 import IotSystem.IoTSystem.Model.Entities.Kits;
 import IotSystem.IoTSystem.Model.Mappers.KitMapper;
@@ -38,6 +40,14 @@ public class KitsServiceImpl implements IKitsService {
         // Tạo các component
         List<Kit_Component> components = KitMapper.toComponentEntities(request.getComponents(), savedKit);
         kitComponentRepository.saveAll(components);
+
+        // Calculate kit amount = sum of all component amounts
+        float kitAmount = (float) components.stream()
+                .mapToDouble(c -> c.getPricePerCom() != null ? c.getPricePerCom() : 0.0)
+                .sum();
+        savedKit.setAmount(kitAmount);
+        kitRepository.save(savedKit);
+
         // Trả về response DTO
         return KitResponseMapper.toResponse(savedKit, components);
     }
@@ -59,12 +69,25 @@ public class KitsServiceImpl implements IKitsService {
 
     @Override
     public List<KitResponse> getAllKits() {
-        return List.of();
+        List<Kits> kits = kitRepository.findAll();
+        return kits.stream()
+                .map(kit -> KitResponseMapper.mapKitsDto(kit, kit.getComponents()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<KitResponse> getAllKitsForStudent(){
+        List<Kits> kits = kitRepository.findByType(KitType.STUDENT_KIT);
+        return kits.stream().map(
+                kit -> KitResponseMapper.mapKitsDto(kit, kit.getComponents())).collect(Collectors.toList());
     }
 
     @Override
     public KitResponse updateKit(UUID kitId, KitRequest request) {
-        return null;
+        Kits kit = kitRepository.findById(kitId).orElseThrow(() -> new ResourceNotFoundException("Did not found Kit ID: " + kitId));
+        KitMapper.updateKit(kit, request);
+        Kits updating = kitRepository.save(kit);
+        return KitResponseMapper.toResponse(updating, updating.getComponents());
     }
 
     @Override
@@ -92,6 +115,14 @@ public class KitsServiceImpl implements IKitsService {
         Kit_Component component = KitMapper.toComponentEntity(request.getComponent(), kit);
         Kit_Component saved = kitComponentRepository.save(component);
 
+        // Recalculate kit amount after adding component
+        List<Kit_Component> allComponents = kitComponentRepository.findByKitId(kit.getId());
+        float kitAmount = (float) allComponents.stream()
+                .mapToDouble(c -> c.getPricePerCom() != null ? c.getPricePerCom() : 0.0)
+                .sum();
+        kit.setAmount(kitAmount);
+        kitRepository.save(kit);
+
         return KitResponseMapper.toComponentResponse(saved);
     }
 
@@ -105,6 +136,14 @@ public class KitsServiceImpl implements IKitsService {
                 .collect(Collectors.toList());
 
         List<Kit_Component> savedList = kitComponentRepository.saveAll(components);
+
+        // Recalculate kit amount after adding components
+        List<Kit_Component> allComponents = kitComponentRepository.findByKitId(kit.getId());
+        float kitAmount = (float) allComponents.stream()
+                .mapToDouble(c -> c.getPricePerCom() != null ? c.getPricePerCom() : 0.0)
+                .sum();
+        kit.setAmount(kitAmount);
+        kitRepository.save(kit);
 
         return KitResponseMapper.toComponentResponseList(savedList);
     }

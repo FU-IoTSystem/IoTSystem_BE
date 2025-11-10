@@ -1,12 +1,14 @@
 package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
-import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.Wallet;
 import IotSystem.IoTSystem.Model.Mappers.AccountMapper;
 import IotSystem.IoTSystem.Model.Mappers.ResponseRegisterMapper;
+import IotSystem.IoTSystem.Model.Request.AccountRequest;
+import IotSystem.IoTSystem.Model.Request.ChangePasswordRequest;
 import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
+import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.Roles;
 import IotSystem.IoTSystem.Model.Request.UpdateAccountRequest;
 import IotSystem.IoTSystem.Model.Response.ProfileResponse;
@@ -15,9 +17,12 @@ import IotSystem.IoTSystem.Security.TokenProvider;
 import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.RolesRepository;
 import IotSystem.IoTSystem.Service.IAccountService;
+import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,12 +31,15 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -170,6 +178,42 @@ public class AccountServiceImpl implements IAccountService {
                 saved.getIsActive()
         );
     }
+
+    @Override
+    public String changePassword(ChangePasswordRequest request) {
+        Account account = getCurrentAccount();
+
+        // Validate old password
+        if (!passwordEncoder.matches(request.getOldPassword(), account.getPasswordHash())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        // Validate new password
+        String newPassword = request.getNewPassword();
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new RuntimeException("Password must be at least 8 characters long");
+        }
+        if (!newPassword.matches(".*[A-Z].*")) {
+            throw new RuntimeException("Password must contain at least one uppercase letter");
+        }
+        if (!newPassword.matches(".*[a-z].*")) {
+            throw new RuntimeException("Password must contain at least one lowercase letter");
+        }
+        if (!newPassword.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*")) {
+            throw new RuntimeException("Password must contain at least one special character");
+        }
+
+        // Check if new password is same as old password
+        if (passwordEncoder.matches(newPassword, account.getPasswordHash())) {
+            throw new RuntimeException("New password must be different from old password");
+        }
+
+        // Update password
+        account.setPasswordHash(passwordEncoder.encode(newPassword));
+        accountRepository.save(account);
+
+        return "Password changed successfully";
+    }
     @Override
     public ProfileResponse getProfile() {
         Account account = getCurrentAccount(); // lấy từ SecurityContext
@@ -177,10 +221,10 @@ public class AccountServiceImpl implements IAccountService {
     }
 
     @Override
-    public Page<ProfileResponse> getAllAccounts(Pageable pageable) {
-        Page<Account> accountsPage = accountRepository.findAll(pageable);
+    public List<ProfileResponse> getAllAccounts() {
+        List<Account> list = accountRepository.findAllExceptAdmin();
 
-        return accountsPage.map(AccountMapper::toProfileResponse);
+        return list.stream().map(AccountMapper::toProfileResponse).toList();
     }
 
     @Override
@@ -277,5 +321,4 @@ public class AccountServiceImpl implements IAccountService {
         accountRepository.save(account);
         return AccountMapper.toProfileResponse(account);
     }
-
 }

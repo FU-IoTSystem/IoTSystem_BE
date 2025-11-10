@@ -35,4 +35,6 @@ public interface IKitsService {
     KitComponentResponse addSingleComponentToKit(AddSingleComponentRequest request);
     List<KitComponentResponse> addMultipleComponentsToKit(AddMultipleComponentsRequest request);
 
+    List<KitResponse> getAllKitsForStudent();
+
 }

@@ -2,8 +2,11 @@ package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.Model.Entities.StudentGroup;
 
+import IotSystem.IoTSystem.Model.Request.StudentGroupRequest;
+import IotSystem.IoTSystem.Model.Response.StudentGroupResponse;
 import IotSystem.IoTSystem.Service.IStudentGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,18 +19,19 @@ public class StudentGroupController {
     private IStudentGroupService studentGroupService;
 
     @GetMapping("/getAll")
-    public List<StudentGroup> getAll() {
-        return studentGroupService.getAll();
+    public ResponseEntity<List<StudentGroupResponse>> getAll() {
+        return ResponseEntity.ok(studentGroupService.getAll());
     }
 
     @GetMapping("/getById/{id}")
-    public StudentGroup getById(@PathVariable UUID id) {
-        return studentGroupService.getById(id);
+    public ResponseEntity<StudentGroupResponse> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(studentGroupService.getById(id));
     }
 
     @PostMapping("/create")
-    public StudentGroup create(@RequestBody StudentGroup group) {
-        return studentGroupService.create(group);
+    public ResponseEntity<StudentGroupResponse> create(@RequestBody StudentGroupRequest request) {
+        StudentGroupResponse group = studentGroupService.create(request);
+        return ResponseEntity.ok(group);
     }
 
     @PutMapping("/update/{id}")
