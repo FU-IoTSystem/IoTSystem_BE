@@ -23,6 +23,23 @@ public class KitsController {
     @Autowired
     private IKitsService kitsService;
 
+    @GetMapping("/")
+    public ResponseEntity<List<KitResponse>> getAllKit(){
+        List<KitResponse> responses = kitsService.getAllKits();
+        return ResponseEntity.ok(responses);
+    };
+
+    @GetMapping("/student")
+    public ResponseEntity<List<KitResponse>> getAllKitsForStudent(){
+        List<KitResponse> responses = kitsService.getAllKitsForStudent();
+        return ResponseEntity.ok(responses);
+    }
+
+    @PutMapping("/{kitId}")
+    public ResponseEntity<KitResponse> updateKit(@PathVariable UUID id, @RequestBody KitRequest request){
+        KitResponse response = kitsService.updateKit(id, request);
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/{kitId}")
     @Operation(summary = "Lấy thông tin chi tiết của một Kit (bao gồm các component)")

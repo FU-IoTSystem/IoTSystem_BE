@@ -1,16 +1,18 @@
 package IotSystem.IoTSystem.Service;
 
 import IotSystem.IoTSystem.Model.Entities.StudentGroup;
+import IotSystem.IoTSystem.Model.Request.StudentGroupRequest;
+import IotSystem.IoTSystem.Model.Response.StudentGroupResponse;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface IStudentGroupService {
-    List<StudentGroup> getAll();
+    List<StudentGroupResponse> getAll();
 
-    StudentGroup getById(UUID id);
+    StudentGroupResponse getById(UUID id);
 
-    StudentGroup create(StudentGroup group);
+    StudentGroupResponse create(StudentGroupRequest request);
 
     StudentGroup update(UUID id, StudentGroup group);
 

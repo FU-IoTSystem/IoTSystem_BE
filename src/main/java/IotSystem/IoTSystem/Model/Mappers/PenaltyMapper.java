@@ -25,7 +25,7 @@ public class PenaltyMapper {
         return penalty;
     }
 
-    public PenaltyResponse toResponse(Penalty entity) {
+    public static PenaltyResponse toResponse(Penalty entity) {
         PenaltyResponse response = new PenaltyResponse();
         response.setId(entity.getId());
         response.setSemester(entity.getSemester());

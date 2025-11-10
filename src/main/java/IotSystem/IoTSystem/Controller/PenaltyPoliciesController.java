@@ -1,8 +1,12 @@
 package IotSystem.IoTSystem.Controller;
 
+import IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus;
 import IotSystem.IoTSystem.Model.Entities.PenaltyPolicies;
+import IotSystem.IoTSystem.Model.Response.ApiResponse;
+import IotSystem.IoTSystem.Model.Response.PenaltyPoliciesResponse;
 import IotSystem.IoTSystem.Service.IPenaltyPoliciesService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,8 +20,18 @@ public class PenaltyPoliciesController {
     private IPenaltyPoliciesService service;
 
     @GetMapping("/getAll")
-    public List<PenaltyPolicies> getAll() {
-        return service.getAll();
+    public ResponseEntity<ApiResponse<List<PenaltyPoliciesResponse>>> getAll() {
+
+        List<PenaltyPoliciesResponse> policies = service.getAll();
+
+        ApiResponse<List<PenaltyPoliciesResponse>> response = new ApiResponse<>();
+
+        response.setMessage("Fetch Policies successfully");
+        response.setStatus(HTTPStatus.Ok);
+        response.setData(policies);
+
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/getById/{id}")

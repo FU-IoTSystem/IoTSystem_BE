@@ -1,7 +1,17 @@
 package IotSystem.IoTSystem.Service.Implement;
 
+import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
+import IotSystem.IoTSystem.Model.Entities.Account;
+import IotSystem.IoTSystem.Model.Entities.Classes;
 import IotSystem.IoTSystem.Model.Entities.StudentGroup;
+import IotSystem.IoTSystem.Model.Mappers.StudentGroupMapper;
+import IotSystem.IoTSystem.Model.Request.StudentGroupRequest;
+import IotSystem.IoTSystem.Model.Response.StudentGroupResponse;
+import IotSystem.IoTSystem.Repository.AccountRepository;
+import IotSystem.IoTSystem.Repository.ClassesRepository;
+import IotSystem.IoTSystem.Repository.StudentGroupRepository;
 import IotSystem.IoTSystem.Service.IStudentGroupService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,20 +21,41 @@ import java.util.UUID;
 public class StudentGroupServiceImpl implements IStudentGroupService {
 
 
+    @Autowired
+    private StudentGroupRepository studentGroupRepository;
+
+    @Autowired
+    private ClassesRepository classesRepository;
+
+    @Autowired
+    private AccountRepository accountRepository;
 
     @Override
-    public List<StudentGroup> getAll() {
-        return List.of();
+    public List<StudentGroupResponse> getAll() {
+        List<StudentGroup> responses = studentGroupRepository.findAll();
+        return responses.stream().map(StudentGroupMapper::toResponse).toList();
     }
 
     @Override
-    public StudentGroup getById(UUID id) {
-        return null;
+    public StudentGroupResponse getById(UUID id) {
+        StudentGroup studentGroup = studentGroupRepository.findById(id).orElseThrow(()
+                -> new ResourceNotFoundException("Did not found the Class: " + id));
+        return StudentGroupMapper.toResponse(studentGroup);
     }
 
     @Override
-    public StudentGroup create(StudentGroup group) {
-        return null;
+    public StudentGroupResponse create(StudentGroupRequest request) {
+        Classes classes = classesRepository.findById(request.getClassId()).orElseThrow(()
+                -> new ResourceNotFoundException("Did not found the Class: " + request.getClassId()));
+
+        Account account = accountRepository.findById(request.getAccountId()).orElseThrow(()
+                -> new ResourceNotFoundException("Did not found this Account: " + request.getAccountId()));
+
+        StudentGroup group = StudentGroupMapper.toEntity(request, classes, account);
+
+        studentGroupRepository.save(group);
+
+        return StudentGroupMapper.toResponse(group);
     }
 
     @Override
@@ -34,7 +65,11 @@ public class StudentGroupServiceImpl implements IStudentGroupService {
 
     @Override
     public void delete(UUID id) {
+        StudentGroup studentGroup = studentGroupRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Did not found StudentGroup with ID: " + id));
 
+        // Delete the student group (cascade will automatically delete related borrowing groups)
+        studentGroupRepository.deleteById(id);
     }
 //    @Autowired
 //    private StudentGroupRepository studentGroupRepository;

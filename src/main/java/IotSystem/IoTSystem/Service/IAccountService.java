@@ -1,5 +1,8 @@
 package IotSystem.IoTSystem.Service;
 
+import IotSystem.IoTSystem.Model.Entities.Account;
+import IotSystem.IoTSystem.Model.Request.AccountRequest;
+import IotSystem.IoTSystem.Model.Request.ChangePasswordRequest;
 import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
 import IotSystem.IoTSystem.Model.Request.UpdateAccountRequest;
@@ -20,10 +23,11 @@ public interface IAccountService {
     // Profile
 
     ProfileResponse updateProfile(UpdateAccountRequest request);
+    String changePassword(ChangePasswordRequest request);
     // xem thong tin ca nhan
     ProfileResponse getProfile();
 
-    Page<ProfileResponse> getAllAccounts(Pageable pageable);
+    List<ProfileResponse> getAllAccounts();
     ProfileResponse getAccountById(UUID accountId);
     List<ProfileResponse> getAllbyRoleLecture();
     List<ProfileResponse> getAllStudent();

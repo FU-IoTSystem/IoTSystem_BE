@@ -1,5 +1,6 @@
 package IotSystem.IoTSystem.Model.Mappers;
 
+import IotSystem.IoTSystem.Model.Entities.Enum.KitType;
 import IotSystem.IoTSystem.Model.Entities.Kit_Component;
 import IotSystem.IoTSystem.Model.Entities.Kits;
 import IotSystem.IoTSystem.Model.Request.KitComponentRequest;
@@ -10,6 +11,7 @@ import IotSystem.IoTSystem.Model.Response.KitBorrowResponse;
 import IotSystem.IoTSystem.Model.Response.KitResponse;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,6 +30,17 @@ public class KitMapper {
         return kit;
     }
 
+    public static void updateKit(Kits existingKit, KitRequest request){
+        existingKit.setKitName(request.getKitName());
+        existingKit.setDescription(request.getDescription());
+        existingKit.setStatus(request.getStatus());
+        existingKit.setType(KitType.valueOf(request.getType()));
+        existingKit.setQuantityAvailable(request.getQuantityAvailable());
+        existingKit.setQuantityTotal(request.getQuantityTotal());
+        existingKit.setImageUrl(request.getImageUrl());
+        existingKit.setUpdatedAt(LocalDateTime.now());
+    }
+
     public static List<Kit_Component> toComponentEntities(List<KitComponentRequest> componentRequests, Kits kit) {
         return componentRequests.stream().map(req -> {
             Kit_Component component = new Kit_Component();
@@ -37,6 +50,7 @@ public class KitMapper {
             component.setQuantityTotal(req.getQuantityTotal());
             component.setQuantityAvailable(req.getQuantityAvailable());
             component.setPricePerCom(req.getPricePerCom());
+            // Calculate amount = pricePerCom * quantityTotal
             component.setStatus(req.getStatus());
             component.setImageUrl(req.getImageUrl());
             component.setKit(kit);
@@ -63,6 +77,7 @@ public class KitMapper {
         component.setQuantityTotal(req.getQuantityTotal());
         component.setQuantityAvailable(req.getQuantityAvailable());
         component.setPricePerCom(req.getPricePerCom());
+        // Calculate amount = pricePerCom * quantityTotal
         component.setStatus(req.getStatus());
         component.setImageUrl(req.getImageUrl());
         component.setKit(kit);

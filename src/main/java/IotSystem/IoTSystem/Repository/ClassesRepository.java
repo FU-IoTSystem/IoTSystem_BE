@@ -5,8 +5,11 @@ import IotSystem.IoTSystem.Model.Entities.Classes;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface ClassesRepository extends JpaRepository<Classes, UUID> {
+    Optional<Classes> findByClassCode(String classCode);
+    boolean existsByClassCode(String classCode);
 }
