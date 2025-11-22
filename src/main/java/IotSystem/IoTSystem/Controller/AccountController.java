@@ -171,5 +171,23 @@ public class AccountController {
 
         return ResponseEntity.ok(response);
     }
+    @DeleteMapping("/admin/users/{id}")
+    @PreAuthorize("hasRole('ADMIN', 'ACADEMIC')")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable UUID id) {
+        try {
+            accountService.deleteAccount(id);
+
+            ApiResponse<Void> response = new ApiResponse<>();
+            response.setStatus(HTTPStatus.Ok);
+            response.setMessage("User deleted successfully");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse<Void> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus(HTTPStatus.InternalServerError);
+            errorResponse.setMessage("Failed to delete user: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
 }
 

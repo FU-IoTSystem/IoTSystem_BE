@@ -36,4 +36,6 @@ public interface IAccountService {
 
     ProfileResponse createALecturer(RegisterRequest request);
 
+    void deleteAccount(UUID accountId);
+
 }
