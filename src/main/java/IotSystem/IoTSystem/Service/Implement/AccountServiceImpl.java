@@ -16,6 +16,13 @@ import IotSystem.IoTSystem.Model.Response.RegisterResponse;
 import IotSystem.IoTSystem.Security.TokenProvider;
 import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.RolesRepository;
+import IotSystem.IoTSystem.Repository.BorrowingGroupRepository;
+import IotSystem.IoTSystem.Repository.StudentGroupRepository;
+import IotSystem.IoTSystem.Repository.ClassesRepository;
+import IotSystem.IoTSystem.Repository.ClassAssignemntRepository;
+import IotSystem.IoTSystem.Repository.PenaltyRepository;
+import IotSystem.IoTSystem.Repository.BorrowingRequestRepository;
+import IotSystem.IoTSystem.Repository.DamageReportRepository;
 import IotSystem.IoTSystem.Service.IAccountService;
 import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +65,27 @@ public class AccountServiceImpl implements IAccountService {
 
     @Autowired
     private TokenProvider tokenProvider;
+
+    @Autowired
+    private BorrowingGroupRepository borrowingGroupRepository;
+
+    @Autowired
+    private StudentGroupRepository studentGroupRepository;
+
+    @Autowired
+    private ClassesRepository classesRepository;
+
+    @Autowired
+    private ClassAssignemntRepository classAssignmentRepository;
+
+    @Autowired
+    private PenaltyRepository penaltyRepository;
+
+    @Autowired
+    private BorrowingRequestRepository borrowingRequestRepository;
+
+    @Autowired
+    private DamageReportRepository damageReportRepository;
 
 
     //lấy user hiện tại của hệ thống
@@ -320,5 +348,51 @@ public class AccountServiceImpl implements IAccountService {
 
         accountRepository.save(account);
         return AccountMapper.toProfileResponse(account);
+    }
+
+    @Override
+    public void deleteAccount(UUID accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + accountId));
+
+        // Check if account is ADMIN - prevent deleting admin accounts
+        if (account.getRole() != null && "ADMIN".equalsIgnoreCase(account.getRole().getName())) {
+            throw new RuntimeException("Cannot delete admin account");
+        }
+
+        // Delete all related records before deleting the account
+        // 1. Delete BorrowingGroups (using existing query method)
+        borrowingGroupRepository.findByAccountId(accountId).forEach(borrowingGroupRepository::delete);
+
+        // 2. Delete StudentGroups (where account is leader/owner)
+        studentGroupRepository.findAll().stream()
+                .filter(sg -> sg.getAccount() != null && sg.getAccount().getId().equals(accountId))
+                .forEach(studentGroupRepository::delete);
+
+        // 3. Delete Classes (where account is teacher)
+        classesRepository.findAll().stream()
+                .filter(cls -> cls.getAccount() != null && cls.getAccount().getId().equals(accountId))
+                .forEach(classesRepository::delete);
+
+        // 4. Delete ClassAssignments
+        classAssignmentRepository.findAll().stream()
+                .filter(ca -> ca.getAccount() != null && ca.getAccount().getId().equals(accountId))
+                .forEach(classAssignmentRepository::delete);
+
+        // 5. Delete Penalties (using existing query method)
+        penaltyRepository.findPenaltiesByAccountId(accountId).forEach(penaltyRepository::delete);
+
+        // 6. Delete BorrowingRequests (using existing query method)
+        borrowingRequestRepository.findByRequestedById(accountId).forEach(borrowingRequestRepository::delete);
+
+        // 7. Delete DamageReports
+        damageReportRepository.findAll().stream()
+                .filter(dr -> dr.getGeneratedBy() != null && dr.getGeneratedBy().getId().equals(accountId))
+                .forEach(damageReportRepository::delete);
+
+        // 8. Wallet will be deleted automatically due to cascade ALL
+
+        // Finally, delete the account
+        accountRepository.delete(account);
     }
 }
