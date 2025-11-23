@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public class BorrowingRequestCreateRequest {
     private UUID kitId;              // chọn kit nào để mượn
-    //    private Double depositAmount;    // tiền cọc
+//    private Double depositAmount;    // tiền cọc
     private UUID accountID; // who rent?
     private LocalDateTime expectReturnDate; // ngày dự kiến trả
     private String reason;           // lý do mượn

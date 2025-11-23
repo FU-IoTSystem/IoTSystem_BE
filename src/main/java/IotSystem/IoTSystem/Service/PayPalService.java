@@ -23,7 +23,7 @@ public class PayPalService {
         String clientId = payPalConfig.getClientId();
         String clientSecret = payPalConfig.getClientSecret();
         String mode = payPalConfig.getMode();
-        
+
         if (clientId == null || clientId.isEmpty()) {
             throw new IllegalStateException("PayPal Client ID is not configured");
         }
@@ -33,9 +33,9 @@ public class PayPalService {
         if (mode == null || mode.isEmpty()) {
             mode = "sandbox"; // default to sandbox
         }
-        
+
         System.out.println("Creating PayPal APIContext with mode: " + mode);
-        
+
         return new APIContext(clientId, clientSecret, mode);
     }
 
@@ -64,23 +64,23 @@ public class PayPalService {
 
         // Set redirect URLs (use custom URLs if provided, otherwise use config defaults)
         RedirectUrls redirectUrls = new RedirectUrls();
-        String finalReturnUrl = (returnUrl != null && !returnUrl.isEmpty()) 
-            ? returnUrl + (returnUrl.contains("?") ? "&" : "?") + "orderId=" + request.getOrderId()
-            : payPalConfig.getReturnUrl() + "?orderId=" + request.getOrderId();
+        String finalReturnUrl = (returnUrl != null && !returnUrl.isEmpty())
+                ? returnUrl + (returnUrl.contains("?") ? "&" : "?") + "orderId=" + request.getOrderId()
+                : payPalConfig.getReturnUrl() + "?orderId=" + request.getOrderId();
         String finalCancelUrl = (cancelUrl != null && !cancelUrl.isEmpty())
-            ? cancelUrl + (cancelUrl.contains("?") ? "&" : "?") + "cancel=true"
-            : payPalConfig.getCancelUrl() + "?cancel=true";
-        
+                ? cancelUrl + (cancelUrl.contains("?") ? "&" : "?") + "cancel=true"
+                : payPalConfig.getCancelUrl() + "?cancel=true";
+
         redirectUrls.setCancelUrl(finalCancelUrl);
         redirectUrls.setReturnUrl(finalReturnUrl);
 
         // Set amount details
         Amount amount = new Amount();
-        String currency = (request.getCurrency() != null && !request.getCurrency().isEmpty()) 
-            ? request.getCurrency() 
-            : payPalConfig.getCurrency();
+        String currency = (request.getCurrency() != null && !request.getCurrency().isEmpty())
+                ? request.getCurrency()
+                : payPalConfig.getCurrency();
         amount.setCurrency(currency);
-        
+
         // Convert amount to string with 2 decimal places
         BigDecimal amountValue = request.getAmount().setScale(2, RoundingMode.HALF_UP);
         amount.setTotal(amountValue.toString());

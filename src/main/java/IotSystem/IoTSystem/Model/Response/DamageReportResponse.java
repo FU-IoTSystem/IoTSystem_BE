@@ -1,8 +1,10 @@
 package IotSystem.IoTSystem.Model.Response;
 
-
 import IotSystem.IoTSystem.Model.Entities.Enum.Status.ReportStatus;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 import java.util.UUID;

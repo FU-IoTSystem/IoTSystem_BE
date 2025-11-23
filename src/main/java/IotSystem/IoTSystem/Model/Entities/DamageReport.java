@@ -24,7 +24,8 @@ public class DamageReport extends Base {
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
-
+    
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private ReportStatus status;
 
@@ -34,11 +35,11 @@ public class DamageReport extends Base {
     @ManyToOne
     @JoinColumn(name = "generated_by")
     private Account generatedBy;
-
+    
     @ManyToOne
     @JoinColumn(name = "kit_id")
     private Kits kit;
-
+    
     @ManyToOne
     @JoinColumn(name = "borrow_request_id")
     private BorrowingRequest borrowRequest;

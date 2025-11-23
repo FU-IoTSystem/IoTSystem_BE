@@ -6,10 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -18,6 +14,12 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.UUID;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 @Service
 public class StudentImportService {
@@ -107,14 +109,14 @@ public class StudentImportService {
                     c.setClassCode(classCode);
                     c.setSemester(null);
                     c.setStatus(true);
-                    
+
                     // Set a random lecturer as the account for this class
                     Account lecturer = getRandomLecturer();
                     if (lecturer == null) {
                         throw new RuntimeException("No active lecturers found. Cannot create class without a lecturer.");
                     }
                     c.setAccount(lecturer);
-                    
+
                     return classesRepository.save(c);
                 });
 
@@ -126,7 +128,7 @@ public class StudentImportService {
                 // Check if account exists by email - if so, update it instead of creating new
                 Optional<Account> existingAccount = accountRepository.findByEmail(email);
                 Account account;
-                
+
                 if (existingAccount.isPresent()) {
                     // Update existing account
                     account = existingAccount.get();

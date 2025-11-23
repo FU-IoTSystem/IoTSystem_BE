@@ -36,6 +36,8 @@ public class Kit_Component extends Base {
 
     private String imageUrl;
 
+    private String link;
+
 
     @ManyToOne
     @JoinColumn(name = "kit_id")
