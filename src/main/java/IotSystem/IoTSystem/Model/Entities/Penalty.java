@@ -25,6 +25,8 @@ public class Penalty extends Base {
     private String semester;
     private Date take_effect_date;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "kit_type")
     private KitType kit_type;
     private boolean resolved;
 

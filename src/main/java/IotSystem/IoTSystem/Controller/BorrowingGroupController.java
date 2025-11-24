@@ -64,7 +64,7 @@ public class BorrowingGroupController {
 
     @GetMapping("/student-group/{studentGroupId}/account/{accountId}")
     public ResponseEntity<BorrowingGroupResponse> getByStudentGroupAndAccount(
-            @PathVariable UUID studentGroupId, 
+            @PathVariable UUID studentGroupId,
             @PathVariable UUID accountId) {
         BorrowingGroupResponse response = borrowingGroupService.getByStudentGroupAndAccount(studentGroupId, accountId);
         return ResponseEntity.ok(response);
@@ -78,7 +78,7 @@ public class BorrowingGroupController {
 
     @GetMapping("/student-group/{studentGroupId}/role/{roles}")
     public ResponseEntity<List<BorrowingGroupResponse>> getByStudentGroupAndRole(
-            @PathVariable UUID studentGroupId, 
+            @PathVariable UUID studentGroupId,
             @PathVariable GroupRoles roles) {
         List<BorrowingGroupResponse> responses = borrowingGroupService.getByStudentGroupAndRole(studentGroupId, roles);
         return ResponseEntity.ok(responses);
@@ -100,8 +100,8 @@ public class BorrowingGroupController {
     @PostMapping("/add-member")
     public ResponseEntity<BorrowingGroupResponse> addMemberToGroup(@RequestBody BorrowingGroupRequest request) {
         BorrowingGroupResponse response = borrowingGroupService.addMemberToGroup(
-                request.getStudentGroupId(), 
-                request.getAccountId(), 
+                request.getStudentGroupId(),
+                request.getAccountId(),
                 request.getRoles()
         );
         return ResponseEntity.ok(response);
@@ -109,7 +109,7 @@ public class BorrowingGroupController {
 
     @DeleteMapping("/student-group/{studentGroupId}/account/{accountId}")
     public ResponseEntity<Void> removeMemberFromGroup(
-            @PathVariable UUID studentGroupId, 
+            @PathVariable UUID studentGroupId,
             @PathVariable UUID accountId) {
         borrowingGroupService.removeMemberFromGroup(studentGroupId, accountId);
         return ResponseEntity.ok().build();
@@ -118,7 +118,7 @@ public class BorrowingGroupController {
     @PutMapping("/promote-leader")
     public ResponseEntity<BorrowingGroupResponse> promoteToLeader(@RequestBody BorrowingGroupRequest request) {
         BorrowingGroupResponse response = borrowingGroupService.promoteToLeader(
-                request.getStudentGroupId(), 
+                request.getStudentGroupId(),
                 request.getAccountId()
         );
         return ResponseEntity.ok(response);
@@ -127,7 +127,7 @@ public class BorrowingGroupController {
     @PutMapping("/demote-member")
     public ResponseEntity<BorrowingGroupResponse> demoteToMember(@RequestBody BorrowingGroupRequest request) {
         BorrowingGroupResponse response = borrowingGroupService.demoteToMember(
-                request.getStudentGroupId(), 
+                request.getStudentGroupId(),
                 request.getAccountId()
         );
         return ResponseEntity.ok(response);

@@ -1,6 +1,5 @@
 package IotSystem.IoTSystem.Model.Entities;
 
-import IotSystem.IoTSystem.Model.Entities.Enum.GroupRoles;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

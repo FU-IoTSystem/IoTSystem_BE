@@ -1,8 +1,6 @@
 package IotSystem.IoTSystem.Model.Request;
 
-import IotSystem.IoTSystem.Model.Entities.Enum.Kit_Items_Types;
 import IotSystem.IoTSystem.Model.Entities.Enum.Status.KitComponentType;
-import IotSystem.IoTSystem.Model.Entities.Kits;
 import lombok.Builder;
 import lombok.Data;
 
@@ -19,5 +17,6 @@ public class KitComponentRequest {
     private Double pricePerCom;
     private String status;
     private String imageUrl;
+    private String link;
     private UUID kitId;
 }

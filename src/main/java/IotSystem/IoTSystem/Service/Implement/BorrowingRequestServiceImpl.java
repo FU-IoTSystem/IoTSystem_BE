@@ -24,7 +24,6 @@ import IotSystem.IoTSystem.Repository.RequestKitComponentRepository;
 import IotSystem.IoTSystem.Repository.WalletRepository;
 import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
 import IotSystem.IoTSystem.Service.IBorrowingRequestService;
-
 import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -102,7 +101,7 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         // Generate QR code
         try {
             String qrCodeData = generateQRCodeText(account, kit, borrow);
-            String qrCodeBase64 = IotSystem.IoTSystem.Service.Implement.QRCodeService.generateQRCodeBase64(qrCodeData);
+            String qrCodeBase64 = QRCodeService.generateQRCodeBase64(qrCodeData);
             borrow.setQrCode(qrCodeBase64);
         } catch (WriterException | IOException e) {
             System.err.println("Error generating QR code: " + e.getMessage());
@@ -149,7 +148,7 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         // Generate QR code for component rental
         try {
             String qrCodeData = generateComponentQRCodeText(account, component, borrowingRequest, request);
-            String qrCodeBase64 = IotSystem.IoTSystem.Service.Implement.QRCodeService.generateQRCodeBase64(qrCodeData);
+            String qrCodeBase64 = QRCodeService.generateQRCodeBase64(qrCodeData);
             borrowingRequest.setQrCode(qrCodeBase64);
         } catch (Exception e) {
             System.err.println("Error generating QR code: " + e.getMessage());

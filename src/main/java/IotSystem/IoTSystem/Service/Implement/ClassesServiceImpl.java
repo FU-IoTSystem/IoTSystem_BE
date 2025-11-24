@@ -8,17 +8,18 @@ import IotSystem.IoTSystem.Model.Request.ClassRequest;
 import IotSystem.IoTSystem.Model.Response.ClassResponse;
 import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.ClassesRepository;
+import IotSystem.IoTSystem.Service.IAccountService;
 import IotSystem.IoTSystem.Service.IClassesService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class ClassesServiceImpl  implements IClassesService {
-
-
 
     @Autowired
     private ClassesRepository classesRepository;

@@ -30,7 +30,7 @@ public class BorrowingRequestResponse {
     private KitResponse kit;
     private AccountInfo requestedBy;
 //    private String penaltyDescription;
-
+    
     @Data
     @Builder
     @NoArgsConstructor
