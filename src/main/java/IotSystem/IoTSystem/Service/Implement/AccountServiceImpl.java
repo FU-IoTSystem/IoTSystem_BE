@@ -23,6 +23,9 @@ import IotSystem.IoTSystem.Repository.ClassAssignemntRepository;
 import IotSystem.IoTSystem.Repository.PenaltyRepository;
 import IotSystem.IoTSystem.Repository.BorrowingRequestRepository;
 import IotSystem.IoTSystem.Repository.DamageReportRepository;
+import IotSystem.IoTSystem.Repository.WalletRepository;
+import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
+import IotSystem.IoTSystem.Repository.PenaltyDetailRepository;
 import IotSystem.IoTSystem.Service.IAccountService;
 import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +44,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -87,6 +91,15 @@ public class AccountServiceImpl implements IAccountService {
     @Autowired
     private DamageReportRepository damageReportRepository;
 
+    @Autowired
+    private WalletRepository walletRepository;
+
+    @Autowired
+    private WalletTransactionRepository walletTransactionRepository;
+
+    @Autowired
+    private PenaltyDetailRepository penaltyDetailRepository;
+
 
     //lấy user hiện tại của hệ thống
     private Account getCurrentAccount() {
@@ -95,6 +108,36 @@ public class AccountServiceImpl implements IAccountService {
         return accountRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
+
+    /**
+     * Validate phone number format
+     * Phone number must: start with 0, have exactly 10 digits, contain only numbers
+     * @param phoneNumber The phone number to validate
+     * @throws RuntimeException if phone number format is invalid
+     */
+    private void validatePhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            return; // Allow empty phone numbers (optional field)
+        }
+
+        String trimmedPhone = phoneNumber.trim();
+
+        // Check if phone number starts with 0
+        if (!trimmedPhone.startsWith("0")) {
+            throw new RuntimeException("Phone number must start with 0");
+        }
+
+        // Check if phone number contains only digits
+        if (!trimmedPhone.matches("^[0-9]+$")) {
+            throw new RuntimeException("Phone number must contain only numbers");
+        }
+
+        // Check if phone number has exactly 10 digits
+        if (trimmedPhone.length() != 10) {
+            throw new RuntimeException("Phone number must have exactly 10 digits");
+        }
+    }
+
     public String login(LoginRequest loginRequest) {
         // Xác thực người dùng
         authenticationManager.authenticate(
@@ -137,6 +180,11 @@ public class AccountServiceImpl implements IAccountService {
         Roles role = rolesRepository.findByName(request.getRoles().toUpperCase())
                 .orElseThrow(() -> new RuntimeException("Default role" + request.getRoles().toUpperCase() + " not found"));
 
+        // Validate phone number format
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+            validatePhoneNumber(request.getPhoneNumber());
+        }
+
         // Tạo tài khoản trước
         Account account = new Account();
         account.setEmail(request.getUsername());
@@ -168,12 +216,56 @@ public class AccountServiceImpl implements IAccountService {
     @Override
     public RegisterResponse updating(RegisterRequest request, UUID id){
         Account account = accountRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Did not found Account ID: " + id));
+
+        // Validate email uniqueness (excluding current account)
+        if (request.getUsername() != null && !request.getUsername().trim().isEmpty()) {
+            String newEmail = request.getUsername().trim();
+            // Check if email is being changed
+            if (!newEmail.equals(account.getEmail())) {
+                if (accountRepository.existsByEmailExcludingId(newEmail, id)) {
+                    throw new RuntimeException("Email already exists: " + newEmail);
+                }
+            }
+        }
+
+        // Validate studentCode uniqueness (excluding current account) - only for STUDENT role
+        Roles role = rolesRepository.findByName(request.getRoles().toUpperCase())
+                .orElseThrow(() -> new ResourceNotFoundException("Did not found the role: " + request.getRoles()));
+
+        if(role.getName().equals("STUDENT")){
+            if (request.getStudentCode() != null && !request.getStudentCode().trim().isEmpty()) {
+                String newStudentCode = request.getStudentCode().trim();
+                // Check if studentCode is being changed
+                if (account.getStudentCode() == null || !newStudentCode.equals(account.getStudentCode())) {
+                    if (accountRepository.existsByStudentCodeExcludingId(newStudentCode, id)) {
+                        throw new RuntimeException("Student Code already exists: " + newStudentCode);
+                    }
+                }
+            }
+        }
+
+        // Validate phone uniqueness and format (excluding current account)
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+            String newPhone = request.getPhoneNumber().trim();
+
+            // Validate phone number format
+            validatePhoneNumber(newPhone);
+
+            // Check if phone is being changed
+            if (account.getPhone() == null || !newPhone.equals(account.getPhone())) {
+                if (accountRepository.existsByPhoneExcludingId(newPhone, id)) {
+                    throw new RuntimeException("Phone number already exists: " + newPhone);
+                }
+            }
+        }
+
+        // Update account fields
         account.setPhone(request.getPhoneNumber());
         account.setEmail(request.getUsername());
         account.setFullName(request.getFullName());
 
-        Roles role = rolesRepository.findByName(request.getRoles().toUpperCase())
-                .orElseThrow(() -> new ResourceNotFoundException("Did not found the role: " + request.getRoles()));
+        // Update role - only admin can update role
+        account.setRole(role);
 
         if(role.getName().equals("STUDENT")){
             account.setStudentCode(request.getStudentCode());
@@ -188,6 +280,12 @@ public class AccountServiceImpl implements IAccountService {
     @Override
     public ProfileResponse updateProfile(UpdateAccountRequest request) {
         Account account = getCurrentAccount();
+
+        // Validate phone number format if provided
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            validatePhoneNumber(request.getPhone());
+        }
+
         account.setFullName(request.getFullName());
         account.setAvatarUrl(request.getAvatarUrl());
         account.setPhone(request.getPhone());
@@ -288,6 +386,10 @@ public class AccountServiceImpl implements IAccountService {
             throw new RuntimeException("Username already taken");
         }
 
+        // Validate phone number format
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+            validatePhoneNumber(request.getPhoneNumber());
+        }
 
         Roles role = rolesRepository.findByName("STUDENT").orElseThrow();
 
@@ -323,6 +425,10 @@ public class AccountServiceImpl implements IAccountService {
             throw new RuntimeException("Username already taken");
         }
 
+        // Validate phone number format
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+            validatePhoneNumber(request.getPhoneNumber());
+        }
 
         Roles role = rolesRepository.findByName("LECTURER").orElseThrow();
 
@@ -351,6 +457,7 @@ public class AccountServiceImpl implements IAccountService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteAccount(UUID accountId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + accountId));
@@ -360,39 +467,128 @@ public class AccountServiceImpl implements IAccountService {
             throw new RuntimeException("Cannot delete admin account");
         }
 
-        // Delete all related records before deleting the account
-        // 1. Delete BorrowingGroups (using existing query method)
-        borrowingGroupRepository.findByAccountId(accountId).forEach(borrowingGroupRepository::delete);
+        try {
+            // Delete all related records before deleting the account
+            // Order matters: delete child entities first, then parent
 
-        // 2. Delete StudentGroups (where account is leader/owner)
-        studentGroupRepository.findAll().stream()
-                .filter(sg -> sg.getAccount() != null && sg.getAccount().getId().equals(accountId))
-                .forEach(studentGroupRepository::delete);
+            // 1. Delete BorrowingGroups (using existing query method)
+            try {
+                borrowingGroupRepository.findByAccountId(accountId).forEach(borrowingGroupRepository::delete);
+                borrowingGroupRepository.flush(); // Force flush to catch constraint violations early
+            } catch (Exception e) {
+                System.err.println("Warning: Error deleting borrowing groups for account " + accountId + ": " + e.getMessage());
+                throw new RuntimeException("Failed to delete borrowing groups: " + e.getMessage(), e);
+            }
 
-        // 3. Delete Classes (where account is teacher)
-        classesRepository.findAll().stream()
-                .filter(cls -> cls.getAccount() != null && cls.getAccount().getId().equals(accountId))
-                .forEach(classesRepository::delete);
+            // 2. Delete ClassAssignments (delete before StudentGroups and Classes)
+            try {
+                classAssignmentRepository.findAll().stream()
+                        .filter(ca -> ca.getAccount() != null && ca.getAccount().getId().equals(accountId))
+                        .forEach(classAssignmentRepository::delete);
+                classAssignmentRepository.flush();
+            } catch (Exception e) {
+                System.err.println("Warning: Error deleting class assignments for account " + accountId + ": " + e.getMessage());
+                throw new RuntimeException("Failed to delete class assignments: " + e.getMessage(), e);
+            }
 
-        // 4. Delete ClassAssignments
-        classAssignmentRepository.findAll().stream()
-                .filter(ca -> ca.getAccount() != null && ca.getAccount().getId().equals(accountId))
-                .forEach(classAssignmentRepository::delete);
+            // 3. Delete StudentGroups (where account is leader/owner)
+            try {
+                studentGroupRepository.findAll().stream()
+                        .filter(sg -> sg.getAccount() != null && sg.getAccount().getId().equals(accountId))
+                        .forEach(studentGroupRepository::delete);
+                studentGroupRepository.flush();
+            } catch (Exception e) {
+                System.err.println("Warning: Error deleting student groups for account " + accountId + ": " + e.getMessage());
+                throw new RuntimeException("Failed to delete student groups: " + e.getMessage(), e);
+            }
 
-        // 5. Delete Penalties (using existing query method)
-        penaltyRepository.findPenaltiesByAccountId(accountId).forEach(penaltyRepository::delete);
+            // 4. Delete Classes (where account is teacher)
+            try {
+                classesRepository.findAll().stream()
+                        .filter(cls -> cls.getAccount() != null && cls.getAccount().getId().equals(accountId))
+                        .forEach(classesRepository::delete);
+                classesRepository.flush();
+            } catch (Exception e) {
+                System.err.println("Warning: Error deleting classes for account " + accountId + ": " + e.getMessage());
+                throw new RuntimeException("Failed to delete classes: " + e.getMessage(), e);
+            }
 
-        // 6. Delete BorrowingRequests (using existing query method)
-        borrowingRequestRepository.findByRequestedById(accountId).forEach(borrowingRequestRepository::delete);
+            // 5. Delete PenaltyDetails first (before deleting Penalties)
+            try {
+                penaltyRepository.findPenaltiesByAccountId(accountId).forEach(penalty -> {
+                    penaltyDetailRepository.findByPenaltyId(penalty.getId()).forEach(penaltyDetailRepository::delete);
+                });
+                penaltyDetailRepository.flush();
+            } catch (Exception e) {
+                System.err.println("Warning: Error deleting penalty details for account " + accountId + ": " + e.getMessage());
+                throw new RuntimeException("Failed to delete penalty details: " + e.getMessage(), e);
+            }
 
-        // 7. Delete DamageReports
-        damageReportRepository.findAll().stream()
-                .filter(dr -> dr.getGeneratedBy() != null && dr.getGeneratedBy().getId().equals(accountId))
-                .forEach(damageReportRepository::delete);
+            // 6. Delete Penalties (using existing query method)
+            try {
+                penaltyRepository.findPenaltiesByAccountId(accountId).forEach(penaltyRepository::delete);
+                penaltyRepository.flush();
+            } catch (Exception e) {
+                System.err.println("Warning: Error deleting penalties for account " + accountId + ": " + e.getMessage());
+                throw new RuntimeException("Failed to delete penalties: " + e.getMessage(), e);
+            }
 
-        // 8. Wallet will be deleted automatically due to cascade ALL
+            // 7. Delete BorrowingRequests (using existing query method)
+            try {
+                borrowingRequestRepository.findByRequestedById(accountId).forEach(borrowingRequestRepository::delete);
+                borrowingRequestRepository.flush();
+            } catch (Exception e) {
+                System.err.println("Warning: Error deleting borrowing requests for account " + accountId + ": " + e.getMessage());
+                throw new RuntimeException("Failed to delete borrowing requests: " + e.getMessage(), e);
+            }
 
-        // Finally, delete the account
-        accountRepository.delete(account);
+            // 8. Delete DamageReports (using native query to avoid enum mapping issues)
+            try {
+                damageReportRepository.deleteByGeneratedByAccountId(accountId);
+            } catch (Exception e) {
+                // Log error but continue with deletion (damage reports might not exist)
+                System.err.println("Warning: Error deleting damage reports for account " + accountId + ": " + e.getMessage());
+            }
+
+            // 9. Delete Wallet transactions first (if wallet exists)
+            if (account.getWallet() != null) {
+                try {
+                    walletTransactionRepository.findTransactionsByWalletId(account.getWallet().getId())
+                            .forEach(walletTransactionRepository::delete);
+                    walletTransactionRepository.flush();
+                } catch (Exception e) {
+                    System.err.println("Warning: Error deleting wallet transactions for account " + accountId + ": " + e.getMessage());
+                    throw new RuntimeException("Failed to delete wallet transactions: " + e.getMessage(), e);
+                }
+            }
+
+            // 10. Wallet will be deleted automatically due to cascade ALL, but we need to handle it explicitly
+            // Delete wallet if it exists
+            if (account.getWallet() != null) {
+                try {
+                    walletRepository.delete(account.getWallet());
+                    walletRepository.flush();
+                } catch (Exception e) {
+                    System.err.println("Warning: Error deleting wallet for account " + accountId + ": " + e.getMessage());
+                    throw new RuntimeException("Failed to delete wallet: " + e.getMessage(), e);
+                }
+            }
+
+            // Finally, delete the account
+            accountRepository.delete(account);
+            accountRepository.flush(); // Force flush to ensure deletion
+
+        } catch (ResourceNotFoundException e) {
+            // Re-throw ResourceNotFoundException as-is
+            throw e;
+        } catch (RuntimeException e) {
+            // Re-throw RuntimeException as-is
+            throw e;
+        } catch (Exception e) {
+            // Wrap any other exception
+            System.err.println("Error deleting account " + accountId + ": " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to delete account: " + e.getMessage(), e);
+        }
     }
 }
