@@ -23,8 +23,7 @@ public class BorrowingRequest extends Base {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-//    @Column(name = "borrowing_id",  columnDefinition = "uuid")
-    @Column(name = "id", nullable = false, columnDefinition = "BINARY(16)")
+    @Column(name = "id", nullable = false, columnDefinition = "uuid")
     private UUID id;
 
     @Column(name = "qr_code", columnDefinition = "TEXT")
@@ -57,6 +56,8 @@ public class BorrowingRequest extends Base {
     @Column(name = "note")
     private String note;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "request_type")
     private RequestType requestType;
 
     // ================== RELATIONSHIPS ==================

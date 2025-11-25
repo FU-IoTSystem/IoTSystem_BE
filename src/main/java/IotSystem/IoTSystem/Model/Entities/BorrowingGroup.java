@@ -19,7 +19,7 @@ public class BorrowingGroup extends Base{
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
-
+    @Enumerated(EnumType.STRING)
     private GroupRoles roles;
 
     @ManyToOne

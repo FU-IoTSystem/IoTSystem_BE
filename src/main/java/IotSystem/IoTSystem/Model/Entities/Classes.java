@@ -21,8 +21,7 @@ public class Classes extends Base {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-//    @Column(name = "id", nullable = false, columnDefinition = "uuid")
-    @Column(name = "id", nullable = false, columnDefinition = "BINARY(16)")
+    @Column(name = "id", nullable = false, columnDefinition = "uuid")
     private UUID id;
 
     private String classCode;

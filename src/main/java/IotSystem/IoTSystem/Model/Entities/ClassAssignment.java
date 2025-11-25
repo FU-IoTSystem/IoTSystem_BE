@@ -17,8 +17,7 @@ public class ClassAssignment extends Base {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-//    @Column(name = "class_assignment_id",  columnDefinition = "uuid")
-    @Column(name = "id", nullable = false, columnDefinition = "BINARY(16)")
+    @Column(name = "id", nullable = false, columnDefinition = "uuid")
     private UUID id;
 
     @ManyToOne
