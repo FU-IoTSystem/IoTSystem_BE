@@ -8,6 +8,7 @@ import IotSystem.IoTSystem.Model.Request.ChangePasswordRequest;
 import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
 import IotSystem.IoTSystem.Model.Request.UpdateAccountRequest;
+import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Response.ApiResponse;
 import IotSystem.IoTSystem.Model.Response.ProfileResponse;
 import IotSystem.IoTSystem.Model.Response.RegisterResponse;
@@ -65,9 +66,41 @@ public class AccountController {
     }
 
     @PutMapping("/register/{id}")
-    public ResponseEntity<RegisterResponse> updateAccount(@PathVariable UUID id, @RequestBody RegisterRequest request){
-        RegisterResponse response = accountService.updating(request, id);
-        return ResponseEntity.ok(response);
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC')")
+    public ResponseEntity<ApiResponse<RegisterResponse>> updateAccount(
+            @PathVariable UUID id,
+            @RequestBody RegisterRequest request) {
+        try {
+            RegisterResponse updatedAccount = accountService.updating(request, id);
+
+            ApiResponse<RegisterResponse> response = new ApiResponse<>();
+            response.setStatus(HTTPStatus.Ok);
+            response.setMessage("Account updated successfully");
+            response.setData(updatedAccount);
+
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            // Handle resource not found (account or role not found)
+            ApiResponse<RegisterResponse> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus(HTTPStatus.NotFound);
+            errorResponse.setMessage(e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        } catch (RuntimeException e) {
+            // Handle validation errors (duplicate email, studentCode, phone)
+            ApiResponse<RegisterResponse> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus(HTTPStatus.BadRequest);
+            errorResponse.setMessage(e.getMessage());
+
+            return ResponseEntity.badRequest().body(errorResponse);
+        } catch (Exception e) {
+            // Handle other unexpected exceptions
+            ApiResponse<RegisterResponse> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus(HTTPStatus.InternalServerError);
+            errorResponse.setMessage("Failed to update account: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 
 
@@ -171,8 +204,9 @@ public class AccountController {
 
         return ResponseEntity.ok(response);
     }
+
     @DeleteMapping("/admin/users/{id}")
-    @PreAuthorize("hasRole('ADMIN', 'ACADEMIC')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC')")
     public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable UUID id) {
         try {
             accountService.deleteAccount(id);
