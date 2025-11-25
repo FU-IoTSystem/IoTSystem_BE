@@ -1,6 +1,10 @@
 package IotSystem.IoTSystem.Model.Response;
+
 import IotSystem.IoTSystem.Model.Entities.Enum.KitType;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.UUID;

@@ -9,19 +9,19 @@ import java.util.UUID;
 
 public interface IRequestKitComponentService {
     List<RequestKitComponent> getAll();
-    
+
     RequestKitComponentResponse getById(UUID id);
-    
+
     List<RequestKitComponentResponse> getByRequestId(UUID requestId);
-    
+
     RequestKitComponentResponse create(RequestKitComponentRequest request);
-    
+
     List<RequestKitComponentResponse> createMultiple(List<RequestKitComponentRequest> requests);
-    
+
     RequestKitComponentResponse update(UUID id, RequestKitComponentRequest request);
-    
+
     void delete(UUID id);
-    
+
     void deleteByRequestId(UUID requestId);
 }
 

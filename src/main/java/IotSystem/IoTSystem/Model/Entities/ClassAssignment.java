@@ -1,10 +1,12 @@
 package IotSystem.IoTSystem.Model.Entities;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
-import java.io.Serializable;
 import java.util.UUID;
 
 @Entity

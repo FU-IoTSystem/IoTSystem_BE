@@ -1,6 +1,5 @@
 package IotSystem.IoTSystem.Model.Request;
 
-import IotSystem.IoTSystem.Model.Entities.Enum.GroupRoles;
 import lombok.Getter;
 import lombok.Setter;
 

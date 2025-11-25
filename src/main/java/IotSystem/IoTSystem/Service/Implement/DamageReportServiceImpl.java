@@ -1,9 +1,6 @@
 package IotSystem.IoTSystem.Service.Implement;
 
-import IotSystem.IoTSystem.Model.Entities.Account;
-import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
-import IotSystem.IoTSystem.Model.Entities.DamageReport;
-import IotSystem.IoTSystem.Model.Entities.Kits;
+import IotSystem.IoTSystem.Model.Entities.*;
 import IotSystem.IoTSystem.Model.Request.DamageReportRequest;
 import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.BorrowingRequestRepository;
@@ -138,3 +135,4 @@ public class DamageReportServiceImpl implements IDamageReportService {
                 .toList();
     }
 }
+

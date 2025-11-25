@@ -23,7 +23,8 @@ public class ExcelImportController {
     @PostMapping("/import")
     public ResponseEntity<ExcelImportResponse> importExcel(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("role") String role) {
+            @RequestParam("role") String role,
+            @RequestParam(value = "sheetName", required = false) String sheetName) {
 
         try {
             // Validate file
@@ -32,6 +33,17 @@ public class ExcelImportController {
                         ExcelImportResponse.builder()
                                 .success(false)
                                 .message("File is empty")
+                                .build()
+                );
+            }
+
+            // Validate file extension
+            String fileName = file.getOriginalFilename();
+            if (fileName == null || (!fileName.toLowerCase().endsWith(".xlsx") && !fileName.toLowerCase().endsWith(".xls"))) {
+                return ResponseEntity.badRequest().body(
+                        ExcelImportResponse.builder()
+                                .success(false)
+                                .message("Invalid file format. Please upload a .xls or .xlsx file.")
                                 .build()
                 );
             }
@@ -54,6 +66,7 @@ public class ExcelImportController {
                     .role(role)
                     .fileName(file.getOriginalFilename())
                     .fileContent(fileContent)
+                    .sheetName(sheetName)
                     .build();
 
             // Process import

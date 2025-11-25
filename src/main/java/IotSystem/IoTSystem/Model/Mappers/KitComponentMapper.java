@@ -7,8 +7,6 @@ import IotSystem.IoTSystem.Model.Response.KitComponentBorrowResponse;
 import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-
 @Component
 public class  KitComponentMapper {
 
@@ -22,6 +20,7 @@ public class  KitComponentMapper {
         entity.setPricePerCom(request.getPricePerCom());
         entity.setStatus(request.getStatus());
         entity.setImageUrl(request.getImageUrl());
+        entity.setLink(request.getLink());
         entity.setKit(kit);
         return entity;
     }
@@ -51,6 +50,9 @@ public class  KitComponentMapper {
         if (request.getImageUrl() != null) {
             existingEntity.setImageUrl(request.getImageUrl());
         }
+        if (request.getLink() != null) {
+            existingEntity.setLink(request.getLink());
+        }
         if (kit != null) {
             existingEntity.setKit(kit);
         }
@@ -67,6 +69,7 @@ public class  KitComponentMapper {
         response.setPricePerCom(entity.getPricePerCom());
         response.setStatus(entity.getStatus());
         response.setImageUrl(entity.getImageUrl());
+        response.setLink(entity.getLink());
         if (entity.getKit() != null) {
             response.setKitId(entity.getKit().getId());
         }

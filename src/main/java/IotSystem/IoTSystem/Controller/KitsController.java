@@ -36,8 +36,8 @@ public class KitsController {
     }
 
     @PutMapping("/{kitId}")
-    public ResponseEntity<KitResponse> updateKit(@PathVariable UUID id, @RequestBody KitRequest request){
-        KitResponse response = kitsService.updateKit(id, request);
+    public ResponseEntity<KitResponse> updateKit(@PathVariable UUID kitId, @RequestBody KitRequest request){
+        KitResponse response = kitsService.updateKit(kitId, request);
         return ResponseEntity.ok(response);
     }
 
@@ -110,5 +110,24 @@ public class KitsController {
         response.setData(result);
 
         return ResponseEntity.status(response.getStatus().getCode()).body(response);
+    }
+
+    @DeleteMapping("/{kitId}")
+    @Operation(summary = "Xóa một Kit")
+    public ResponseEntity<ApiResponse<Void>> deleteKit(@PathVariable("kitId") UUID kitId) {
+        try {
+            kitsService.deleteKit(kitId);
+
+            ApiResponse<Void> response = new ApiResponse<>();
+            response.setStatus(HTTPStatus.Ok);
+            response.setMessage("Xóa Kit thành công");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse<Void> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus(HTTPStatus.InternalServerError);
+            errorResponse.setMessage("Failed to delete kit: " + e.getMessage());
+            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 }
