@@ -15,4 +15,7 @@ import java.util.UUID;
 public interface ClassAssignemntRepository extends JpaRepository<ClassAssignment, UUID> {
     //    List<ClassAssignment> findByRoles(Roles roles);
     Optional<ClassAssignment> findByClazzAndAccount(Classes clazz, Account account);
+
+    // Find all class assignments by class
+    List<ClassAssignment> findByClazz(Classes clazz);
 }

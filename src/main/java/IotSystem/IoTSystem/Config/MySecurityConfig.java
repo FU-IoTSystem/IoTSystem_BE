@@ -36,9 +36,19 @@ public class MySecurityConfig {
         http.cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(
-                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
-                ))
+                .exceptionHandling(ex -> {
+                    ex.authenticationEntryPoint(
+                            new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
+                    );
+                    ex.accessDeniedHandler((request, response, accessDeniedException) -> {
+                        // Only handle if response is not committed
+                        if (!response.isCommitted()) {
+                            response.setStatus(HttpStatus.FORBIDDEN.value());
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\":\"Access Denied\"}");
+                        }
+                    });
+                })
                 .authorizeHttpRequests(auth ->
                         auth
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -47,7 +57,9 @@ public class MySecurityConfig {
                                         "/swagger-ui.html",
                                         "/swagger-ui/**",
                                         "/v3/api-docs/**",
-                                        "/webjars/**"
+                                        "/webjars/**",
+                                        "/ws/**",
+                                        "/error"
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )
@@ -66,6 +78,7 @@ public class MySecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
