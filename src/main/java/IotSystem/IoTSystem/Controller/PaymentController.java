@@ -7,7 +7,6 @@ import IotSystem.IoTSystem.Model.Entities.Enum.Wallet_Transaction_Type;
 import IotSystem.IoTSystem.Model.Entities.Wallet;
 import IotSystem.IoTSystem.Model.Entities.WalletTransaction;
 import IotSystem.IoTSystem.Model.Request.PayPalPaymentRequest;
-import IotSystem.IoTSystem.Model.Request.VNPayPaymentRequest;
 import IotSystem.IoTSystem.Model.Response.ApiResponse;
 import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.WalletRepository;
