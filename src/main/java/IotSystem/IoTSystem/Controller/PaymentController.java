@@ -140,12 +140,105 @@ public class PaymentController {
             @RequestParam String payerId,
             @RequestParam(required = false) String transactionId) {
         try {
-            // Execute PayPal payment
-            Payment payment = payPalService.executePayment(paymentId, payerId);
+            // Check payment state first before executing
+            Payment existingPayment = null;
+            try {
+                existingPayment = payPalService.getPaymentDetails(paymentId);
+                // If payment is already approved, skip execution
+                if (existingPayment != null && "approved".equalsIgnoreCase(existingPayment.getState())) {
+                    System.out.println("Payment " + paymentId + " is already approved. Skipping execution.");
+                    // Use existing payment instead of executing again
+                    Payment payment = existingPayment;
+
+                    // Get transaction amount from payment (USD)
+                    BigDecimal amountUSD = new BigDecimal(payment.getTransactions().get(0).getAmount().getTotal());
+
+                    // Find and update transaction if not already completed
+                    WalletTransaction transaction = null;
+                    if (transactionId != null && !transactionId.isEmpty()) {
+                        UUID txId = UUID.fromString(transactionId);
+                        transaction = walletTransactionRepository.findById(txId)
+                                .orElse(null);
+                    } else {
+                        // Find most recent PENDING transaction
+                        List<WalletTransaction> pendingTransactions = walletTransactionRepository.findAll()
+                                .stream()
+                                .filter(t -> t.getTransactionStatus() == Wallet_Transaction_Status.PENDING)
+                                .filter(t -> t.getTransactionType() == Wallet_Transaction_Type.TOP_UP)
+                                .filter(t -> "PayPal".equals(t.getPaymentMethod()))
+                                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                                .limit(1)
+                                .toList();
+
+                        if (!pendingTransactions.isEmpty()) {
+                            transaction = pendingTransactions.get(0);
+                        }
+                    }
+
+                    // Update transaction if found and still pending
+                    if (transaction != null && transaction.getTransactionStatus() == Wallet_Transaction_Status.PENDING) {
+                        transaction.setTransactionStatus(Wallet_Transaction_Status.COMPLETED);
+                        transaction.setUpdatedAt(LocalDateTime.now());
+                        walletTransactionRepository.save(transaction);
+
+                        // Update wallet balance using transaction amount (already in VND)
+                        Wallet wallet = transaction.getWallet();
+                        BigDecimal currentBalance = wallet.getBalance() != null ? wallet.getBalance() : BigDecimal.ZERO;
+                        BigDecimal transactionAmountVND = BigDecimal.valueOf(transaction.getAmount());
+                        BigDecimal newBalance = currentBalance.add(transactionAmountVND);
+                        wallet.setBalance(newBalance);
+                        walletRepository.save(wallet);
+                    }
+
+                    Map<String, String> response = new HashMap<>();
+                    response.put("paymentId", payment.getId());
+                    response.put("state", payment.getState());
+                    response.put("amountUSD", amountUSD.toString());
+                    response.put("message", "Payment was already completed");
+                    if (transaction != null) {
+                        response.put("transactionId", transaction.getId().toString());
+                        response.put("amountVND", String.valueOf(transaction.getAmount()));
+                    }
+
+                    ApiResponse<Map<String, String>> apiResponse = new ApiResponse<>();
+                    apiResponse.setStatus(IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus.Ok);
+                    apiResponse.setMessage("Payment was already completed successfully");
+                    apiResponse.setData(response);
+
+                    return ResponseEntity.ok(apiResponse);
+                }
+            } catch (PayPalRESTException e) {
+                // If we can't get payment details, continue with execution attempt
+                System.out.println("Could not get payment details, will attempt execution: " + e.getMessage());
+            }
+
+            // Execute PayPal payment (only if not already approved)
+            Payment payment = null;
+            try {
+                payment = payPalService.executePayment(paymentId, payerId);
+            } catch (PayPalRESTException e) {
+                // Handle PAYMENT_ALREADY_DONE error - payment was already executed
+                if (e.getMessage() != null && e.getMessage().contains("PAYMENT_ALREADY_DONE")) {
+                    System.out.println("Payment already executed. Getting payment details instead.");
+                    try {
+                        payment = payPalService.getPaymentDetails(paymentId);
+                        if (payment != null && "approved".equalsIgnoreCase(payment.getState())) {
+                            System.out.println("Payment is already approved. Proceeding with transaction update.");
+                        } else {
+                            throw new RuntimeException("Payment state is not approved: " + (payment != null ? payment.getState() : "null"));
+                        }
+                    } catch (PayPalRESTException ex) {
+                        throw new RuntimeException("Failed to get payment details after PAYMENT_ALREADY_DONE: " + ex.getMessage());
+                    }
+                } else {
+                    // Re-throw if it's a different error
+                    throw e;
+                }
+            }
 
             // Check if payment is approved
-            if (!"approved".equalsIgnoreCase(payment.getState())) {
-                throw new RuntimeException("Payment not approved. State: " + payment.getState());
+            if (payment == null || !"approved".equalsIgnoreCase(payment.getState())) {
+                throw new RuntimeException("Payment not approved. State: " + (payment != null ? payment.getState() : "null"));
             }
 
             // Get transaction amount from payment (USD)
@@ -174,18 +267,23 @@ public class PaymentController {
             }
 
             if (transaction != null) {
-                // Update transaction status
-                transaction.setTransactionStatus(Wallet_Transaction_Status.COMPLETED);
-                transaction.setUpdatedAt(LocalDateTime.now());
-                walletTransactionRepository.save(transaction);
+                // Only update if transaction is still pending (avoid duplicate updates)
+                if (transaction.getTransactionStatus() == Wallet_Transaction_Status.PENDING) {
+                    // Update transaction status
+                    transaction.setTransactionStatus(Wallet_Transaction_Status.COMPLETED);
+                    transaction.setUpdatedAt(LocalDateTime.now());
+                    walletTransactionRepository.save(transaction);
 
-                // Update wallet balance using transaction amount (already in VND)
-                Wallet wallet = transaction.getWallet();
-                BigDecimal currentBalance = wallet.getBalance() != null ? wallet.getBalance() : BigDecimal.ZERO;
-                BigDecimal transactionAmountVND = BigDecimal.valueOf(transaction.getAmount());
-                BigDecimal newBalance = currentBalance.add(transactionAmountVND);
-                wallet.setBalance(newBalance);
-                walletRepository.save(wallet);
+                    // Update wallet balance using transaction amount (already in VND)
+                    Wallet wallet = transaction.getWallet();
+                    BigDecimal currentBalance = wallet.getBalance() != null ? wallet.getBalance() : BigDecimal.ZERO;
+                    BigDecimal transactionAmountVND = BigDecimal.valueOf(transaction.getAmount());
+                    BigDecimal newBalance = currentBalance.add(transactionAmountVND);
+                    wallet.setBalance(newBalance);
+                    walletRepository.save(wallet);
+                } else {
+                    System.out.println("Transaction " + transaction.getId() + " is already completed. Skipping wallet update.");
+                }
             }
 
             Map<String, String> response = new HashMap<>();
@@ -205,6 +303,76 @@ public class PaymentController {
             return ResponseEntity.ok(apiResponse);
         } catch (PayPalRESTException e) {
             e.printStackTrace();
+
+            // Handle PAYMENT_ALREADY_DONE error gracefully
+            if (e.getMessage() != null && e.getMessage().contains("PAYMENT_ALREADY_DONE")) {
+                System.out.println("Payment already done. Attempting to get payment details and update transaction.");
+
+                try {
+                    // Get payment details to verify it's approved
+                    Payment payment = payPalService.getPaymentDetails(paymentId);
+                    if (payment != null && "approved".equalsIgnoreCase(payment.getState())) {
+                        // Payment is already approved, update transaction if needed
+                        BigDecimal amountUSD = new BigDecimal(payment.getTransactions().get(0).getAmount().getTotal());
+
+                        WalletTransaction transaction = null;
+                        if (transactionId != null && !transactionId.isEmpty()) {
+                            UUID txId = UUID.fromString(transactionId);
+                            transaction = walletTransactionRepository.findById(txId).orElse(null);
+                        } else {
+                            // Find most recent PENDING transaction
+                            List<WalletTransaction> pendingTransactions = walletTransactionRepository.findAll()
+                                    .stream()
+                                    .filter(t -> t.getTransactionStatus() == Wallet_Transaction_Status.PENDING)
+                                    .filter(t -> t.getTransactionType() == Wallet_Transaction_Type.TOP_UP)
+                                    .filter(t -> "PayPal".equals(t.getPaymentMethod()))
+                                    .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                                    .limit(1)
+                                    .toList();
+
+                            if (!pendingTransactions.isEmpty()) {
+                                transaction = pendingTransactions.get(0);
+                            }
+                        }
+
+                        // Update transaction if found and still pending
+                        if (transaction != null && transaction.getTransactionStatus() == Wallet_Transaction_Status.PENDING) {
+                            transaction.setTransactionStatus(Wallet_Transaction_Status.COMPLETED);
+                            transaction.setUpdatedAt(LocalDateTime.now());
+                            walletTransactionRepository.save(transaction);
+
+                            // Update wallet balance
+                            Wallet wallet = transaction.getWallet();
+                            BigDecimal currentBalance = wallet.getBalance() != null ? wallet.getBalance() : BigDecimal.ZERO;
+                            BigDecimal transactionAmountVND = BigDecimal.valueOf(transaction.getAmount());
+                            BigDecimal newBalance = currentBalance.add(transactionAmountVND);
+                            wallet.setBalance(newBalance);
+                            walletRepository.save(wallet);
+                        }
+
+                        Map<String, String> response = new HashMap<>();
+                        response.put("paymentId", payment.getId());
+                        response.put("state", payment.getState());
+                        response.put("amountUSD", amountUSD.toString());
+                        response.put("message", "Payment was already completed");
+                        if (transaction != null) {
+                            response.put("transactionId", transaction.getId().toString());
+                            response.put("amountVND", String.valueOf(transaction.getAmount()));
+                        }
+
+                        ApiResponse<Map<String, String>> apiResponse = new ApiResponse<>();
+                        apiResponse.setStatus(IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus.Ok);
+                        apiResponse.setMessage("Payment was already completed successfully");
+                        apiResponse.setData(response);
+
+                        return ResponseEntity.ok(apiResponse);
+                    }
+                } catch (Exception ex) {
+                    System.out.println("Error handling PAYMENT_ALREADY_DONE: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+            }
+
             ApiResponse<Map<String, String>> errorResponse = new ApiResponse<>();
             errorResponse.setStatus(HTTPStatus.InternalServerError);
             errorResponse.setMessage("Failed to execute PayPal payment: " + e.getMessage());
@@ -229,10 +397,29 @@ public class PaymentController {
                 throw new RuntimeException("Missing paymentId or PayerID");
             }
 
-            // Execute payment
-            Payment payment = payPalService.executePayment(paymentId, PayerID);
+            // Check payment state first before executing
+            Payment payment = null;
+            try {
+                Payment existingPayment = payPalService.getPaymentDetails(paymentId);
+                // If payment is already approved, skip execution
+                if (existingPayment != null && "approved".equalsIgnoreCase(existingPayment.getState())) {
+                    System.out.println("Payment " + paymentId + " is already approved. Skipping execution.");
+                    payment = existingPayment;
+                } else {
+                    // Execute payment only if not already approved
+                    payment = payPalService.executePayment(paymentId, PayerID);
+                }
+            } catch (PayPalRESTException e) {
+                // Handle PAYMENT_ALREADY_DONE error
+                if (e.getMessage() != null && e.getMessage().contains("PAYMENT_ALREADY_DONE")) {
+                    System.out.println("Payment already done. Getting payment details.");
+                    payment = payPalService.getPaymentDetails(paymentId);
+                } else {
+                    throw e;
+                }
+            }
 
-            if ("approved".equalsIgnoreCase(payment.getState())) {
+            if (payment != null && "approved".equalsIgnoreCase(payment.getState())) {
                 // Get transaction amount (USD) from PayPal
                 BigDecimal amountUSD = new BigDecimal(payment.getTransactions().get(0).getAmount().getTotal());
 
@@ -248,17 +435,22 @@ public class PaymentController {
 
                 if (!pendingTransactions.isEmpty()) {
                     WalletTransaction transaction = pendingTransactions.get(0);
-                    transaction.setTransactionStatus(Wallet_Transaction_Status.COMPLETED);
-                    transaction.setUpdatedAt(LocalDateTime.now());
-                    walletTransactionRepository.save(transaction);
+                    // Only update if transaction is still pending (avoid duplicate updates)
+                    if (transaction.getTransactionStatus() == Wallet_Transaction_Status.PENDING) {
+                        transaction.setTransactionStatus(Wallet_Transaction_Status.COMPLETED);
+                        transaction.setUpdatedAt(LocalDateTime.now());
+                        walletTransactionRepository.save(transaction);
 
-                    // Update wallet balance using transaction amount (already in VND)
-                    Wallet wallet = transaction.getWallet();
-                    BigDecimal currentBalance = wallet.getBalance() != null ? wallet.getBalance() : BigDecimal.ZERO;
-                    BigDecimal transactionAmountVND = BigDecimal.valueOf(transaction.getAmount());
-                    BigDecimal newBalance = currentBalance.add(transactionAmountVND);
-                    wallet.setBalance(newBalance);
-                    walletRepository.save(wallet);
+                        // Update wallet balance using transaction amount (already in VND)
+                        Wallet wallet = transaction.getWallet();
+                        BigDecimal currentBalance = wallet.getBalance() != null ? wallet.getBalance() : BigDecimal.ZERO;
+                        BigDecimal transactionAmountVND = BigDecimal.valueOf(transaction.getAmount());
+                        BigDecimal newBalance = currentBalance.add(transactionAmountVND);
+                        wallet.setBalance(newBalance);
+                        walletRepository.save(wallet);
+                    } else {
+                        System.out.println("Transaction " + transaction.getId() + " is already completed. Skipping wallet update.");
+                    }
                 }
 
                 // Return success HTML
