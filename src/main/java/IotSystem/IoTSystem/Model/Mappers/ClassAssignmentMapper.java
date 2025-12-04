@@ -10,9 +10,11 @@ public class ClassAssignmentMapper {
         return ClassAssignmentResponse.builder()
                 .id(assignment.getId())
                 .classId(assignment.getClazz() != null ? assignment.getClazz().getId() : null)
+                .classCode(assignment.getClazz() != null ? assignment.getClazz().getClassCode() : null)
                 .accountId(assignment.getAccount() != null ? assignment.getAccount().getId() : null)
                 .accountName(assignment.getAccount() != null ? assignment.getAccount().getFullName() : null)
                 .accountEmail(assignment.getAccount() != null ? assignment.getAccount().getEmail() : null)
+                .studentCode(assignment.getAccount() != null ? assignment.getAccount().getStudentCode() : null)
                 .roleName(assignment.getRole() != null ? assignment.getRole().getName() : null)
                 .createdAt(assignment.getCreatedAt())
                 .build();

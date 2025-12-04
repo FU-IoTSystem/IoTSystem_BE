@@ -19,6 +19,7 @@ public class BorrowingRequestResponse {
     private String status;
     private String reason;
     private Double depositAmount;
+    private LocalDateTime createdAt;
     private LocalDateTime approvedDate;
     private LocalDateTime expectReturnDate;
     private LocalDateTime actualReturnDate;
@@ -30,7 +31,7 @@ public class BorrowingRequestResponse {
     private KitResponse kit;
     private AccountInfo requestedBy;
 //    private String penaltyDescription;
-    
+
     @Data
     @Builder
     @NoArgsConstructor
