@@ -21,12 +21,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Random;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 @Service
 public class ExcelImportServiceImpl implements IExcelImportService {
@@ -76,6 +83,15 @@ public class ExcelImportServiceImpl implements IExcelImportService {
             // Validate file is not empty
             if (fileBytes == null || fileBytes.length == 0) {
                 throw new IOException("File content is empty");
+            }
+
+            // Check if file is XML Spreadsheet format (SpreadsheetML)
+            // Try to detect XML format by checking for XML declaration or Workbook element
+            String fileContent = new String(fileBytes, StandardCharsets.UTF_8).trim();
+            if (fileContent.startsWith("<?xml") || fileContent.startsWith("<Workbook") ||
+                    fileContent.contains("urn:schemas-microsoft-com:office:spreadsheet")) {
+                // Handle XML Spreadsheet format
+                return importFromSpreadsheetML(fileBytes, request, errors);
             }
 
             // Determine file type and create workbook
@@ -359,6 +375,202 @@ public class ExcelImportServiceImpl implements IExcelImportService {
             // Add warning but don't fail the entire row
             errors.add("Row " + rowNumber + ": Could not assign student to class '" + classCode + "': " + e.getMessage());
         }
+    }
+
+    /**
+     * Import accounts from XML Spreadsheet format (SpreadsheetML)
+     * Format: Class, RollNumber, Email, MemberCode, FullName
+     */
+    private ExcelImportResponse importFromSpreadsheetML(byte[] fileBytes, ExcelImportRequest request, List<String> errors) {
+        int successCount = 0;
+        int totalRows = 0;
+        List<String> xmlErrors = new ArrayList<>(errors); // Use provided errors list
+
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(new ByteArrayInputStream(fileBytes));
+
+            Element table = (Element) doc.getElementsByTagNameNS("urn:schemas-microsoft-com:office:spreadsheet", "Table").item(0);
+            if (table == null) {
+                xmlErrors.add("No Table element found in XML Spreadsheet file");
+                return ExcelImportResponse.builder()
+                        .success(false)
+                        .totalRows(0)
+                        .successCount(0)
+                        .errorCount(xmlErrors.size())
+                        .errors(xmlErrors)
+                        .message("No data found in file")
+                        .build();
+            }
+
+            NodeList rows = table.getElementsByTagNameNS("urn:schemas-microsoft-com:office:spreadsheet", "Row");
+            if (rows.getLength() == 0) {
+                xmlErrors.add("No rows found in XML Spreadsheet file");
+                return ExcelImportResponse.builder()
+                        .success(false)
+                        .totalRows(0)
+                        .successCount(0)
+                        .errorCount(xmlErrors.size())
+                        .errors(xmlErrors)
+                        .message("No data rows found")
+                        .build();
+            }
+
+            // Get role entity
+            Roles role = rolesRepository.findByName(request.getRole())
+                    .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRole()));
+
+            // Resolve header indices
+            int classIdx = -1, rollIdx = -1, emailIdx = -1, memberCodeIdx = -1, nameIdx = -1;
+            int currentCol = 0;
+            Element headerRow = (Element) rows.item(0);
+            NodeList headerCells = headerRow.getElementsByTagNameNS("urn:schemas-microsoft-com:office:spreadsheet", "Cell");
+            currentCol = 0;
+            for (int c = 0; c < headerCells.getLength(); c++) {
+                Element cell = (Element) headerCells.item(c);
+                int index = currentCol;
+                if (cell.hasAttributeNS("urn:schemas-microsoft-com:office:spreadsheet", "Index")) {
+                    index = Integer.parseInt(cell.getAttributeNS("urn:schemas-microsoft-com:office:spreadsheet", "Index")) - 1;
+                }
+                String value = extractCellStringFromXML(cell);
+                if (value != null) {
+                    if ("Class".equalsIgnoreCase(value)) classIdx = index;
+                    if ("RollNumber".equalsIgnoreCase(value)) rollIdx = index;
+                    if ("Email".equalsIgnoreCase(value)) emailIdx = index;
+                    if ("MemberCode".equalsIgnoreCase(value)) memberCodeIdx = index;
+                    if ("FullName".equalsIgnoreCase(value)) nameIdx = index;
+                }
+                currentCol = index + 1;
+            }
+
+            // Validate required columns for STUDENT role
+            if ("STUDENT".equals(request.getRole())) {
+                if (rollIdx < 0 || emailIdx < 0 || nameIdx < 0) {
+                    xmlErrors.add("Missing required columns. Expected: Class, RollNumber, Email, FullName");
+                    return ExcelImportResponse.builder()
+                            .success(false)
+                            .totalRows(0)
+                            .successCount(0)
+                            .errorCount(xmlErrors.size())
+                            .errors(xmlErrors)
+                            .message("Invalid file format: missing required columns")
+                            .build();
+                }
+            }
+
+            // Iterate data rows
+            for (int r = 1; r < rows.getLength(); r++) {
+                Element row = (Element) rows.item(r);
+                String classCode = getCellValueByIndexFromXML(row, classIdx);
+                String rollNumber = getCellValueByIndexFromXML(row, rollIdx);
+                String email = getCellValueByIndexFromXML(row, emailIdx);
+                String memberCode = getCellValueByIndexFromXML(row, memberCodeIdx);
+                String fullName = getCellValueByIndexFromXML(row, nameIdx);
+
+                totalRows++;
+
+                try {
+                    if ("STUDENT".equals(request.getRole())) {
+                        // Validate required fields for student
+                        if (isBlank(rollNumber)) {
+                            throw new RuntimeException("RollNumber is required");
+                        }
+                        if (isBlank(email)) {
+                            throw new RuntimeException("Email is required");
+                        }
+                        if (isBlank(fullName)) {
+                            throw new RuntimeException("FullName is required");
+                        }
+
+                        // Check if account exists by email
+                        if (accountRepository.existsByEmail(email.trim())) {
+                            throw new RuntimeException("Email already exists: " + email);
+                        }
+
+                        // Check if account exists by studentCode
+                        if (accountRepository.existsByStudentCode(rollNumber.trim())) {
+                            throw new RuntimeException("Student code already exists: " + rollNumber);
+                        }
+
+                        // Create account
+                        Account account = new Account();
+                        account.setEmail(email.trim());
+                        account.setFullName(fullName.trim());
+                        account.setStudentCode(rollNumber.trim());
+                        account.setPhone(memberCode != null ? memberCode.trim() : "");
+                        account.setPasswordHash(passwordEncoder.encode("1")); // Default password
+                        account.setRole(role);
+                        account.setIsActive(true);
+
+                        // Create wallet
+                        Wallet wallet = new Wallet();
+                        wallet.setBalance(java.math.BigDecimal.ZERO);
+                        wallet.setCurrency("VND");
+                        wallet.setActive(true);
+                        wallet.setAccount(account);
+                        account.setWallet(wallet);
+
+                        Account savedAccount = accountRepository.save(account);
+
+                        // Handle class assignment if class code is provided
+                        if (classCode != null && !classCode.trim().isEmpty()) {
+                            assignStudentToClass(savedAccount, classCode.trim(), r + 1, xmlErrors);
+                        }
+
+                        successCount++;
+                    } else {
+                        throw new RuntimeException("XML Spreadsheet format is currently only supported for STUDENT role");
+                    }
+                } catch (Exception e) {
+                    xmlErrors.add("Row " + (r + 1) + ": " + e.getMessage());
+                }
+            }
+
+        } catch (Exception e) {
+            xmlErrors.add("Error parsing XML Spreadsheet file: " + e.getMessage());
+        }
+
+        return ExcelImportResponse.builder()
+                .success(successCount > 0)
+                .totalRows(totalRows)
+                .successCount(successCount)
+                .errorCount(xmlErrors.size())
+                .errors(xmlErrors)
+                .message(String.format("Processed %d rows: %d successful, %d errors",
+                        totalRows, successCount, xmlErrors.size()))
+                .build();
+    }
+
+    private String getCellValueByIndexFromXML(Element row, int targetIndex) {
+        if (targetIndex < 0) return null;
+        NodeList cells = row.getElementsByTagNameNS("urn:schemas-microsoft-com:office:spreadsheet", "Cell");
+        int logicalIndex = 0;
+        for (int i = 0; i < cells.getLength(); i++) {
+            Element cell = (Element) cells.item(i);
+            int index = logicalIndex;
+            if (cell.hasAttributeNS("urn:schemas-microsoft-com:office:spreadsheet", "Index")) {
+                index = Integer.parseInt(cell.getAttributeNS("urn:schemas-microsoft-com:office:spreadsheet", "Index")) - 1;
+            }
+            if (index == targetIndex) {
+                return extractCellStringFromXML(cell);
+            }
+            logicalIndex = index + 1;
+        }
+        return null;
+    }
+
+    private String extractCellStringFromXML(Element cell) {
+        NodeList dataNodes = cell.getElementsByTagNameNS("urn:schemas-microsoft-com:office:spreadsheet", "Data");
+        if (dataNodes.getLength() == 0) return null;
+        Node data = dataNodes.item(0);
+        String text = data.getTextContent();
+        return isBlank(text) ? null : text.trim();
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
     }
 
     private String getCellValueAsString(Cell cell) {
