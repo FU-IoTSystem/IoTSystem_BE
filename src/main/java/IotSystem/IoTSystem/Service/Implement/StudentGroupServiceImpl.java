@@ -11,6 +11,7 @@ import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.ClassesRepository;
 import IotSystem.IoTSystem.Repository.StudentGroupRepository;
 import IotSystem.IoTSystem.Service.IStudentGroupService;
+import IotSystem.IoTSystem.Service.WebSocketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,9 @@ public class StudentGroupServiceImpl implements IStudentGroupService {
 
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    private WebSocketService webSocketService;
 
     @Override
     public List<StudentGroupResponse> getAll() {
@@ -53,7 +57,15 @@ public class StudentGroupServiceImpl implements IStudentGroupService {
 
         StudentGroup group = StudentGroupMapper.toEntity(request, classes, account);
 
-        studentGroupRepository.save(group);
+        group = studentGroupRepository.save(group);
+
+        // Send WebSocket update to lecturer
+        try {
+            StudentGroupResponse groupResponse = StudentGroupMapper.toResponse(group);
+            webSocketService.sendGroupUpdateToUser(account.getId().toString(), groupResponse);
+        } catch (Exception e) {
+            System.err.println("Error sending WebSocket group update: " + e.getMessage());
+        }
 
         return StudentGroupMapper.toResponse(group);
     }

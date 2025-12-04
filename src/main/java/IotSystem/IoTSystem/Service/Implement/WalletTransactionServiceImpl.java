@@ -14,6 +14,7 @@ import IotSystem.IoTSystem.Repository.PenaltyRepository;
 import IotSystem.IoTSystem.Repository.WalletRepository;
 import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
 import IotSystem.IoTSystem.Service.IWalletTransactionService;
+import IotSystem.IoTSystem.Service.WebSocketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,6 +44,9 @@ public class WalletTransactionServiceImpl implements IWalletTransactionService {
 
     @Autowired
     private BorrowingRequestRepository borrowingRequestRepository;
+
+    @Autowired
+    private WebSocketService webSocketService;
 
     @Override
     public List<TransactionHistoryResponse> getAll() {
@@ -188,6 +192,28 @@ public class WalletTransactionServiceImpl implements IWalletTransactionService {
         wallet.setBalance(newBalance);
         wallet.setUpdatedAt(LocalDateTime.now());
         walletRepository.save(wallet);
+
+        // Send WebSocket update to user
+        try {
+            TransactionHistoryResponse transactionResponse = new TransactionHistoryResponse();
+            transactionResponse.setId(transaction.getId());
+            transactionResponse.setType(transaction.getTransactionType().name());
+            transactionResponse.setAmount(transaction.getAmount());
+            transactionResponse.setDescription(transaction.getDescription());
+            transactionResponse.setStatus(transaction.getTransactionStatus().name());
+            transactionResponse.setCreatedAt(transaction.getCreatedAt());
+            transactionResponse.setUpdatedAt(transaction.getUpdatedAt());
+
+            // Send wallet update with new balance
+            java.util.Map<String, Object> walletUpdate = new java.util.HashMap<>();
+            walletUpdate.put("balance", newBalance.doubleValue());
+            walletUpdate.put("transaction", transactionResponse);
+
+            webSocketService.sendWalletUpdateToUser(account.getId().toString(), walletUpdate);
+            webSocketService.sendWalletTransactionToUser(account.getId().toString(), transactionResponse);
+        } catch (Exception e) {
+            System.err.println("Error sending WebSocket update: " + e.getMessage());
+        }
 
         return transaction;
     }
