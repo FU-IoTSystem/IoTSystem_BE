@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@CrossOrigin("*")
 @RequestMapping("/api/notifications")
 public class NotificationController {
 
@@ -73,5 +74,18 @@ public class NotificationController {
     @DeleteMapping("/delete/{id}")
     public void delete(@PathVariable UUID id) {
         notificationService.delete(id);
+    }
+
+    @PutMapping("/mark-as-read/{id}")
+    public ResponseEntity<ApiResponse<NotificationResponse>> markAsRead(@PathVariable UUID id) {
+        ApiResponse<NotificationResponse> response = new ApiResponse<>();
+
+        NotificationResponse notification = notificationService.markAsRead(id);
+
+        response.setStatus(HTTPStatus.Ok);
+        response.setMessage("Notification marked as read successfully");
+        response.setData(notification);
+
+        return ResponseEntity.ok(response);
     }
 }

@@ -53,8 +53,13 @@ public class ClassesController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/delete{id}")
-    public void delete(@PathVariable UUID id) {
-        service.delete(id);
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> delete(@PathVariable UUID id) {
+        try {
+            service.delete(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Failed to delete class: " + e.getMessage());
+        }
     }
 }
