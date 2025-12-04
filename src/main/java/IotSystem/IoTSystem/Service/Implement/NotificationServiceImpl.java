@@ -12,6 +12,7 @@ import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.NotificationRepository;
 import IotSystem.IoTSystem.Repository.RolesRepository;
 import IotSystem.IoTSystem.Service.INotificationService;
+import IotSystem.IoTSystem.Service.WebSocketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,6 +32,9 @@ public class NotificationServiceImpl implements INotificationService {
 
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    private WebSocketService webSocketService;
 
     @Override
     public List<Notification> getAll() {
@@ -144,7 +148,24 @@ public class NotificationServiceImpl implements INotificationService {
         notification.setTitle(request.getTitle() != null ? request.getTitle() : defaultTitle);
         notification.setMessage(request.getMessage() != null ? request.getMessage() : defaultMessage);
 
-        notificationRepository.save(notification);
+        Notification savedNotification = notificationRepository.save(notification);
+        NotificationResponse notificationResponse = NotificationMapper.toResponse(savedNotification);
+
+        // Send real-time notification via WebSocket
+        try {
+            if (notification.getRoles() != null && notification.getRoles().getName().equals("ADMIN")) {
+                // Send to all admins
+                webSocketService.sendNotificationToAdmins(notificationResponse);
+            } else if (notification.getUser() != null && notification.getUser().getId() != null) {
+                // Send to specific user
+                webSocketService.sendNotificationToUser(
+                        notification.getUser().getId().toString(),
+                        notificationResponse
+                );
+            }
+        } catch (Exception e) {
+            System.err.println("Error sending WebSocket notification: " + e.getMessage());
+        }
     }
 
     @Override
@@ -155,5 +176,29 @@ public class NotificationServiceImpl implements INotificationService {
     @Override
     public void delete(UUID id) {
 
+    }
+
+    @Override
+    public NotificationResponse markAsRead(UUID id) {
+        // Get current authenticated user
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        Account currentUser = accountRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Find notification
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
+
+        // Verify that the notification belongs to the current user
+        if (notification.getUser() != null && !notification.getUser().getId().equals(currentUser.getId())) {
+            throw new IllegalArgumentException("You can only mark your own notifications as read");
+        }
+
+        // Mark as read
+        notification.setIsRead(true);
+        Notification updatedNotification = notificationRepository.save(notification);
+
+        return NotificationMapper.toResponse(updatedNotification);
     }
 }

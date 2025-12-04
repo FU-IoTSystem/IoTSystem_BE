@@ -15,10 +15,12 @@ import java.util.UUID;
 public class ClassAssignmentResponse {
     private UUID id;
     private UUID classId;
+    private String classCode; // Class code for display
 
     private UUID accountId;
     private String accountName;
     private String accountEmail;
+    private String studentCode; // Student code for display
 
     private Roles roleId;
     private String roleName;

@@ -3,16 +3,19 @@ package IotSystem.IoTSystem.Service.Implement;
 import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.Classes;
+import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
 import IotSystem.IoTSystem.Model.Mappers.ClassResponseMapper;
 import IotSystem.IoTSystem.Model.Request.ClassRequest;
 import IotSystem.IoTSystem.Model.Response.ClassResponse;
 import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.ClassesRepository;
+import IotSystem.IoTSystem.Repository.ClassAssignemntRepository;
 import IotSystem.IoTSystem.Service.IAccountService;
 import IotSystem.IoTSystem.Service.IClassesService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +29,9 @@ public class ClassesServiceImpl  implements IClassesService {
 
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    private ClassAssignemntRepository classAssignemntRepository;
 
     @Override
     public List<ClassResponse> getAll() {
@@ -71,7 +77,21 @@ public class ClassesServiceImpl  implements IClassesService {
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
+        // Find the class
+        Classes clazz = classesRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Class not found with id: " + id));
 
+        // Delete all class assignments related to this class
+        List<ClassAssignment> assignments = classAssignemntRepository.findByClazz(clazz);
+        if (!assignments.isEmpty()) {
+            classAssignemntRepository.deleteAll(assignments);
+            log.info("Deleted {} class assignments for class {}", assignments.size(), clazz.getClassCode());
+        }
+
+        // Delete the class
+        classesRepository.delete(clazz);
+        log.info("Deleted class with id: {}", id);
     }
 }

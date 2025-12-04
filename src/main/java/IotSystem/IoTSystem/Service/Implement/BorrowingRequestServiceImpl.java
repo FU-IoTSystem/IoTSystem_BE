@@ -4,6 +4,7 @@ package IotSystem.IoTSystem.Service.Implement;
 import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
+import IotSystem.IoTSystem.Model.Entities.Enum.KitType;
 import IotSystem.IoTSystem.Model.Entities.Enum.RequestType;
 import IotSystem.IoTSystem.Model.Entities.Enum.Status.Wallet_Transaction_Status;
 import IotSystem.IoTSystem.Model.Entities.Enum.Wallet_Transaction_Type;
@@ -13,17 +14,23 @@ import IotSystem.IoTSystem.Model.Entities.RequestKitComponent;
 import IotSystem.IoTSystem.Model.Entities.Wallet;
 import IotSystem.IoTSystem.Model.Entities.WalletTransaction;
 import IotSystem.IoTSystem.Model.Mappers.BorrowingRequestMapper;
+import IotSystem.IoTSystem.Model.Response.TransactionHistoryResponse;
 import IotSystem.IoTSystem.Model.Request.BorrowingRequestCreateRequest;
 import IotSystem.IoTSystem.Model.Request.ComponentRentalRequest;
 import IotSystem.IoTSystem.Model.Response.BorrowingRequestResponse;
+import IotSystem.IoTSystem.Model.Entities.Enum.GroupRoles;
 import IotSystem.IoTSystem.Repository.AccountRepository;
+import IotSystem.IoTSystem.Repository.BorrowingGroupRepository;
 import IotSystem.IoTSystem.Repository.BorrowingRequestRepository;
 import IotSystem.IoTSystem.Repository.KitComponentRepository;
 import IotSystem.IoTSystem.Repository.KitsRepository;
+import IotSystem.IoTSystem.Repository.PenaltyRepository;
 import IotSystem.IoTSystem.Repository.RequestKitComponentRepository;
 import IotSystem.IoTSystem.Repository.WalletRepository;
 import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
 import IotSystem.IoTSystem.Service.IBorrowingRequestService;
+
+import IotSystem.IoTSystem.Service.WebSocketService;
 import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -61,6 +68,15 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
     @Autowired
     private RequestKitComponentRepository requestKitComponentRepository;
 
+    @Autowired
+    private BorrowingGroupRepository borrowingGroupRepository;
+
+    @Autowired
+    private PenaltyRepository penaltyRepository;
+
+    @Autowired
+    private WebSocketService webSocketService;
+
 
     @Override
     public List<BorrowingRequestResponse> getAll() {
@@ -79,10 +95,17 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         Account account = accountRepository.findById(request.getAccountID()).orElseThrow(() ->
                 new ResourceNotFoundException("Did not found Account with ID: " + request.getAccountID()));
 
+        // Validate lecturer rental limits
+        validateLecturerRentalLimits(account, kit);
+
+        // Validate leader rental limits
+        validateLeaderRentalLimits(account);
+
         BorrowingRequest borrow = new BorrowingRequest();
         borrow.setKit(kit);
 
-        double deposit_amount = kit.getAmount() / 2.0;
+        // Rental fee is 100% of kit amount
+        double deposit_amount = kit.getAmount();
 
         borrow.setDepositAmount(deposit_amount);
         kit.setQuantityAvailable(kit.getQuantityAvailable() - 1);
@@ -110,7 +133,16 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         kitsRepository.save(kit);
         BorrowingRequest savedBorrow = borrowingRequestRepository.save(borrow);
 
-        return BorrowingRequestMapper.toResponse(savedBorrow);
+        BorrowingRequestResponse response = BorrowingRequestMapper.toResponse(savedBorrow);
+
+        // Send real-time notification to admins about new rental request
+        try {
+            webSocketService.sendRentalRequestToAdmins(response);
+        } catch (Exception e) {
+            System.err.println("Error sending WebSocket notification: " + e.getMessage());
+        }
+
+        return response;
     }
 
     @Override
@@ -122,18 +154,18 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         Kit_Component component = kitComponentRepository.findById(request.getKitComponentsId())
                 .orElseThrow(() -> new ResourceNotFoundException("Component not found with ID: " + request.getKitComponentsId()));
 
-        component.setQuantityAvailable(component.getQuantityAvailable() - request.getQuantity());
         // Get kit from component
         Kits kit = component.getKit();
         if (kit == null) {
             throw new RuntimeException("Kit not found for this component");
         }
 
-        // Check availability
+        // Check availability - but don't subtract yet, wait for admin approval
         if (component.getQuantityAvailable() < request.getQuantity()) {
             throw new RuntimeException("Not enough components available. Required: " + request.getQuantity() + ", Available: " + component.getQuantityAvailable());
         }
 
+        // Don't subtract quantity here - it will be subtracted when admin approves
 
         // Create borrowing request for component
         BorrowingRequest borrowingRequest = new BorrowingRequest();
@@ -166,11 +198,18 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         requestKitComponent.setUpdatedAt(LocalDateTime.now());
         requestKitComponentRepository.save(requestKitComponent);
 
-        // Decrease available quantity
-        component.setQuantityAvailable(component.getQuantityAvailable() - request.getQuantity());
-        kitComponentRepository.save(component);
+        // Don't save component here - quantity will be updated when admin approves
 
-        return BorrowingRequestMapper.toResponse(savedRequest);
+        BorrowingRequestResponse response = BorrowingRequestMapper.toResponse(savedRequest);
+
+        // Send real-time notification to admins about new component rental request
+        try {
+            webSocketService.sendRentalRequestToAdmins(response);
+        } catch (Exception e) {
+            System.err.println("Error sending WebSocket notification: " + e.getMessage());
+        }
+
+        return response;
     }
 
     private Account getCurrentUser() {
@@ -178,6 +217,77 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         String email = auth.getName();
         return accountRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    /**
+     * Validate lecturer rental limits
+     * Lecturers can rent maximum 2 kits: 1 STUDENT_KIT and 1 LECTURER_KIT
+     * They cannot rent:
+     * - 2 kits of the same type
+     * - More than 2 kits total (if they already have both types)
+     * Rejected requests are not counted
+     */
+    private void validateLecturerRentalLimits(Account account, Kits kit) {
+        // Check if account is a lecturer
+        if (account.getRole() == null || !account.getRole().getName().equalsIgnoreCase("LECTURER")) {
+            return; // Not a lecturer, skip validation
+        }
+
+        // Get all active borrowing requests for this lecturer (excluding REJECTED and RETURNED)
+        List<BorrowingRequest> activeRequests = borrowingRequestRepository.findByRequestedById(account.getId())
+                .stream()
+                .filter(req -> req.getRequestType() == RequestType.BORROW_KIT) // Only check kit rentals, not component rentals
+                .filter(req -> !req.getStatus().equalsIgnoreCase("REJECTED")) // Exclude rejected requests
+                .filter(req -> !req.getStatus().equalsIgnoreCase("RETURNED")) // Exclude returned requests
+                .collect(Collectors.toList());
+
+        // Check if lecturer already has a kit of the same type
+        KitType requestedKitType = kit.getType();
+        boolean hasSameType = activeRequests.stream()
+                .anyMatch(req -> req.getKit() != null && req.getKit().getType() == requestedKitType);
+
+        if (hasSameType) {
+            throw new RuntimeException("Lecturer already has an active rental for " + requestedKitType + ". You cannot rent another kit of the same type.");
+        }
+
+        // Check if lecturer already has both types rented
+        boolean hasStudentKit = activeRequests.stream()
+                .anyMatch(req -> req.getKit() != null && req.getKit().getType() == KitType.STUDENT_KIT);
+        boolean hasLecturerKit = activeRequests.stream()
+                .anyMatch(req -> req.getKit() != null && req.getKit().getType() == KitType.LECTURER_KIT);
+
+        if (hasStudentKit && hasLecturerKit) {
+            throw new RuntimeException("Lecturer already has both STUDENT_KIT and LECTURER_KIT rented. Maximum rental limit reached.");
+        }
+    }
+
+    /**
+     * Validate leader rental limits
+     * Leaders can rent maximum 1 kit
+     * They can only send a new request when their previous request is REJECTED
+     */
+    private void validateLeaderRentalLimits(Account account) {
+        // Check if account is a leader (has LEADER role in any BorrowingGroup)
+        boolean isLeader = borrowingGroupRepository.findByAccountId(account.getId())
+                .stream()
+                .anyMatch(bg -> bg.getRoles() == GroupRoles.LEADER);
+
+        if (!isLeader) {
+            return; // Not a leader, skip validation
+        }
+
+        // Get all active borrowing requests for this leader (excluding REJECTED and RETURNED)
+        List<BorrowingRequest> activeRequests = borrowingRequestRepository.findByRequestedById(account.getId())
+                .stream()
+                .filter(req -> req.getRequestType() == RequestType.BORROW_KIT) // Only check kit rentals, not component rentals
+                .filter(req -> !req.getStatus().equalsIgnoreCase("REJECTED")) // Exclude rejected requests
+                .filter(req -> !req.getStatus().equalsIgnoreCase("RETURNED")) // Exclude returned requests
+                .collect(Collectors.toList());
+
+        // Leader can only have 1 active request at a time
+        if (!activeRequests.isEmpty()) {
+            throw new RuntimeException("Leader can only rent 1 kit at a time. You already have an active rental request. Please wait until your current request is approved, rejected, or returned before requesting another kit.");
+        }
     }
 
     private String generateQRCodeText(Account account, Kits kit, BorrowingRequest request) {
@@ -219,10 +329,31 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
 
         if(request.getStatus().equals("REJECTED")){
             existing.setStatus("REJECTED");
+            // No need to restore quantity because it was never subtracted
         }
         else if(request.getStatus().equals("APPROVED")){
             existing.setStatus("APPROVED");
             existing.setApprovedDate(LocalDateTime.now());
+
+            // For component rental requests, subtract quantity when approved
+            if (existing.getRequestType() == RequestType.BORROW_COMPONENT) {
+                List<RequestKitComponent> requestComponents = requestKitComponentRepository.findByRequestId(existing.getId());
+                if (!requestComponents.isEmpty()) {
+                    for (RequestKitComponent reqComponent : requestComponents) {
+                        Kit_Component component = kitComponentRepository.findById(reqComponent.getKitComponentsId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Component not found with ID: " + reqComponent.getKitComponentsId()));
+
+                        // Check availability again before subtracting
+                        if (component.getQuantityAvailable() < reqComponent.getQuantity()) {
+                            throw new RuntimeException("Not enough components available. Required: " + reqComponent.getQuantity() + ", Available: " + component.getQuantityAvailable());
+                        }
+
+                        // Subtract quantity when approved
+                        component.setQuantityAvailable(component.getQuantityAvailable() - reqComponent.getQuantity());
+                        kitComponentRepository.save(component);
+                    }
+                }
+            }
 
             // Deduct deposit amount from user's wallet
             Account account = existing.getRequestedBy();
@@ -275,6 +406,102 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
                 throw new RuntimeException("User wallet not found");
             }
         }
+        else if(request.getStatus().equals("RETURNED")){
+            existing.setStatus("RETURNED");
+            existing.setActualReturnDate(request.getActualReturnDate());
+
+            // Restore kit quantity when returned
+            if (existing.getKit() != null && existing.getRequestType() == RequestType.BORROW_KIT) {
+                Kits kit = existing.getKit();
+                kit.setQuantityAvailable(kit.getQuantityAvailable() + 1);
+
+                // If quantity available was 0 and now becomes > 0, set status back to AVAILABLE
+                if (kit.getQuantityAvailable() > 0 && kit.getStatus().equals("IN_USE")) {
+                    kit.setStatus("AVAILABLE");
+                }
+                kitsRepository.save(kit);
+            }
+
+            // Restore component quantity when returned
+            if (existing.getRequestType() == RequestType.BORROW_COMPONENT) {
+                List<RequestKitComponent> requestComponents = requestKitComponentRepository.findByRequestId(existing.getId());
+                if (!requestComponents.isEmpty()) {
+                    for (RequestKitComponent reqComponent : requestComponents) {
+                        Kit_Component component = kitComponentRepository.findById(reqComponent.getKitComponentsId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Component not found with ID: " + reqComponent.getKitComponentsId()));
+
+                        // Restore quantity when returned
+                        component.setQuantityAvailable(component.getQuantityAvailable() + reqComponent.getQuantity());
+                        kitComponentRepository.save(component);
+                    }
+                }
+            }
+
+            // Process refund if no penalty exists
+            // If penalty exists, refund will be handled when penalty is paid
+            if (existing.getDepositAmount() != null && existing.getDepositAmount() > 0) {
+                // Check if there's an unresolved penalty for this borrowing request
+                boolean hasUnresolvedPenalty = penaltyRepository.findAll().stream()
+                        .anyMatch(p -> p.getRequest() != null &&
+                                p.getRequest().getId().equals(existing.getId()) &&
+                                !p.isResolved());
+
+                if (!hasUnresolvedPenalty) {
+                    // No penalty, refund full deposit
+                    Account account = existing.getRequestedBy();
+                    Wallet wallet = account.getWallet();
+
+                    if (wallet != null) {
+                        BigDecimal depositAmount = BigDecimal.valueOf(existing.getDepositAmount());
+                        BigDecimal currentBalance = wallet.getBalance() != null ? wallet.getBalance() : BigDecimal.ZERO;
+                        BigDecimal newBalance = currentBalance.add(depositAmount);
+
+                        wallet.setBalance(newBalance);
+                        wallet.setUpdatedAt(LocalDateTime.now());
+                        walletRepository.save(wallet);
+
+                        // Create refund transaction
+                        WalletTransaction refundTransaction = new WalletTransaction();
+                        refundTransaction.setAmount(existing.getDepositAmount());
+                        refundTransaction.setTransactionType(Wallet_Transaction_Type.REFUND);
+                        refundTransaction.setTransactionStatus(Wallet_Transaction_Status.COMPLETED);
+                        refundTransaction.setDescription("Refund from rental deposit - kit returned without penalty. Borrowing Request: " + existing.getId());
+                        refundTransaction.setPaymentMethod("Wallet");
+                        refundTransaction.setWallet(wallet);
+                        refundTransaction.setCreatedAt(LocalDateTime.now());
+                        refundTransaction.setUpdatedAt(LocalDateTime.now());
+                        walletTransactionRepository.save(refundTransaction);
+
+                        // Send WebSocket update to user for wallet balance and transaction
+                        try {
+                            TransactionHistoryResponse transactionResponse = new TransactionHistoryResponse();
+                            transactionResponse.setId(refundTransaction.getId());
+                            transactionResponse.setType(refundTransaction.getTransactionType().name());
+                            transactionResponse.setAmount(refundTransaction.getAmount());
+                            transactionResponse.setDescription(refundTransaction.getDescription());
+                            transactionResponse.setStatus(refundTransaction.getTransactionStatus().name());
+                            transactionResponse.setCreatedAt(refundTransaction.getCreatedAt());
+                            transactionResponse.setUpdatedAt(refundTransaction.getUpdatedAt());
+
+                            // Send wallet update with new balance
+                            java.util.Map<String, Object> walletUpdate = new java.util.HashMap<>();
+                            walletUpdate.put("balance", newBalance.doubleValue());
+                            walletUpdate.put("transaction", transactionResponse);
+
+                            webSocketService.sendWalletUpdateToUser(account.getId().toString(), walletUpdate);
+                            webSocketService.sendWalletTransactionToUser(account.getId().toString(), transactionResponse);
+
+                            System.out.println("Refunded " + depositAmount + " VND to wallet. New balance: " + newBalance);
+                            System.out.println("WebSocket wallet update sent to user: " + account.getId());
+                        } catch (Exception e) {
+                            System.err.println("Error sending WebSocket wallet update: " + e.getMessage());
+                            // Continue even if WebSocket fails
+                        }
+                    }
+                }
+                // If penalty exists, refund will be handled in confirmPaymentForPenalty method
+            }
+        }
         else {
             existing.setStatus(request.getStatus());
             existing.setActualReturnDate(request.getActualReturnDate());
@@ -285,7 +512,28 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         }
 
         BorrowingRequest updated = borrowingRequestRepository.save(existing);
-        return BorrowingRequestMapper.toResponse(updated);
+        BorrowingRequestResponse response = BorrowingRequestMapper.toResponse(updated);
+
+        // Send real-time update to admins
+        try {
+            webSocketService.sendRentalRequestToAdmins(response);
+        } catch (Exception e) {
+            System.err.println("Error sending WebSocket notification: " + e.getMessage());
+        }
+
+        // Send real-time update to the user who made the request
+        if (updated.getRequestedBy() != null && updated.getRequestedBy().getId() != null) {
+            try {
+                webSocketService.sendRentalRequestUpdateToUser(
+                        updated.getRequestedBy().getId().toString(),
+                        response
+                );
+            } catch (Exception e) {
+                System.err.println("Error sending WebSocket notification to user: " + e.getMessage());
+            }
+        }
+
+        return response;
     }
 
     @Override

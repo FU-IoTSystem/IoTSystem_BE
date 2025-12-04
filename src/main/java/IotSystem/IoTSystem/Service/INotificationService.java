@@ -20,4 +20,6 @@ public interface INotificationService {
     Notification update(UUID id, Notification notification);
 
     void delete(UUID id);
+
+    NotificationResponse markAsRead(UUID id);
 }
