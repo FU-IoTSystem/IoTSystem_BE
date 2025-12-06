@@ -12,6 +12,10 @@ public class AccountMapper {
                 ? account.getStudentCode()
                 : null;
 
+        String lecturerCode = account.getRole().getName().equals("LECTURER")
+                ? account.getLecturerCode()
+                : null;
+
         return new ProfileResponse(
                 account.getId(),
                 account.getFullName(),
@@ -19,6 +23,7 @@ public class AccountMapper {
                 account.getAvatarUrl(),
                 account.getPhone(),
                 studentCode,
+                lecturerCode,
                 account.getRole().getName(),
                 account.getCreatedAt(),
                 account.getIsActive()
