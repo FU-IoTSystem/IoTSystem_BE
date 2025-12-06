@@ -21,6 +21,7 @@ public class ClassAssignmentResponse {
     private String accountName;
     private String accountEmail;
     private String studentCode; // Student code for display
+    private String lecturerCode; // Lecturer code for display
 
     private Roles roleId;
     private String roleName;

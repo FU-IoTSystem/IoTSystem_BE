@@ -15,6 +15,7 @@ public class ClassAssignmentMapper {
                 .accountName(assignment.getAccount() != null ? assignment.getAccount().getFullName() : null)
                 .accountEmail(assignment.getAccount() != null ? assignment.getAccount().getEmail() : null)
                 .studentCode(assignment.getAccount() != null ? assignment.getAccount().getStudentCode() : null)
+                .lecturerCode(assignment.getAccount() != null ? assignment.getAccount().getLecturerCode() : null)
                 .roleName(assignment.getRole() != null ? assignment.getRole().getName() : null)
                 .createdAt(assignment.getCreatedAt())
                 .build();
