@@ -19,6 +19,7 @@ public class ProfileResponse {
     private String avatarUrl;
     private String phone;
     private String studentCode;
+    private String lecturerCode;
     private String role;
     private LocalDateTime createdAt;
     private Boolean isActive;
