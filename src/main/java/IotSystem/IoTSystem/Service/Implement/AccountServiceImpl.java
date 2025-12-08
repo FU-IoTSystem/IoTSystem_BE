@@ -292,19 +292,22 @@ public class AccountServiceImpl implements IAccountService {
 
         Account saved = accountRepository.save(account);
 
+        String studentCode = saved.getRole().getName().equals("STUDENT") ? saved.getStudentCode() : null;
+        String lecturerCode = saved.getRole().getName().equals("LECTURER") ? saved.getLecturerCode() : null;
+
         return new ProfileResponse(
                 saved.getId(),
                 saved.getFullName(),
                 saved.getEmail(),
                 saved.getAvatarUrl(),
                 saved.getPhone(),
-                saved.getStudentCode(),
+                studentCode,
+                lecturerCode,
                 saved.getRole().getName(),
                 saved.getCreatedAt(),
                 saved.getIsActive()
         );
     }
-
     @Override
     public String changePassword(ChangePasswordRequest request) {
         Account account = getCurrentAccount();
