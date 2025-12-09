@@ -4,35 +4,20 @@ import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Entities.Wallet;
 import IotSystem.IoTSystem.Model.Mappers.AccountMapper;
 import IotSystem.IoTSystem.Model.Mappers.ResponseRegisterMapper;
-import IotSystem.IoTSystem.Model.Request.AccountRequest;
 import IotSystem.IoTSystem.Model.Request.ChangePasswordRequest;
 import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
 import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.Roles;
+import IotSystem.IoTSystem.Model.Entities.Classes;
+import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
 import IotSystem.IoTSystem.Model.Request.UpdateAccountRequest;
 import IotSystem.IoTSystem.Model.Response.ProfileResponse;
 import IotSystem.IoTSystem.Model.Response.RegisterResponse;
+import IotSystem.IoTSystem.Repository.*;
 import IotSystem.IoTSystem.Security.TokenProvider;
-import IotSystem.IoTSystem.Repository.AccountRepository;
-import IotSystem.IoTSystem.Repository.RolesRepository;
-import IotSystem.IoTSystem.Repository.BorrowingGroupRepository;
-import IotSystem.IoTSystem.Repository.StudentGroupRepository;
-import IotSystem.IoTSystem.Repository.ClassesRepository;
-import IotSystem.IoTSystem.Repository.ClassAssignemntRepository;
-import IotSystem.IoTSystem.Repository.PenaltyRepository;
-import IotSystem.IoTSystem.Repository.BorrowingRequestRepository;
-import IotSystem.IoTSystem.Repository.DamageReportRepository;
-import IotSystem.IoTSystem.Repository.WalletRepository;
-import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
-import IotSystem.IoTSystem.Repository.PenaltyDetailRepository;
 import IotSystem.IoTSystem.Service.IAccountService;
-import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -41,16 +26,13 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -196,6 +178,12 @@ public class AccountServiceImpl implements IAccountService {
 
         if(role.getName().equals("STUDENT")){
             account.setStudentCode(request.getStudentCode());
+            account.setLecturerCode(null);
+        }
+
+        if(role.getName().equals("LECTURER")){
+            account.setLecturerCode(request.getLecturerCode());
+            account.setStudentCode(null);
         }
 
         // Nếu là STUDENT hoặc LECTURER thì tạo ví
@@ -228,7 +216,7 @@ public class AccountServiceImpl implements IAccountService {
             }
         }
 
-        // Validate studentCode uniqueness (excluding current account) - only for STUDENT role
+        // Validate studentCode/lecturerCode uniqueness (excluding current account) - only for STUDENT/LECTURER role
         Roles role = rolesRepository.findByName(request.getRoles().toUpperCase())
                 .orElseThrow(() -> new ResourceNotFoundException("Did not found the role: " + request.getRoles()));
 
@@ -239,6 +227,18 @@ public class AccountServiceImpl implements IAccountService {
                 if (account.getStudentCode() == null || !newStudentCode.equals(account.getStudentCode())) {
                     if (accountRepository.existsByStudentCodeExcludingId(newStudentCode, id)) {
                         throw new RuntimeException("Student Code already exists: " + newStudentCode);
+                    }
+                }
+            }
+        }
+
+        if(role.getName().equals("LECTURER")){
+            if (request.getLecturerCode() != null && !request.getLecturerCode().trim().isEmpty()) {
+                String newLecturerCode = request.getLecturerCode().trim();
+                // Check if lecturerCode is being changed
+                if (account.getLecturerCode() == null || !newLecturerCode.equals(account.getLecturerCode())) {
+                    if (accountRepository.existsByLecturerCodeExcludingId(newLecturerCode, id)) {
+                        throw new RuntimeException("Lecturer Code already exists: " + newLecturerCode);
                     }
                 }
             }
@@ -269,6 +269,12 @@ public class AccountServiceImpl implements IAccountService {
 
         if(role.getName().equals("STUDENT")){
             account.setStudentCode(request.getStudentCode());
+            account.setLecturerCode(null); // Clear lecturerCode if changing from lecturer to student
+        }
+
+        if(role.getName().equals("LECTURER")){
+            account.setLecturerCode(request.getLecturerCode());
+            account.setStudentCode(null); // Clear studentCode if changing from student to lecturer
         }
 
         accountRepository.save(account);
@@ -292,13 +298,17 @@ public class AccountServiceImpl implements IAccountService {
 
         Account saved = accountRepository.save(account);
 
+        String studentCode = saved.getRole().getName().equals("STUDENT") ? saved.getStudentCode() : null;
+        String lecturerCode = saved.getRole().getName().equals("LECTURER") ? saved.getLecturerCode() : null;
+
         return new ProfileResponse(
                 saved.getId(),
                 saved.getFullName(),
                 saved.getEmail(),
                 saved.getAvatarUrl(),
                 saved.getPhone(),
-                saved.getStudentCode(),
+                studentCode,
+                lecturerCode,
                 saved.getRole().getName(),
                 saved.getCreatedAt(),
                 saved.getIsActive()
@@ -432,8 +442,8 @@ public class AccountServiceImpl implements IAccountService {
 
         Roles role = rolesRepository.findByName("LECTURER").orElseThrow();
 
-
-        account.setStudentCode(request.getStudentCode());
+        account.setLecturerCode(request.getLecturerCode());
+        account.setStudentCode(null); // Clear studentCode for lecturer
         account.setRole(role);
         account.setPhone(request.getPhoneNumber());
         account.setFullName(request.getFullName());
@@ -480,18 +490,7 @@ public class AccountServiceImpl implements IAccountService {
                 throw new RuntimeException("Failed to delete borrowing groups: " + e.getMessage(), e);
             }
 
-            // 2. Delete ClassAssignments (delete before StudentGroups and Classes)
-            try {
-                classAssignmentRepository.findAll().stream()
-                        .filter(ca -> ca.getAccount() != null && ca.getAccount().getId().equals(accountId))
-                        .forEach(classAssignmentRepository::delete);
-                classAssignmentRepository.flush();
-            } catch (Exception e) {
-                System.err.println("Warning: Error deleting class assignments for account " + accountId + ": " + e.getMessage());
-                throw new RuntimeException("Failed to delete class assignments: " + e.getMessage(), e);
-            }
-
-            // 3. Delete StudentGroups (where account is leader/owner)
+            // 2. Delete StudentGroups (where account is leader/owner)
             try {
                 studentGroupRepository.findAll().stream()
                         .filter(sg -> sg.getAccount() != null && sg.getAccount().getId().equals(accountId))
@@ -502,15 +501,42 @@ public class AccountServiceImpl implements IAccountService {
                 throw new RuntimeException("Failed to delete student groups: " + e.getMessage(), e);
             }
 
-            // 4. Delete Classes (where account is teacher)
+            // 3. Delete Classes (where account is teacher)
+            // First, find all classes for this account
             try {
-                classesRepository.findAll().stream()
+                List<Classes> classesToDelete = classesRepository.findAll().stream()
                         .filter(cls -> cls.getAccount() != null && cls.getAccount().getId().equals(accountId))
-                        .forEach(classesRepository::delete);
+                        .toList();
+
+                // For each class, delete all related ClassAssignments first
+                for (Classes clazz : classesToDelete) {
+                    // Delete all ClassAssignments for this class
+                    List<ClassAssignment> assignments = classAssignmentRepository.findByClazz(clazz);
+                    for (ClassAssignment assignment : assignments) {
+                        classAssignmentRepository.delete(assignment);
+                    }
+                }
+                classAssignmentRepository.flush();
+
+                // Now delete the classes
+                for (Classes clazz : classesToDelete) {
+                    classesRepository.delete(clazz);
+                }
                 classesRepository.flush();
             } catch (Exception e) {
                 System.err.println("Warning: Error deleting classes for account " + accountId + ": " + e.getMessage());
                 throw new RuntimeException("Failed to delete classes: " + e.getMessage(), e);
+            }
+
+            // 4. Delete remaining ClassAssignments (where account is student/lecturer but not class owner)
+            try {
+                classAssignmentRepository.findAll().stream()
+                        .filter(ca -> ca.getAccount() != null && ca.getAccount().getId().equals(accountId))
+                        .forEach(classAssignmentRepository::delete);
+                classAssignmentRepository.flush();
+            } catch (Exception e) {
+                System.err.println("Warning: Error deleting remaining class assignments for account " + accountId + ": " + e.getMessage());
+                throw new RuntimeException("Failed to delete class assignments: " + e.getMessage(), e);
             }
 
             // 5. Delete PenaltyDetails first (before deleting Penalties)

@@ -12,7 +12,7 @@ import java.util.UUID;
 @Repository
 
 public interface DamageReportRepository extends JpaRepository<DamageReport, UUID> {
-
+    
     // Delete damage reports by account ID using native query to avoid enum mapping issues
     @Modifying
     @Query(value = "DELETE FROM reports WHERE generated_by = :accountId", nativeQuery = true)

@@ -4,7 +4,6 @@ import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
 import IotSystem.IoTSystem.Model.Entities.Penalty;
-import IotSystem.IoTSystem.Model.Entities.PenaltyDetail;
 import IotSystem.IoTSystem.Model.Entities.Wallet;
 import IotSystem.IoTSystem.Model.Entities.WalletTransaction;
 import IotSystem.IoTSystem.Model.Mappers.PenaltyMapper;

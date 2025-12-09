@@ -6,7 +6,6 @@ import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
 import IotSystem.IoTSystem.Model.Entities.Classes;
 import IotSystem.IoTSystem.Model.Entities.Roles;
 import IotSystem.IoTSystem.Model.Mappers.ClassAssignmentMapper;
-import IotSystem.IoTSystem.Model.Mappers.ClassResponseMapper;
 import IotSystem.IoTSystem.Model.Request.ClassAssignmentRequest;
 import IotSystem.IoTSystem.Model.Response.ClassAssignmentResponse;
 import IotSystem.IoTSystem.Model.Response.ClassResponse;

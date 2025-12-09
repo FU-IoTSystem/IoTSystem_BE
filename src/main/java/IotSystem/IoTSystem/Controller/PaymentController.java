@@ -15,7 +15,6 @@ import IotSystem.IoTSystem.Service.PayPalService;
 import IotSystem.IoTSystem.Config.PayPalConfig;
 import com.paypal.api.payments.Payment;
 import com.paypal.base.rest.PayPalRESTException;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

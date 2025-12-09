@@ -1,9 +1,9 @@
 package IotSystem.IoTSystem.Controller;
 
-import IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus;
 import IotSystem.IoTSystem.Model.Entities.PenaltyDetail;
 import IotSystem.IoTSystem.Model.Request.PenaltyDetailRequest;
 import IotSystem.IoTSystem.Model.Response.ApiResponse;
+import IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus;
 import IotSystem.IoTSystem.Model.Response.PenaltyDetailResponse;
 import IotSystem.IoTSystem.Service.IPenaltyDetailService;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -4,7 +4,6 @@ import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Entities.Penalty;
 import IotSystem.IoTSystem.Model.Entities.PenaltyPolicies;
 import IotSystem.IoTSystem.Model.Mappers.PenaltyPoliciesMapper;
-import IotSystem.IoTSystem.Model.Request.PenaltyPoliciesRequest;
 import IotSystem.IoTSystem.Model.Response.PenaltyPoliciesResponse;
 import IotSystem.IoTSystem.Repository.PenaltyPoliciesRepository;
 import IotSystem.IoTSystem.Repository.PenaltyRepository;
