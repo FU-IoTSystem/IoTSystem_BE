@@ -1,9 +1,9 @@
 package IotSystem.IoTSystem.Controller;
 
 import IotSystem.IoTSystem.Model.Entities.DamageReport;
-import IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus;
 import IotSystem.IoTSystem.Model.Request.DamageReportRequest;
 import IotSystem.IoTSystem.Model.Response.ApiResponse;
+import IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus;
 import IotSystem.IoTSystem.Service.IDamageReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

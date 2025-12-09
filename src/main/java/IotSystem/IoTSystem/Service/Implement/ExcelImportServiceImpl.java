@@ -205,9 +205,9 @@ public class ExcelImportServiceImpl implements IExcelImportService {
                             assignStudentToClass(savedAccount, studentClass.trim(), row.getRowNum() + 1, errors);
                         }
                     } else if ("LECTURER".equals(role.getName())) {
-                        // For lecturers: Column C is class_code, Column D is Semester
-                        String classCode = getCellValueAsString(row.getCell(3)); // Column D: class_code
-                        String semester = getCellValueAsString(row.getCell(4)); // Column E: Semester
+                        // For lecturers: Column E is class_code, Column F is Semester
+                        String classCode = getCellValueAsString(row.getCell(4)); // Column E: class_code
+                        String semester = getCellValueAsString(row.getCell(5)); // Column F: Semester
                         if (classCode != null && !classCode.trim().isEmpty()) {
                             createOrAssignClassForLecturer(savedAccount, classCode.trim(),
                                     semester != null ? semester.trim() : null, row.getRowNum() + 1, errors);
@@ -254,11 +254,19 @@ public class ExcelImportServiceImpl implements IExcelImportService {
             phone = getCellValueAsString(row.getCell(3));       // Column D: phone
             // Column E is StudentClass - handled separately after account creation
         } else if ("LECTURER".equals(role.getName())) {
-            // For lecturers: Excel columns: email, fullname, phone, class_code, Semester
-            email = getCellValueAsString(row.getCell(0));       // Column A: email
-            fullName = getCellValueAsString(row.getCell(1));    // Column B: fullname
-            phone = getCellValueAsString(row.getCell(2));       // Column C: phone
-            // Column D is class_code, Column E is Semester - handled separately after account creation
+            // For lecturers: Excel columns: lecturer_code, email, fullname, phone, class_code, Semester
+            String lecturerCode = getCellValueAsString(row.getCell(0)); // Column A: lecturer_code
+            email = getCellValueAsString(row.getCell(1));       // Column B: email
+            fullName = getCellValueAsString(row.getCell(2));    // Column C: fullname
+            phone = getCellValueAsString(row.getCell(3));       // Column D: phone
+            // Column E is class_code, Column F is Semester - handled separately after account creation
+
+            // Set lecturer code if provided
+            if (lecturerCode != null && !lecturerCode.trim().isEmpty()) {
+                account.setLecturerCode(lecturerCode.trim());
+            } else {
+                account.setLecturerCode("");
+            }
         } else {
             throw new RuntimeException("Unsupported role: " + role.getName());
         }
@@ -288,6 +296,13 @@ public class ExcelImportServiceImpl implements IExcelImportService {
         // Check if email already exists
         if (accountRepository.existsByEmail(email.trim())) {
             throw new RuntimeException("Email already exists: " + email);
+        }
+
+        // For lecturers, check if lecturerCode already exists
+        if ("LECTURER".equals(role.getName()) && account.getLecturerCode() != null && !account.getLecturerCode().trim().isEmpty()) {
+            if (accountRepository.existsByLecturerCode(account.getLecturerCode().trim())) {
+                throw new RuntimeException("Lecturer Code already exists: " + account.getLecturerCode());
+            }
         }
 
         return account;

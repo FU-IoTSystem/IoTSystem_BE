@@ -29,7 +29,6 @@ import IotSystem.IoTSystem.Repository.RequestKitComponentRepository;
 import IotSystem.IoTSystem.Repository.WalletRepository;
 import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
 import IotSystem.IoTSystem.Service.IBorrowingRequestService;
-
 import IotSystem.IoTSystem.Service.WebSocketService;
 import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -237,8 +236,8 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         List<BorrowingRequest> activeRequests = borrowingRequestRepository.findByRequestedById(account.getId())
                 .stream()
                 .filter(req -> req.getRequestType() == RequestType.BORROW_KIT) // Only check kit rentals, not component rentals
-                .filter(req -> !req.getStatus().equalsIgnoreCase("REJECTED")) // Exclude rejected requests
-                .filter(req -> !req.getStatus().equalsIgnoreCase("RETURNED")) // Exclude returned requests
+                .filter(req -> req.getStatus() != null && !req.getStatus().equalsIgnoreCase("REJECTED")) // Exclude rejected requests
+                .filter(req -> req.getStatus() != null && !req.getStatus().equalsIgnoreCase("RETURNED")) // Exclude returned requests
                 .collect(Collectors.toList());
 
         // Check if lecturer already has a kit of the same type
@@ -280,8 +279,8 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         List<BorrowingRequest> activeRequests = borrowingRequestRepository.findByRequestedById(account.getId())
                 .stream()
                 .filter(req -> req.getRequestType() == RequestType.BORROW_KIT) // Only check kit rentals, not component rentals
-                .filter(req -> !req.getStatus().equalsIgnoreCase("REJECTED")) // Exclude rejected requests
-                .filter(req -> !req.getStatus().equalsIgnoreCase("RETURNED")) // Exclude returned requests
+                .filter(req -> req.getStatus() != null && !req.getStatus().equalsIgnoreCase("REJECTED")) // Exclude rejected requests
+                .filter(req -> req.getStatus() != null && !req.getStatus().equalsIgnoreCase("RETURNED")) // Exclude returned requests
                 .collect(Collectors.toList());
 
         // Leader can only have 1 active request at a time
@@ -300,7 +299,7 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         qrText.append("Request Type: ").append(request.getRequestType()).append("\n");
         qrText.append("Reason: ").append(request.getReason()).append("\n");
         qrText.append("Expected Return Date: ").append(request.getExpectReturnDate()).append("\n");
-        qrText.append("Status: ").append(request.getStatus()).append("\n");
+        qrText.append("Status: ").append(request.getStatus() != null ? request.getStatus() : "PENDING").append("\n");
         qrText.append("==============================");
         return qrText.toString();
     }
@@ -317,7 +316,7 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         qrText.append("Total Amount: ").append(request.getDepositAmount()).append(" VND\n");
         qrText.append("Reason: ").append(request.getReason()).append("\n");
         qrText.append("Expected Return Date: ").append(request.getExpectReturnDate()).append("\n");
-        qrText.append("Status: ").append(request.getStatus()).append("\n");
+        qrText.append("Status: ").append(request.getStatus() != null ? request.getStatus() : "PENDING").append("\n");
         qrText.append("==================================");
         return qrText.toString();
     }
@@ -327,11 +326,12 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         BorrowingRequest existing = borrowingRequestRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Borrowing request not found with ID: " + id));
 
-        if(request.getStatus().equals("REJECTED")){
+        // Handle status updates (only if status is provided)
+        if(request.getStatus() != null && request.getStatus().equals("REJECTED")){
             existing.setStatus("REJECTED");
             // No need to restore quantity because it was never subtracted
         }
-        else if(request.getStatus().equals("APPROVED")){
+        else if(request.getStatus() != null && request.getStatus().equals("APPROVED")){
             existing.setStatus("APPROVED");
             existing.setApprovedDate(LocalDateTime.now());
 
@@ -406,9 +406,11 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
                 throw new RuntimeException("User wallet not found");
             }
         }
-        else if(request.getStatus().equals("RETURNED")){
+        else if(request.getStatus() != null && request.getStatus().equals("RETURNED")){
             existing.setStatus("RETURNED");
-            existing.setActualReturnDate(request.getActualReturnDate());
+            if(request.getActualReturnDate() != null) {
+                existing.setActualReturnDate(request.getActualReturnDate());
+            }
 
             // Restore kit quantity when returned
             if (existing.getKit() != null && existing.getRequestType() == RequestType.BORROW_KIT) {
@@ -416,7 +418,7 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
                 kit.setQuantityAvailable(kit.getQuantityAvailable() + 1);
 
                 // If quantity available was 0 and now becomes > 0, set status back to AVAILABLE
-                if (kit.getQuantityAvailable() > 0 && kit.getStatus().equals("IN_USE")) {
+                if (kit.getQuantityAvailable() > 0 && kit.getStatus() != null && kit.getStatus().equals("IN_USE")) {
                     kit.setStatus("AVAILABLE");
                 }
                 kitsRepository.save(kit);
@@ -502,9 +504,16 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
                 // If penalty exists, refund will be handled in confirmPaymentForPenalty method
             }
         }
-        else {
+
+        // Update other fields if provided (even if status is null - for partial updates like isLate)
+        if(request.getStatus() != null){
             existing.setStatus(request.getStatus());
+        }
+        if(request.getActualReturnDate() != null){
             existing.setActualReturnDate(request.getActualReturnDate());
+        }
+        if(request.getIsLate() != null){
+            existing.setIsLate(request.getIsLate());
         }
 
         if(request.getNote() != null){
