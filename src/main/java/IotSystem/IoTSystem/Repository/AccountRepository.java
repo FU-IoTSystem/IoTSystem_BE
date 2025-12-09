@@ -19,19 +19,19 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
     boolean existsByEmail(String email);
     boolean existsByStudentCode(String studentCode);
     boolean existsByLecturerCode(String lecturerCode);
-
+    
     // Check if email exists for another account (excluding current account)
     @Query("SELECT COUNT(a) > 0 FROM Account a WHERE a.email = :email AND a.id <> :excludeId")
     boolean existsByEmailExcludingId(@Param("email") String email, @Param("excludeId") UUID excludeId);
-
+    
     // Check if studentCode exists for another account (excluding current account)
     @Query("SELECT COUNT(a) > 0 FROM Account a WHERE a.studentCode = :studentCode AND a.id <> :excludeId AND a.studentCode IS NOT NULL AND a.studentCode <> ''")
     boolean existsByStudentCodeExcludingId(@Param("studentCode") String studentCode, @Param("excludeId") UUID excludeId);
-
+    
     // Check if lecturerCode exists for another account (excluding current account)
     @Query("SELECT COUNT(a) > 0 FROM Account a WHERE a.lecturerCode = :lecturerCode AND a.id <> :excludeId AND a.lecturerCode IS NOT NULL AND a.lecturerCode <> ''")
     boolean existsByLecturerCodeExcludingId(@Param("lecturerCode") String lecturerCode, @Param("excludeId") UUID excludeId);
-
+    
     // Check if phone exists for another account (excluding current account)
     @Query("SELECT COUNT(a) > 0 FROM Account a WHERE a.phone = :phone AND a.id <> :excludeId AND a.phone IS NOT NULL AND a.phone <> ''")
     boolean existsByPhoneExcludingId(@Param("phone") String phone, @Param("excludeId") UUID excludeId);
@@ -45,7 +45,7 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
     List<Account> findByRole(Roles role);
 
     // Kiểm tra username đã tồn tại chưa (thường dùng khi register)
-
+    
     @Query("SELECT a FROM Account a WHERE a.role.name = 'LECTURER' AND a.isActive = true")
     List<Account> findAllLecturers();
 

@@ -1,6 +1,5 @@
 package IotSystem.IoTSystem.Model.Response;
 
-import IotSystem.IoTSystem.Model.Entities.Roles;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

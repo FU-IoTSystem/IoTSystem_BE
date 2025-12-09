@@ -1,9 +1,5 @@
 package IotSystem.IoTSystem.Model.Request;
 
-import IotSystem.IoTSystem.Model.Entities.Roles;
-import IotSystem.IoTSystem.Model.Entities.Wallet;
-import jakarta.annotation.Nonnull;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

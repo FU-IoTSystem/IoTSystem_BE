@@ -2,10 +2,8 @@ package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Entities.Account;
-import IotSystem.IoTSystem.Model.Entities.Enum.NotificationSubType;
 import IotSystem.IoTSystem.Model.Entities.Notification;
 import IotSystem.IoTSystem.Model.Entities.Roles;
-import IotSystem.IoTSystem.Model.Mappers.NotificationMapper;
 import IotSystem.IoTSystem.Model.Request.NotificationRequest;
 import IotSystem.IoTSystem.Model.Response.NotificationResponse;
 import IotSystem.IoTSystem.Repository.AccountRepository;

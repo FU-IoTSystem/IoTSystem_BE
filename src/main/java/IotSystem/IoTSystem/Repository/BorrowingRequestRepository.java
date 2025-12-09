@@ -13,6 +13,6 @@ public interface BorrowingRequestRepository extends JpaRepository<BorrowingReque
     List<BorrowingRequest> findByRequestedById(UUID requestedById);
 
     List<BorrowingRequest> findByStatus(String status);
-
+    
     List<BorrowingRequest> findByStatusIn(List<String> statuses);
 }
