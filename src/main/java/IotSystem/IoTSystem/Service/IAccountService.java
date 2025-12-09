@@ -8,6 +8,7 @@ import IotSystem.IoTSystem.Model.Request.RegisterRequest;
 import IotSystem.IoTSystem.Model.Request.UpdateAccountRequest;
 import IotSystem.IoTSystem.Model.Response.ProfileResponse;
 import IotSystem.IoTSystem.Model.Response.RegisterResponse;
+import IotSystem.IoTSystem.Model.Response.StudentExportResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -31,6 +32,11 @@ public interface IAccountService {
     ProfileResponse getAccountById(UUID accountId);
     List<ProfileResponse> getAllbyRoleLecture();
     List<ProfileResponse> getAllStudent();
+    List<ProfileResponse> getStudentsByClassCode(String classCode);
+    List<ProfileResponse> getStudentsByClassId(UUID classId);
+
+    // Export student data for Excel
+    List<StudentExportResponse> exportStudents();
 
     ProfileResponse createAStudent(RegisterRequest request);
 
