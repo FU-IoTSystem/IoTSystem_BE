@@ -3,6 +3,7 @@ package IotSystem.IoTSystem.Service.Implement;
 import IotSystem.IoTSystem.Model.Entities.Penalty;
 import IotSystem.IoTSystem.Model.Entities.PenaltyDetail;
 import IotSystem.IoTSystem.Model.Entities.PenaltyPolicies;
+import IotSystem.IoTSystem.Model.Mappers.PenaltyDetailMapper;
 import IotSystem.IoTSystem.Model.Request.PenaltyDetailRequest;
 import IotSystem.IoTSystem.Model.Response.PenaltyDetailResponse;
 import IotSystem.IoTSystem.Repository.PenaltyDetailRepository;

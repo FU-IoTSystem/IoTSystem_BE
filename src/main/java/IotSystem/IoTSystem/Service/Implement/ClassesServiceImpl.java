@@ -4,6 +4,7 @@ import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.Classes;
 import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
+import IotSystem.IoTSystem.Model.Mappers.ClassResponseMapper;
 import IotSystem.IoTSystem.Model.Request.ClassRequest;
 import IotSystem.IoTSystem.Model.Response.ClassResponse;
 import IotSystem.IoTSystem.Repository.AccountRepository;

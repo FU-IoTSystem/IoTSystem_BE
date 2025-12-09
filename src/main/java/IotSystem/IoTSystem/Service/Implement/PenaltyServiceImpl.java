@@ -6,6 +6,7 @@ import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
 import IotSystem.IoTSystem.Model.Entities.Penalty;
 import IotSystem.IoTSystem.Model.Entities.Wallet;
 import IotSystem.IoTSystem.Model.Entities.WalletTransaction;
+import IotSystem.IoTSystem.Model.Mappers.PenaltyMapper;
 import IotSystem.IoTSystem.Model.Request.PenaltyRequest;
 import IotSystem.IoTSystem.Model.Response.PenaltyResponse;
 import IotSystem.IoTSystem.Model.Response.TransactionHistoryResponse;

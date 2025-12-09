@@ -13,6 +13,7 @@ import IotSystem.IoTSystem.Model.Entities.Kits;
 import IotSystem.IoTSystem.Model.Entities.RequestKitComponent;
 import IotSystem.IoTSystem.Model.Entities.Wallet;
 import IotSystem.IoTSystem.Model.Entities.WalletTransaction;
+import IotSystem.IoTSystem.Model.Mappers.BorrowingRequestMapper;
 import IotSystem.IoTSystem.Model.Response.TransactionHistoryResponse;
 import IotSystem.IoTSystem.Model.Request.BorrowingRequestCreateRequest;
 import IotSystem.IoTSystem.Model.Request.ComponentRentalRequest;
