@@ -25,16 +25,19 @@ public class WalletTransaction extends Base {
     private UUID id;
 
     private Double amount;
-    
+
+    @Column(name = "previous_balance")
+    private Double previousBalance;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type")
     private Wallet_Transaction_Type transactionType;
-    
+
     private String description;
-    
+
     @Column(name = "payment_method")
     private String paymentMethod;
-    
+
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_status")
     private Wallet_Transaction_Status transactionStatus;

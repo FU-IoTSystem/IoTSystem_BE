@@ -12,15 +12,16 @@ public class TransactionHistoryResponse {
     private UUID id;
     private String type; // TOP_UP, PENALTY_PAYMENT, REFUND, RENTAL_DEPOSIT
     private Double amount;
+    private Double previousBalance;
     private String description;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
+
     // For penalties
     private String penaltyNote;
     private UUID penaltyId;
-    
+
     // For rental deposits
     private UUID borrowingRequestId;
     private String kitName;

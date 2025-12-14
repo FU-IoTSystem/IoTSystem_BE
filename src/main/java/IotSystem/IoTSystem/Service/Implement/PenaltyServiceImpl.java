@@ -4,6 +4,7 @@ import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
 import IotSystem.IoTSystem.Model.Entities.Penalty;
+import IotSystem.IoTSystem.Model.Entities.PenaltyDetail;
 import IotSystem.IoTSystem.Model.Entities.Wallet;
 import IotSystem.IoTSystem.Model.Entities.WalletTransaction;
 import IotSystem.IoTSystem.Model.Mappers.PenaltyMapper;
@@ -64,6 +65,15 @@ public class PenaltyServiceImpl implements IPenaltyService {
     @Override
     public Penalty getById(UUID id) {
         return null;
+    }
+
+    @Override
+    public PenaltyResponse getPenaltyByRequestId(UUID requestId) {
+        Penalty penalty = penaltyRepository.findByRequestId(requestId);
+        if (penalty == null) {
+            return null;
+        }
+        return PenaltyMapper.toResponse(penalty);
     }
 
     @Override
@@ -219,9 +229,13 @@ public class PenaltyServiceImpl implements IPenaltyService {
             }
         }
 
+        // Get initial balance before any transactions
+        java.math.BigDecimal initialBalance = wallet.getBalance() != null ? wallet.getBalance() : java.math.BigDecimal.ZERO;
+        Double initialPreviousBalance = initialBalance.doubleValue();
+
         // Check if wallet has enough balance for the amount to pay from wallet
         if (amountToPayFromWallet.compareTo(java.math.BigDecimal.ZERO) > 0) {
-            if (wallet.getBalance().compareTo(amountToPayFromWallet) < 0) {
+            if (initialBalance.compareTo(amountToPayFromWallet) < 0) {
                 throw new RuntimeException("Số dư ví không đủ. Vui lòng nạp thêm tiền! Cần: " + amountToPayFromWallet + " VND");
             }
         }
@@ -229,6 +243,10 @@ public class PenaltyServiceImpl implements IPenaltyService {
         // Process refund if any
         WalletTransaction savedRefundTransaction = null;
         if (refundAmount.compareTo(java.math.BigDecimal.ZERO) > 0) {
+            // Get balance before refund
+            java.math.BigDecimal balanceBeforeRefund = wallet.getBalance() != null ? wallet.getBalance() : java.math.BigDecimal.ZERO;
+            Double previousBalanceForRefund = balanceBeforeRefund.doubleValue();
+
             // Add refund to wallet
             wallet.setBalance(wallet.getBalance().add(refundAmount));
 
@@ -236,6 +254,7 @@ public class PenaltyServiceImpl implements IPenaltyService {
             WalletTransaction refundTransaction = new WalletTransaction();
             refundTransaction.setWallet(wallet);
             refundTransaction.setAmount(refundAmount.doubleValue());
+            refundTransaction.setPreviousBalance(previousBalanceForRefund);
             refundTransaction.setTransactionType(IotSystem.IoTSystem.Model.Entities.Enum.Wallet_Transaction_Type.REFUND);
             refundTransaction.setTransactionStatus(IotSystem.IoTSystem.Model.Entities.Enum.Status.Wallet_Transaction_Status.COMPLETED);
             refundTransaction.setDescription("Refund from rental deposit after penalty payment. Penalty: " + penaltyId + " (Deposit: " + depositAmount + " VND, Penalty: " + penaltyAmount + " VND, Refund: " + refundAmount + " VND)");
@@ -251,10 +270,15 @@ public class PenaltyServiceImpl implements IPenaltyService {
         WalletTransaction savedPaymentTransaction = null;
         WalletTransaction savedDepositUsageTransaction = null;
         if (amountToPayFromWallet.compareTo(java.math.BigDecimal.ZERO) > 0) {
+            // Get balance before payment (after refund if any)
+            java.math.BigDecimal balanceBeforePayment = wallet.getBalance() != null ? wallet.getBalance() : java.math.BigDecimal.ZERO;
+            Double previousBalanceForPayment = balanceBeforePayment.doubleValue();
+
             // Deduct from wallet and create transaction
             WalletTransaction paymentTransaction = new WalletTransaction();
             paymentTransaction.setWallet(wallet);
             paymentTransaction.setAmount(amountToPayFromWallet.doubleValue());
+            paymentTransaction.setPreviousBalance(previousBalanceForPayment);
             paymentTransaction.setTransactionType(IotSystem.IoTSystem.Model.Entities.Enum.Wallet_Transaction_Type.PENALTY_PAYMENT);
             paymentTransaction.setTransactionStatus(IotSystem.IoTSystem.Model.Entities.Enum.Status.Wallet_Transaction_Status.COMPLETED);
             paymentTransaction.setDescription("Payment for Penalty: " + penaltyId + (depositAmount.compareTo(java.math.BigDecimal.ZERO) > 0 ? " (after deducting deposit: " + depositAmount + " VND)" : ""));
@@ -270,9 +294,14 @@ public class PenaltyServiceImpl implements IPenaltyService {
         } else if (depositAmount.compareTo(java.math.BigDecimal.ZERO) > 0 && penaltyAmount.compareTo(depositAmount) <= 0) {
             // When penalty <= deposit, create a transaction to record that deposit was used to pay penalty
             // This helps with tracking and transparency
+            // Get current balance (no change to balance, but record the transaction)
+            java.math.BigDecimal currentBalanceForDeposit = wallet.getBalance() != null ? wallet.getBalance() : java.math.BigDecimal.ZERO;
+            Double previousBalanceForDeposit = currentBalanceForDeposit.doubleValue();
+
             WalletTransaction depositUsageTransaction = new WalletTransaction();
             depositUsageTransaction.setWallet(wallet);
             depositUsageTransaction.setAmount(penaltyAmount.doubleValue());
+            depositUsageTransaction.setPreviousBalance(previousBalanceForDeposit);
             depositUsageTransaction.setTransactionType(IotSystem.IoTSystem.Model.Entities.Enum.Wallet_Transaction_Type.PENALTY_PAYMENT);
             depositUsageTransaction.setTransactionStatus(IotSystem.IoTSystem.Model.Entities.Enum.Status.Wallet_Transaction_Status.COMPLETED);
             depositUsageTransaction.setDescription("Penalty paid using deposit. Penalty: " + penaltyId + " (Deposit used: " + penaltyAmount + " VND, Refunded: " + refundAmount + " VND)");
@@ -301,6 +330,7 @@ public class PenaltyServiceImpl implements IPenaltyService {
                 refundResponse.setId(savedRefundTransaction.getId());
                 refundResponse.setType(savedRefundTransaction.getTransactionType().name());
                 refundResponse.setAmount(savedRefundTransaction.getAmount());
+                refundResponse.setPreviousBalance(savedRefundTransaction.getPreviousBalance());
                 refundResponse.setDescription(savedRefundTransaction.getDescription());
                 refundResponse.setStatus(savedRefundTransaction.getTransactionStatus().name());
                 refundResponse.setCreatedAt(savedRefundTransaction.getCreatedAt());
@@ -315,6 +345,7 @@ public class PenaltyServiceImpl implements IPenaltyService {
                 paymentResponse.setId(savedPaymentTransaction.getId());
                 paymentResponse.setType(savedPaymentTransaction.getTransactionType().name());
                 paymentResponse.setAmount(savedPaymentTransaction.getAmount());
+                paymentResponse.setPreviousBalance(savedPaymentTransaction.getPreviousBalance());
                 paymentResponse.setDescription(savedPaymentTransaction.getDescription());
                 paymentResponse.setStatus(savedPaymentTransaction.getTransactionStatus().name());
                 paymentResponse.setCreatedAt(savedPaymentTransaction.getCreatedAt());
@@ -329,6 +360,7 @@ public class PenaltyServiceImpl implements IPenaltyService {
                 depositResponse.setId(savedDepositUsageTransaction.getId());
                 depositResponse.setType(savedDepositUsageTransaction.getTransactionType().name());
                 depositResponse.setAmount(savedDepositUsageTransaction.getAmount());
+                depositResponse.setPreviousBalance(savedDepositUsageTransaction.getPreviousBalance());
                 depositResponse.setDescription(savedDepositUsageTransaction.getDescription());
                 depositResponse.setStatus(savedDepositUsageTransaction.getTransactionStatus().name());
                 depositResponse.setCreatedAt(savedDepositUsageTransaction.getCreatedAt());
