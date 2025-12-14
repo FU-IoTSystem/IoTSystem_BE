@@ -11,9 +11,12 @@ import java.util.UUID;
 
 @Repository
 public interface PenaltyRepository extends JpaRepository<Penalty, UUID> {
-    
+
     @Query("SELECT p FROM Penalty p WHERE p.account.id = :accountId ORDER BY p.createdAt DESC")
     List<Penalty> findPenaltiesByAccountId(@Param("accountId") UUID accountId);
 
     List<Penalty> findByResolved(boolean isResolved);
+
+    @Query("SELECT p FROM Penalty p WHERE p.request.id = :requestId")
+    Penalty findByRequestId(@Param("requestId") UUID requestId);
 }
