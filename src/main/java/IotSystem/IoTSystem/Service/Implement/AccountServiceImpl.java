@@ -4,6 +4,7 @@ import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Entities.Wallet;
 import IotSystem.IoTSystem.Model.Mappers.AccountMapper;
 import IotSystem.IoTSystem.Model.Mappers.ResponseRegisterMapper;
+import IotSystem.IoTSystem.Model.Request.AccountRequest;
 import IotSystem.IoTSystem.Model.Request.ChangePasswordRequest;
 import IotSystem.IoTSystem.Model.Request.LoginRequest;
 import IotSystem.IoTSystem.Model.Request.RegisterRequest;
@@ -14,10 +15,27 @@ import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
 import IotSystem.IoTSystem.Model.Request.UpdateAccountRequest;
 import IotSystem.IoTSystem.Model.Response.ProfileResponse;
 import IotSystem.IoTSystem.Model.Response.RegisterResponse;
-import IotSystem.IoTSystem.Repository.*;
+import IotSystem.IoTSystem.Model.Response.StudentExportResponse;
 import IotSystem.IoTSystem.Security.TokenProvider;
+import IotSystem.IoTSystem.Repository.AccountRepository;
+import IotSystem.IoTSystem.Repository.RolesRepository;
+import IotSystem.IoTSystem.Repository.BorrowingGroupRepository;
+import IotSystem.IoTSystem.Repository.StudentGroupRepository;
+import IotSystem.IoTSystem.Repository.ClassesRepository;
+import IotSystem.IoTSystem.Repository.ClassAssignemntRepository;
+import IotSystem.IoTSystem.Repository.PenaltyRepository;
+import IotSystem.IoTSystem.Repository.BorrowingRequestRepository;
+import IotSystem.IoTSystem.Repository.DamageReportRepository;
+import IotSystem.IoTSystem.Repository.WalletRepository;
+import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
+import IotSystem.IoTSystem.Repository.PenaltyDetailRepository;
 import IotSystem.IoTSystem.Service.IAccountService;
+import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,13 +44,16 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -369,6 +390,66 @@ public class AccountServiceImpl implements IAccountService {
         List<Account> accounts = accountRepository.findByRole(role);
 
         return accounts.stream().map(AccountMapper::toProfileResponse).toList();
+    }
+
+    @Override
+    public List<ProfileResponse> getStudentsByClassCode(String classCode) {
+        // Find class by classCode
+        Classes clazz = classesRepository.findByClassCode(classCode)
+                .orElseThrow(() -> new ResourceNotFoundException("Class not found with classCode: " + classCode));
+
+        // Get all student assignments for this class
+        List<ClassAssignment> assignments = classAssignmentRepository.findStudentAssignmentsByClass(clazz);
+
+        // Extract accounts from assignments and map to ProfileResponse
+        return assignments.stream()
+                .map(ClassAssignment::getAccount)
+                .filter(account -> account != null && account.getIsActive())
+                .map(AccountMapper::toProfileResponse)
+                .toList();
+    }
+
+    @Override
+    public List<ProfileResponse> getStudentsByClassId(UUID classId) {
+        // Find class by classId
+        Classes clazz = classesRepository.findById(classId)
+                .orElseThrow(() -> new ResourceNotFoundException("Class not found with id: " + classId));
+
+        // Get all student assignments for this class
+        List<ClassAssignment> assignments = classAssignmentRepository.findStudentAssignmentsByClass(clazz);
+
+        // Extract accounts from assignments and map to ProfileResponse
+        return assignments.stream()
+                .map(ClassAssignment::getAccount)
+                .filter(account -> account != null && account.getIsActive())
+                .map(AccountMapper::toProfileResponse)
+                .toList();
+    }
+
+    @Override
+    public List<StudentExportResponse> exportStudents() {
+        // TODO: consider filtering by class or other conditions if needed
+        List<ClassAssignment> assignments = classAssignmentRepository.findAll().stream()
+                .filter(ca -> ca.getAccount() != null
+                        && ca.getAccount().getRole() != null
+                        && "STUDENT".equalsIgnoreCase(ca.getAccount().getRole().getName()))
+                .toList();
+
+        return assignments.stream().map(ca -> {
+            Account account = ca.getAccount();
+            Classes clazz = ca.getClazz();
+
+            StudentExportResponse response = new StudentExportResponse();
+            response.setClassCode(clazz != null ? clazz.getClassCode() : null);
+            response.setStudentCode(account != null ? account.getStudentCode() : null);
+            response.setName(account != null ? account.getFullName() : null);
+            response.setEmail(account != null ? account.getEmail() : null);
+            response.setRole(account != null && account.getRole() != null ? account.getRole().getName() : null);
+            response.setStatus(account != null ? account.getIsActive() : null);
+            response.setCreateDate(account != null ? account.getCreatedAt() : null);
+
+            return response;
+        }).toList();
     }
 
     @Override
