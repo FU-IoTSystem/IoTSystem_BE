@@ -21,4 +21,6 @@ public interface IPenaltyService {
     void delete(UUID id);
 
     void confirmPaymentForPenalty(UUID penaltyId);
+
+    PenaltyResponse getPenaltyByRequestId(UUID requestId);
 }
