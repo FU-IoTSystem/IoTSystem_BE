@@ -12,6 +12,7 @@ import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Response.ApiResponse;
 import IotSystem.IoTSystem.Model.Response.ProfileResponse;
 import IotSystem.IoTSystem.Model.Response.RegisterResponse;
+import IotSystem.IoTSystem.Model.Response.StudentExportResponse;
 import IotSystem.IoTSystem.Service.IAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -201,6 +202,67 @@ public class AccountController {
         response.setStatus(HTTPStatus.Ok);
         response.setMessage("Fetched account successfully");
         response.setData(profileResponses);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/getStudentsByClassCode/{classCode}")
+    public ResponseEntity<ApiResponse<List<ProfileResponse>>> getStudentsByClassCode(@PathVariable String classCode){
+        try {
+            List<ProfileResponse> profileResponses = accountService.getStudentsByClassCode(classCode);
+
+            ApiResponse<List<ProfileResponse>> response = new ApiResponse<>();
+            response.setStatus(HTTPStatus.Ok);
+            response.setMessage("Fetched students by class code successfully");
+            response.setData(profileResponses);
+
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            ApiResponse<List<ProfileResponse>> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus(HTTPStatus.NotFound);
+            errorResponse.setMessage(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        } catch (Exception e) {
+            ApiResponse<List<ProfileResponse>> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus(HTTPStatus.InternalServerError);
+            errorResponse.setMessage("Failed to fetch students: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @GetMapping("/getStudentsByClassId/{classId}")
+    public ResponseEntity<ApiResponse<List<ProfileResponse>>> getStudentsByClassId(@PathVariable UUID classId){
+        try {
+            List<ProfileResponse> profileResponses = accountService.getStudentsByClassId(classId);
+
+            ApiResponse<List<ProfileResponse>> response = new ApiResponse<>();
+            response.setStatus(HTTPStatus.Ok);
+            response.setMessage("Fetched students by class id successfully");
+            response.setData(profileResponses);
+
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            ApiResponse<List<ProfileResponse>> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus(HTTPStatus.NotFound);
+            errorResponse.setMessage(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        } catch (Exception e) {
+            ApiResponse<List<ProfileResponse>> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus(HTTPStatus.InternalServerError);
+            errorResponse.setMessage("Failed to fetch students: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @GetMapping("/admin/students/export")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC')")
+    public ResponseEntity<ApiResponse<List<StudentExportResponse>>> exportStudents() {
+        List<StudentExportResponse> exportData = accountService.exportStudents();
+
+        ApiResponse<List<StudentExportResponse>> response = new ApiResponse<>();
+        response.setStatus(HTTPStatus.Ok);
+        response.setMessage("Fetched student export data successfully");
+        response.setData(exportData);
 
         return ResponseEntity.ok(response);
     }
