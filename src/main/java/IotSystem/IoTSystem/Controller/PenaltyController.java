@@ -93,4 +93,22 @@ public class PenaltyController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+
+    @GetMapping("/by-request/{requestId}")
+    public ResponseEntity<ApiResponse<PenaltyResponse>> getPenaltyByRequestId(@PathVariable UUID requestId) {
+        ApiResponse<PenaltyResponse> response = new ApiResponse<>();
+        PenaltyResponse penaltyResponse = penaltyService.getPenaltyByRequestId(requestId);
+
+        if (penaltyResponse == null) {
+            response.setStatus(HTTPStatus.NotFound);
+            response.setMessage("No penalty found for this request");
+            response.setData(null);
+            return ResponseEntity.ok(response);
+        }
+
+        response.setStatus(HTTPStatus.Ok);
+        response.setMessage("Penalty found successfully");
+        response.setData(penaltyResponse);
+        return ResponseEntity.ok(response);
+    }
 }
