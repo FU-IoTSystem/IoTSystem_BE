@@ -103,6 +103,26 @@ public class ExcelImportController {
                 );
             }
 
+            // Validate file name and extension
+            String fileName = request.getFileName();
+            if (fileName == null || fileName.isEmpty()) {
+                return ResponseEntity.badRequest().body(
+                        ExcelImportResponse.builder()
+                                .success(false)
+                                .message("File name is required")
+                                .build()
+                );
+            }
+
+            if (!fileName.toLowerCase().endsWith(".xlsx") && !fileName.toLowerCase().endsWith(".xls")) {
+                return ResponseEntity.badRequest().body(
+                        ExcelImportResponse.builder()
+                                .success(false)
+                                .message("Invalid file format. Please upload a .xls or .xlsx file.")
+                                .build()
+                );
+            }
+
             if (request.getRole() == null || (!request.getRole().equals("STUDENT") && !request.getRole().equals("LECTURER"))) {
                 return ResponseEntity.badRequest().body(
                         ExcelImportResponse.builder()

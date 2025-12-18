@@ -5,9 +5,14 @@ import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
 import IotSystem.IoTSystem.Model.Entities.Classes;
 import IotSystem.IoTSystem.Model.Entities.Roles;
 import IotSystem.IoTSystem.Model.Entities.Wallet;
+import IotSystem.IoTSystem.Model.Request.AccountRequest;
 import IotSystem.IoTSystem.Model.Request.ExcelImportRequest;
 import IotSystem.IoTSystem.Model.Response.ExcelImportResponse;
-import IotSystem.IoTSystem.Repository.*;
+import IotSystem.IoTSystem.Repository.AccountRepository;
+import IotSystem.IoTSystem.Repository.ClassAssignemntRepository;
+import IotSystem.IoTSystem.Repository.ClassesRepository;
+import IotSystem.IoTSystem.Repository.RolesRepository;
+import IotSystem.IoTSystem.Repository.WalletRepository;
 import IotSystem.IoTSystem.Service.IExcelImportService;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -24,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -171,26 +177,74 @@ public class ExcelImportServiceImpl implements IExcelImportService {
             Roles role = rolesRepository.findByName(request.getRole())
                     .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRole()));
 
+            // Validate file format by checking header row
+            if (!validateFileFormat(sheet, role)) {
+                workbook.close();
+                throw new IOException("Invalid file format. The file does not appear to be a " +
+                        request.getRole().toLowerCase() + " import file. Please check that the header row contains expected columns (email, name, etc.).");
+            }
+
             // Process each row
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) continue; // Skip header row
 
+                // Check if row is empty (all cells are empty or null)
+                boolean isEmptyRow = true;
+                for (int i = 0; i < row.getLastCellNum(); i++) {
+                    String cellValue = getCellValueAsString(row.getCell(i));
+                    if (cellValue != null && !cellValue.trim().isEmpty()) {
+                        isEmptyRow = false;
+                        break;
+                    }
+                }
+
+                if (isEmptyRow) {
+                    continue; // Skip empty rows
+                }
+
                 totalRows++;
 
                 try {
-                    Account account = createAccountFromRow(row, role);
+                    Account savedAccount;
+                    boolean isNewAccount = false;
 
-                    // Create wallet for STUDENT or LECTURER accounts
-                    if ("STUDENT".equals(role.getName()) || "LECTURER".equals(role.getName())) {
+                    if ("LECTURER".equals(role.getName())) {
+                        // For lecturers: Get existing account or create new one
+                        String email = getCellValueAsString(row.getCell(1)); // Column B: email
+                        if (email == null || email.trim().isEmpty()) {
+                            throw new RuntimeException("Email is required");
+                        }
+
+                        email = email.trim();
+
+                        // Validate email format
+                        if (!isValidEmailFormat(email)) {
+                            throw new RuntimeException("Invalid email format: " + email);
+                        }
+
+                        // Check if account exists before calling getOrCreateLecturerAccountFromRow
+                        Optional<Account> existingAccountBefore = accountRepository.findByEmail(email);
+                        boolean accountExistedBefore = existingAccountBefore.isPresent();
+
+                        savedAccount = getOrCreateLecturerAccountFromRow(row, role);
+
+                        // Only count as new if account didn't exist before
+                        isNewAccount = !accountExistedBefore;
+                    } else {
+                        // For students: Keep original logic (fail if account exists)
+                        Account account = createAccountFromRow(row, role);
+
+                        // Create wallet for STUDENT accounts
                         Wallet wallet = new Wallet();
                         wallet.setBalance(java.math.BigDecimal.ZERO);
                         wallet.setCurrency("VND");
                         wallet.setActive(true);
                         wallet.setAccount(account);
                         account.setWallet(wallet);
-                    }
 
-                    Account savedAccount = accountRepository.save(account);
+                        savedAccount = accountRepository.save(account);
+                        isNewAccount = true; // Student accounts are always new (fail if exists)
+                    }
 
                     // Handle class assignment based on role
                     if ("STUDENT".equals(role.getName())) {
@@ -201,6 +255,7 @@ public class ExcelImportServiceImpl implements IExcelImportService {
                         }
                     } else if ("LECTURER".equals(role.getName())) {
                         // For lecturers: Column E is class_code, Column F is Semester
+                        // Always process class assignment even if lecturer already exists
                         String classCode = getCellValueAsString(row.getCell(4)); // Column E: class_code
                         String semester = getCellValueAsString(row.getCell(5)); // Column F: Semester
                         if (classCode != null && !classCode.trim().isEmpty()) {
@@ -209,7 +264,10 @@ public class ExcelImportServiceImpl implements IExcelImportService {
                         }
                     }
 
-                    successCount++;
+                    // Only count as success if a new account was created
+                    if (isNewAccount) {
+                        successCount++;
+                    }
                 } catch (Exception e) {
                     errors.add("Row " + (row.getRowNum() + 1) + ": " + e.getMessage());
                 }
@@ -274,6 +332,12 @@ public class ExcelImportServiceImpl implements IExcelImportService {
             throw new RuntimeException("Email is required");
         }
 
+        // Validate email format
+        email = email.trim();
+        if (!isValidEmailFormat(email)) {
+            throw new RuntimeException("Invalid email format: " + email);
+        }
+
         // Set account properties
         account.setEmail(email.trim());
         account.setFullName(fullName.trim());
@@ -301,6 +365,99 @@ public class ExcelImportServiceImpl implements IExcelImportService {
         }
 
         return account;
+    }
+
+    /**
+     * Get existing lecturer account or create new one if not exists
+     * If lecturer exists (by email or lecturerCode), return existing account
+     * If lecturer doesn't exist, create new account with wallet
+     * @param row Excel row containing lecturer data
+     * @param role Lecturer role
+     * @return Existing or newly created Account
+     */
+    private Account getOrCreateLecturerAccountFromRow(Row row, Roles role) {
+        // Parse lecturer data from row
+        // For lecturers: Excel columns: lecturer_code, email, fullname, phone, class_code, Semester
+        String lecturerCode = getCellValueAsString(row.getCell(0)); // Column A: lecturer_code
+        String email = getCellValueAsString(row.getCell(1));       // Column B: email
+        String fullName = getCellValueAsString(row.getCell(2));    // Column C: fullname
+        String phone = getCellValueAsString(row.getCell(3));       // Column D: phone
+
+        // Validate required fields
+        if (email == null || email.trim().isEmpty()) {
+            throw new RuntimeException("Email is required");
+        }
+
+        email = email.trim();
+
+        // Validate email format
+        if (!isValidEmailFormat(email)) {
+            throw new RuntimeException("Invalid email format: " + email);
+        }
+
+        // Check if lecturer exists by email
+        Optional<Account> existingAccountByEmail = accountRepository.findByEmail(email);
+        if (existingAccountByEmail.isPresent()) {
+            Account existingAccount = existingAccountByEmail.get();
+            // Verify it's a lecturer account
+            if ("LECTURER".equals(existingAccount.getRole().getName())) {
+                return existingAccount; // Return existing lecturer account
+            } else {
+                throw new RuntimeException("Email already exists but belongs to a different role: " + email);
+            }
+        }
+
+        // Check if lecturer exists by lecturerCode (if provided)
+        if (lecturerCode != null && !lecturerCode.trim().isEmpty()) {
+            final String trimmedLecturerCode = lecturerCode.trim();
+            if (accountRepository.existsByLecturerCode(trimmedLecturerCode)) {
+                // Find account by lecturerCode
+                List<Account> lecturers = accountRepository.findAllLecturers();
+                Optional<Account> existingAccountByCode = lecturers.stream()
+                        .filter(acc -> trimmedLecturerCode.equals(acc.getLecturerCode()))
+                        .findFirst();
+
+                if (existingAccountByCode.isPresent()) {
+                    return existingAccountByCode.get(); // Return existing lecturer account
+                }
+            }
+        }
+
+        // Lecturer doesn't exist, create new account
+        Account account = new Account();
+
+        // Set lecturer code if provided
+        if (lecturerCode != null && !lecturerCode.trim().isEmpty()) {
+            account.setLecturerCode(lecturerCode.trim());
+        } else {
+            account.setLecturerCode("");
+        }
+
+        // Validate full name
+        if (fullName == null || fullName.trim().isEmpty()) {
+            throw new RuntimeException("Full Name is required");
+        }
+
+        // Set account properties
+        account.setEmail(email);
+        account.setFullName(fullName.trim());
+        account.setPhone(phone != null ? phone.trim() : "");
+        account.setStudentCode(""); // Lecturer doesn't have student code
+        // Password default is "1"
+        account.setPasswordHash(passwordEncoder.encode("1"));
+        account.setRole(role);
+        account.setIsActive(true);
+
+        // Create wallet for lecturer
+        Wallet wallet = new Wallet();
+        wallet.setBalance(java.math.BigDecimal.ZERO);
+        wallet.setCurrency("VND");
+        wallet.setActive(true);
+        wallet.setAccount(account);
+        account.setWallet(wallet);
+
+        // Save new account
+        return accountRepository.save(account);
     }
 
     private void createOrAssignClassForLecturer(Account lecturer, String classCode, String semester, int rowNumber, List<String> errors) {
@@ -581,6 +738,70 @@ public class ExcelImportServiceImpl implements IExcelImportService {
 
     private boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
+    }
+
+    /**
+     * Validate email format using simple regex pattern
+     * @param email Email string to validate
+     * @return true if email format is valid, false otherwise
+     */
+    private boolean isValidEmailFormat(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return false;
+        }
+        // Simple email validation pattern
+        String emailPattern = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        return email.trim().matches(emailPattern);
+    }
+
+    /**
+     * Validate file format by checking header row
+     * @param sheet Excel sheet to validate
+     * @param role Role type (STUDENT or LECTURER)
+     * @return true if header row matches expected format, false otherwise
+     */
+    private boolean validateFileFormat(Sheet sheet, Roles role) {
+        Row headerRow = sheet.getRow(0);
+        if (headerRow == null) {
+            return false;
+        }
+
+        if ("STUDENT".equals(role.getName())) {
+            // For students: Expected columns: studentCode, StudentName, email, phone, StudentClass
+            String colA = getCellValueAsString(headerRow.getCell(0));
+            String colB = getCellValueAsString(headerRow.getCell(1));
+            String colC = getCellValueAsString(headerRow.getCell(2));
+
+            // Check if header contains expected keywords (case insensitive)
+            boolean hasStudentCode = colA != null && (colA.toLowerCase().contains("studentcode") ||
+                    colA.toLowerCase().contains("code") ||
+                    colA.toLowerCase().contains("mã"));
+            boolean hasName = colB != null && (colB.toLowerCase().contains("name") ||
+                    colB.toLowerCase().contains("tên"));
+            boolean hasEmail = colC != null && colC.toLowerCase().contains("email");
+
+            // At least email column should be present
+            return hasEmail;
+        } else if ("LECTURER".equals(role.getName())) {
+            // For lecturers: Expected columns: lecturer_code, email, fullname, phone, class_code, Semester
+            String colA = getCellValueAsString(headerRow.getCell(0));
+            String colB = getCellValueAsString(headerRow.getCell(1));
+            String colC = getCellValueAsString(headerRow.getCell(2));
+
+            // Check if header contains expected keywords (case insensitive)
+            boolean hasLecturerCode = colA != null && (colA.toLowerCase().contains("lecturer") ||
+                    colA.toLowerCase().contains("code") ||
+                    colA.toLowerCase().contains("mã"));
+            boolean hasEmail = colB != null && colB.toLowerCase().contains("email");
+            boolean hasName = colC != null && (colC.toLowerCase().contains("name") ||
+                    colC.toLowerCase().contains("fullname") ||
+                    colC.toLowerCase().contains("tên"));
+
+            // At least email column should be present
+            return hasEmail;
+        }
+
+        return false;
     }
 
     private String getCellValueAsString(Cell cell) {

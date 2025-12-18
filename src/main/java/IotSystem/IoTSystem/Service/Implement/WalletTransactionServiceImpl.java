@@ -169,9 +169,14 @@ public class WalletTransactionServiceImpl implements IWalletTransactionService {
             throw new RuntimeException("Wallet not found");
         }
 
+        // Get current balance before transaction
+        BigDecimal currentBalance = wallet.getBalance() != null ? wallet.getBalance() : BigDecimal.ZERO;
+        Double previousBalance = currentBalance.doubleValue();
+
         // Create transaction
         WalletTransaction transaction = new WalletTransaction();
         transaction.setAmount(amount);
+        transaction.setPreviousBalance(previousBalance);
         transaction.setTransactionType(Wallet_Transaction_Type.TOP_UP);
         transaction.setTransactionStatus(Wallet_Transaction_Status.COMPLETED);
         transaction.setDescription(description != null ? description : "Top-up wallet");
@@ -183,7 +188,7 @@ public class WalletTransactionServiceImpl implements IWalletTransactionService {
         transaction = walletTransactionRepository.save(transaction);
 
         // Update wallet balance
-        BigDecimal currentBalance = wallet.getBalance() != null ? wallet.getBalance() : BigDecimal.ZERO;
+
         BigDecimal newBalance = currentBalance.add(BigDecimal.valueOf(amount));
         wallet.setBalance(newBalance);
         wallet.setUpdatedAt(LocalDateTime.now());
@@ -195,6 +200,7 @@ public class WalletTransactionServiceImpl implements IWalletTransactionService {
             transactionResponse.setId(transaction.getId());
             transactionResponse.setType(transaction.getTransactionType().name());
             transactionResponse.setAmount(transaction.getAmount());
+            transactionResponse.setPreviousBalance(transaction.getPreviousBalance());
             transactionResponse.setDescription(transaction.getDescription());
             transactionResponse.setStatus(transaction.getTransactionStatus().name());
             transactionResponse.setCreatedAt(transaction.getCreatedAt());
