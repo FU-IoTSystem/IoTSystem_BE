@@ -11,6 +11,8 @@ public interface IWalletTransactionService {
 
     WalletTransaction createTopUp(Double amount, String description);
 
+    WalletTransaction transfer(String recipientEmail, Double amount, String description);
+
     void delete(UUID id);
 
     List<TransactionHistoryResponse> getTransactionHistory();

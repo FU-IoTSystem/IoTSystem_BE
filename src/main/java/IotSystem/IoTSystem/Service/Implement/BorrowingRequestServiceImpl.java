@@ -3,7 +3,10 @@ package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Entities.Account;
+import IotSystem.IoTSystem.Model.Entities.BorrowingGroup;
 import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
+import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
+import IotSystem.IoTSystem.Model.Entities.StudentGroup;
 import IotSystem.IoTSystem.Model.Entities.Enum.KitType;
 import IotSystem.IoTSystem.Model.Entities.Enum.RequestType;
 import IotSystem.IoTSystem.Model.Entities.Enum.Status.Wallet_Transaction_Status;
@@ -18,9 +21,21 @@ import IotSystem.IoTSystem.Model.Response.TransactionHistoryResponse;
 import IotSystem.IoTSystem.Model.Request.BorrowingRequestCreateRequest;
 import IotSystem.IoTSystem.Model.Request.ComponentRentalRequest;
 import IotSystem.IoTSystem.Model.Response.BorrowingRequestResponse;
+import IotSystem.IoTSystem.Model.Response.BorrowPenaltyStatsResponse;
 import IotSystem.IoTSystem.Model.Entities.Enum.GroupRoles;
-import IotSystem.IoTSystem.Repository.*;
+import IotSystem.IoTSystem.Repository.AccountRepository;
+import IotSystem.IoTSystem.Repository.BorrowingGroupRepository;
+import IotSystem.IoTSystem.Repository.BorrowingRequestRepository;
+import IotSystem.IoTSystem.Repository.ClassAssignemntRepository;
+import IotSystem.IoTSystem.Repository.KitComponentRepository;
+import IotSystem.IoTSystem.Repository.KitsRepository;
+import IotSystem.IoTSystem.Repository.PenaltyRepository;
+import IotSystem.IoTSystem.Repository.RequestKitComponentRepository;
+import IotSystem.IoTSystem.Repository.StudentGroupRepository;
+import IotSystem.IoTSystem.Repository.WalletRepository;
+import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
 import IotSystem.IoTSystem.Service.IBorrowingRequestService;
+import IotSystem.IoTSystem.Service.Implement.QRCodeService;
 import IotSystem.IoTSystem.Service.WebSocketService;
 import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +83,12 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
     @Autowired
     private WebSocketService webSocketService;
 
+    @Autowired
+    private ClassAssignemntRepository classAssignemntRepository;
+
+    @Autowired
+    private StudentGroupRepository studentGroupRepository;
+
 
     @Override
     public List<BorrowingRequestResponse> getAll() {
@@ -86,11 +107,15 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         Account account = accountRepository.findById(request.getAccountID()).orElseThrow(() ->
                 new ResourceNotFoundException("Did not found Account with ID: " + request.getAccountID()));
 
+        // Validate student is in active class (for students only)
+        validateStudentActiveClass(account);
+
         // Validate lecturer rental limits
         validateLecturerRentalLimits(account, kit);
 
-        // Validate leader rental limits
+        // Validate leader rental limits and active group requirement
         validateLeaderRentalLimits(account);
+        validateLeaderActiveGroup(account);
 
         BorrowingRequest borrow = new BorrowingRequest();
         borrow.setKit(kit);
@@ -140,6 +165,12 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
     public BorrowingRequestResponse createComponentRequest(ComponentRentalRequest request) {
         // Get current user from security context
         Account account = getCurrentUser();
+
+        // Validate student is in active class (for students only)
+        validateStudentActiveClass(account);
+
+        // Validate leader has active group (for leaders only)
+        validateLeaderActiveGroup(account);
 
         // Get component
         Kit_Component component = kitComponentRepository.findById(request.getKitComponentsId())
@@ -211,6 +242,33 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
     }
 
     /**
+     * Validate student is in active class
+     * Students can only use rent services if they are in an active class
+     * If student is in inactive class, they must join a new active class first
+     */
+    private void validateStudentActiveClass(Account account) {
+        // Check if account is a student
+        if (account.getRole() == null || !account.getRole().getName().equalsIgnoreCase("STUDENT")) {
+            return; // Not a student, skip validation
+        }
+
+        // Get all class assignments for this student
+        List<ClassAssignment> assignments = classAssignemntRepository.findByAccount(account);
+
+        if (assignments.isEmpty()) {
+            throw new RuntimeException("Student is not assigned to any class. Please join a class first to use rent services.");
+        }
+
+        // Check if student has at least one active class assignment
+        boolean hasActiveClass = assignments.stream()
+                .anyMatch(assignment -> assignment.getClazz() != null && assignment.getClazz().isStatus());
+
+        if (!hasActiveClass) {
+            throw new RuntimeException("Student is in an inactive class. Please join a new active class to enable rent services.");
+        }
+    }
+
+    /**
      * Validate lecturer rental limits
      * Lecturers can rent maximum 2 kits: 1 STUDENT_KIT and 1 LECTURER_KIT
      * They cannot rent:
@@ -278,6 +336,39 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         // Leader can only have 1 active request at a time
         if (!activeRequests.isEmpty()) {
             throw new RuntimeException("Leader can only rent 1 kit at a time. You already have an active rental request. Please wait until your current request is approved, rejected, or returned before requesting another kit.");
+        }
+    }
+
+    /**
+     * Validate leader has active group
+     * Leaders must be in an active group to rent kits
+     * If leader's group is inactive (due to class being inactive), they must join a new active group first
+     */
+    private void validateLeaderActiveGroup(Account account) {
+        // Get all borrowing groups for this account with LEADER role
+        List<BorrowingGroup> leaderGroups = borrowingGroupRepository.findByAccountId(account.getId())
+                .stream()
+                .filter(bg -> bg.getRoles() == GroupRoles.LEADER)
+                .collect(Collectors.toList());
+
+        if (leaderGroups.isEmpty()) {
+            return; // Not a leader, skip validation
+        }
+
+        // Check if leader has at least one active group
+        // Group must be active AND BorrowingGroup must be active
+        boolean hasActiveGroup = leaderGroups.stream()
+                .anyMatch(bg -> {
+                    if (bg.getStudentGroup() == null) {
+                        return false;
+                    }
+                    StudentGroup studentGroup = bg.getStudentGroup();
+                    // Check both StudentGroup status and BorrowingGroup isActive
+                    return studentGroup.isStatus() && bg.isActive();
+                });
+
+        if (!hasActiveGroup) {
+            throw new RuntimeException("Leader must be in an active group to rent kits. Your group has been disabled because the class is inactive. Please join a new active group first.");
         }
     }
 
@@ -357,6 +448,9 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
 
                 // Check if wallet has enough balance
                 if (currentBalance.compareTo(depositAmount) >= 0) {
+                    // Get previous balance before transaction
+                    Double previousBalance = currentBalance.doubleValue();
+
                     BigDecimal newBalance = currentBalance.subtract(depositAmount);
                     wallet.setBalance(newBalance);
                     wallet.setUpdatedAt(LocalDateTime.now());
@@ -365,6 +459,7 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
                     // Create wallet transaction record
                     WalletTransaction transaction = new WalletTransaction();
                     transaction.setAmount(existing.getDepositAmount());
+                    transaction.setPreviousBalance(previousBalance);
                     transaction.setTransactionType(Wallet_Transaction_Type.RENTAL_FEE);
                     transaction.setTransactionStatus(Wallet_Transaction_Status.COMPLETED);
 
@@ -448,6 +543,10 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
                     if (wallet != null) {
                         BigDecimal depositAmount = BigDecimal.valueOf(existing.getDepositAmount());
                         BigDecimal currentBalance = wallet.getBalance() != null ? wallet.getBalance() : BigDecimal.ZERO;
+
+                        // Get previous balance before transaction
+                        Double previousBalance = currentBalance.doubleValue();
+
                         BigDecimal newBalance = currentBalance.add(depositAmount);
 
                         wallet.setBalance(newBalance);
@@ -457,6 +556,7 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
                         // Create refund transaction
                         WalletTransaction refundTransaction = new WalletTransaction();
                         refundTransaction.setAmount(existing.getDepositAmount());
+                        refundTransaction.setPreviousBalance(previousBalance);
                         refundTransaction.setTransactionType(Wallet_Transaction_Type.REFUND);
                         refundTransaction.setTransactionStatus(Wallet_Transaction_Status.COMPLETED);
                         refundTransaction.setDescription("Refund from rental deposit - kit returned without penalty. Borrowing Request: " + existing.getId());
@@ -472,6 +572,7 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
                             transactionResponse.setId(refundTransaction.getId());
                             transactionResponse.setType(refundTransaction.getTransactionType().name());
                             transactionResponse.setAmount(refundTransaction.getAmount());
+                            transactionResponse.setPreviousBalance(refundTransaction.getPreviousBalance());
                             transactionResponse.setDescription(refundTransaction.getDescription());
                             transactionResponse.setStatus(refundTransaction.getTransactionStatus().name());
                             transactionResponse.setCreatedAt(refundTransaction.getCreatedAt());
@@ -572,6 +673,18 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         List<BorrowingRequest> borrows = borrowingRequestRepository.findByStatusIn(statuses);
         return borrows.stream()
                 .map(BorrowingRequestMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BorrowPenaltyStatsResponse> getBorrowPenaltyStats() {
+        List<BorrowingRequestRepository.BorrowPenaltyStats> projections = borrowingRequestRepository.aggregateBorrowAndPenalty();
+        return projections.stream()
+                .map(proj -> new BorrowPenaltyStatsResponse(
+                        proj.getTotalBorrow(),
+                        proj.getTotalPenalty(),
+                        proj.getStatDate()
+                ))
                 .collect(Collectors.toList());
     }
 }

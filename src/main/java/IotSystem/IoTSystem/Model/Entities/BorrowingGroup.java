@@ -30,4 +30,6 @@ public class BorrowingGroup extends Base{
     @ManyToOne
     @JoinColumn(name="account_id")
     private Account account;
+
+    private boolean isActive = true;
 }

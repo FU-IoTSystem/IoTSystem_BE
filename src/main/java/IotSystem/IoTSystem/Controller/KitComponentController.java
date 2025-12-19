@@ -66,7 +66,7 @@ public class KitComponentController {
     @PostMapping("/import")
     public ResponseEntity<ExcelImportResponse> importComponents(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("kitId") UUID kitId,
+            @RequestParam(value = "kitId", required = false) UUID kitId,
             @RequestParam(value = "sheetName", required = false) String sheetName) {
 
         try {

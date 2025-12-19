@@ -18,17 +18,20 @@ public class BorrowingGroupResponse {
     private GroupRoles roles;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
+
     // Student Group details
     private UUID studentGroupId;
     private String studentGroupName;
     private UUID classId;
     private String className;
-    
+
     // Account details
     private UUID accountId;
     private String accountName;
     private String accountEmail;
     private String accountPhone;
     private String studentCode;
+
+    // Active status
+    private Boolean isActive;
 }

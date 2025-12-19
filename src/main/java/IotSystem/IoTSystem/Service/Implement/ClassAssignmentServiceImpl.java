@@ -6,6 +6,7 @@ import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
 import IotSystem.IoTSystem.Model.Entities.Classes;
 import IotSystem.IoTSystem.Model.Entities.Roles;
 import IotSystem.IoTSystem.Model.Mappers.ClassAssignmentMapper;
+import IotSystem.IoTSystem.Model.Mappers.ClassResponseMapper;
 import IotSystem.IoTSystem.Model.Request.ClassAssignmentRequest;
 import IotSystem.IoTSystem.Model.Response.ClassAssignmentResponse;
 import IotSystem.IoTSystem.Model.Response.ClassResponse;
@@ -82,6 +83,23 @@ public class ClassAssignmentServiceImpl implements IClassAssignmentService {
         Optional<ClassAssignment> existingAssignment = classAssignemntRepository.findByClazzAndAccount(classes, account);
         if (existingAssignment.isPresent()) {
             throw new RuntimeException("Assignment already exists for this class and account");
+        }
+
+        // For students: validate that old class is inactive before joining new class
+        Roles studentRole = rolesRepository.findByName("STUDENT")
+                .orElseThrow(() -> new ResourceNotFoundException("STUDENT role not found"));
+
+        if (account.getRole() != null && account.getRole().getId().equals(studentRole.getId())) {
+            // Get all existing class assignments for this student
+            List<ClassAssignment> existingAssignments = classAssignemntRepository.findByAccount(account);
+
+            // Check if student has any active class assignments
+            boolean hasActiveClass = existingAssignments.stream()
+                    .anyMatch(assignment -> assignment.getClazz() != null && assignment.getClazz().isStatus());
+
+            if (hasActiveClass) {
+                throw new RuntimeException("Student is already in an active class. Please wait until your current class becomes inactive before joining a new class.");
+            }
         }
 
         ClassAssignment assignment = new ClassAssignment();

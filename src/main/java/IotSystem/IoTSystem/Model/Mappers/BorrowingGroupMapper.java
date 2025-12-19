@@ -15,6 +15,8 @@ public class BorrowingGroupMapper {
         borrowingGroup.setRoles(request.getRoles());
         borrowingGroup.setStudentGroup(studentGroup);
         borrowingGroup.setAccount(account);
+        // Set isActive: default to true if not specified, or use request value
+        borrowingGroup.setActive(request.getIsActive() != null ? request.getIsActive() : true);
         return borrowingGroup;
     }
 
@@ -28,15 +30,16 @@ public class BorrowingGroupMapper {
                 .updatedAt(entity.getUpdatedAt())
                 .studentGroupId(entity.getStudentGroup() != null ? entity.getStudentGroup().getId() : null)
                 .studentGroupName(entity.getStudentGroup() != null ? entity.getStudentGroup().getGroupName() : null)
-                .classId(entity.getStudentGroup() != null && entity.getStudentGroup().getClazz() != null 
+                .classId(entity.getStudentGroup() != null && entity.getStudentGroup().getClazz() != null
                         ? entity.getStudentGroup().getClazz().getId() : null)
-                .className(entity.getStudentGroup() != null && entity.getStudentGroup().getClazz() != null 
+                .className(entity.getStudentGroup() != null && entity.getStudentGroup().getClazz() != null
                         ? entity.getStudentGroup().getClazz().getClassCode() : null)
                 .accountId(entity.getAccount() != null ? entity.getAccount().getId() : null)
                 .accountName(entity.getAccount() != null ? entity.getAccount().getFullName() : null)
                 .accountEmail(entity.getAccount() != null ? entity.getAccount().getEmail() : null)
                 .accountPhone(entity.getAccount() != null ? entity.getAccount().getPhone() : null)
                 .studentCode(entity.getAccount() != null ? entity.getAccount().getStudentCode() : null)
+                .isActive(entity.isActive())
                 .build();
     }
 
