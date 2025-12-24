@@ -7,6 +7,7 @@ import IotSystem.IoTSystem.Model.Request.BorrowingRequestCreateRequest;
 import IotSystem.IoTSystem.Model.Request.ComponentRentalRequest;
 import IotSystem.IoTSystem.Model.Response.ApiResponse;
 import IotSystem.IoTSystem.Model.Response.BorrowingRequestResponse;
+import IotSystem.IoTSystem.Model.Response.BorrowPenaltyStatsResponse;
 import IotSystem.IoTSystem.Service.IBorrowingRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -56,6 +57,19 @@ public class BorrowingRequestController {
         response.setStatus(HTTPStatus.Ok);
         response.setMessage("Fetched borrowing requests by statuses successfully");
         response.setData(borrows);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/stats/borrow-penalty")
+    public ResponseEntity<ApiResponse<List<BorrowPenaltyStatsResponse>>> getBorrowPenaltyStats() {
+        List<BorrowPenaltyStatsResponse> stats = borrowingRequestService.getBorrowPenaltyStats();
+
+        ApiResponse<List<BorrowPenaltyStatsResponse>> response = new ApiResponse<>();
+        response.setStatus(HTTPStatus.Ok);
+        response.setMessage("Fetched borrow and penalty stats successfully");
+        response.setData(stats);
+        response.setTotal(stats.size());
 
         return ResponseEntity.ok(response);
     }
