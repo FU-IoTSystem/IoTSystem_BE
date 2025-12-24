@@ -4,6 +4,7 @@ import IotSystem.IoTSystem.Model.Entities.Penalty;
 import IotSystem.IoTSystem.Model.Entities.PenaltyDetail;
 import IotSystem.IoTSystem.Model.Entities.PenaltyPolicies;
 import IotSystem.IoTSystem.Model.Mappers.PenaltyDetailMapper;
+import IotSystem.IoTSystem.Model.Mappers.PenaltyMapper;
 import IotSystem.IoTSystem.Model.Request.PenaltyDetailRequest;
 import IotSystem.IoTSystem.Model.Response.PenaltyDetailResponse;
 import IotSystem.IoTSystem.Repository.PenaltyDetailRepository;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,6 +47,7 @@ public class PenaltyDetailServiceImpl implements IPenaltyDetailService {
         PenaltyDetail detail = new PenaltyDetail();
         detail.setAmount(request.getAmount());
         detail.setDescription(request.getDescription());
+        detail.setImageUrl(request.getImageUrl());
 
         // Set createdAt - use request value or current date
         if (request.getCreatedAt() != null) {
@@ -89,6 +92,10 @@ public class PenaltyDetailServiceImpl implements IPenaltyDetailService {
 
         if (request.getDescription() != null) {
             detail.setDescription(request.getDescription());
+        }
+
+        if (request.getImageUrl() != null) {
+            detail.setImageUrl(request.getImageUrl());
         }
 
         // Update relationships if needed

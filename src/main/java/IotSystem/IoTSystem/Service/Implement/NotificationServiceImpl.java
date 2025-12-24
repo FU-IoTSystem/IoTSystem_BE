@@ -2,6 +2,7 @@ package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Entities.Account;
+import IotSystem.IoTSystem.Model.Entities.Enum.NotificationSubType;
 import IotSystem.IoTSystem.Model.Entities.Notification;
 import IotSystem.IoTSystem.Model.Entities.Roles;
 import IotSystem.IoTSystem.Model.Mappers.NotificationMapper;
@@ -122,6 +123,14 @@ public class NotificationServiceImpl implements INotificationService {
                 defaultTitle = "Nạp tiền thất bại";
                 defaultMessage = "Giao dịch nạp tiền không thành công. Vui lòng thử lại hoặc liên hệ hỗ trợ.";
             }
+            case TRANSFER_SENT -> {
+                defaultTitle = "Chuyển tiền thành công";
+                defaultMessage = "Bạn đã chuyển tiền thành công.";
+            }
+            case TRANSFER_RECEIVED -> {
+                defaultTitle = "Nhận tiền thành công";
+                defaultMessage = "Bạn đã nhận tiền chuyển từ người dùng khác.";
+            }
             case OVERDUE_RETURN -> {
                 defaultTitle = "Cảnh báo: Trễ hạn trả kit";
                 defaultMessage = "Bạn có đơn mượn kit đã quá hạn. Vui lòng trả kit sớm để tránh phát sinh thêm phí phạt.";
@@ -137,6 +146,10 @@ public class NotificationServiceImpl implements INotificationService {
             case RENTAL_REJECTED -> {
                 defaultTitle = "Thông báo từ QTV";
                 defaultMessage = "Yêu cầu của bạn đã bị từ chối.";
+            }
+            case LECTURER_DELETE_BLOCKED_BY_CLASS -> {
+                defaultTitle = "Không thể xóa giảng viên";
+                defaultMessage = "Không thể xóa giảng viên vì giảng viên này đang được gán vào lớp học. Vui lòng xóa hoặc thay đổi gán giảng viên cho các lớp này trước khi xóa giảng viên.";
             }
             default -> {
                 defaultTitle = request.getSubType().name();

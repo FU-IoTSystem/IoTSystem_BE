@@ -8,10 +8,16 @@ import IotSystem.IoTSystem.Model.Response.PenaltyDetailResponse;
 import IotSystem.IoTSystem.Service.IPenaltyDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -110,6 +116,65 @@ public class PenaltyDetailController {
         response.setMessage("Fetched penalty details by policies ID successfully");
         response.setData(details);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Map<String, String>>> uploadImage(@RequestParam("file") MultipartFile file) {
+        try {
+            // Validate file
+            if (file.isEmpty()) {
+                ApiResponse<Map<String, String>> errorResponse = new ApiResponse<>();
+                errorResponse.setStatus(HTTPStatus.BadRequest);
+                errorResponse.setMessage("File is empty");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+
+            // Validate file type (only images)
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                ApiResponse<Map<String, String>> errorResponse = new ApiResponse<>();
+                errorResponse.setStatus(HTTPStatus.BadRequest);
+                errorResponse.setMessage("File must be an image");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+
+            // Validate file size (max 5MB)
+            if (file.getSize() > 5 * 1024 * 1024) {
+                ApiResponse<Map<String, String>> errorResponse = new ApiResponse<>();
+                errorResponse.setStatus(HTTPStatus.BadRequest);
+                errorResponse.setMessage("File size must not exceed 5MB");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+
+            // Convert image to base64
+            byte[] imageBytes = file.getBytes();
+            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+            String imageDataUrl = "data:" + contentType + ";base64," + base64Image;
+
+            // Return image URL (base64 data URL)
+            Map<String, String> result = new HashMap<>();
+            result.put("imageUrl", imageDataUrl);
+            result.put("fileName", file.getOriginalFilename());
+            result.put("contentType", contentType);
+            result.put("size", String.valueOf(file.getSize()));
+
+            ApiResponse<Map<String, String>> response = new ApiResponse<>();
+            response.setStatus(HTTPStatus.Ok);
+            response.setMessage("Image uploaded successfully");
+            response.setData(result);
+
+            return ResponseEntity.ok(response);
+        } catch (IOException e) {
+            ApiResponse<Map<String, String>> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus(HTTPStatus.InternalServerError);
+            errorResponse.setMessage("Failed to upload image: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        } catch (Exception e) {
+            ApiResponse<Map<String, String>> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus(HTTPStatus.InternalServerError);
+            errorResponse.setMessage("Failed to process image: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 }
 

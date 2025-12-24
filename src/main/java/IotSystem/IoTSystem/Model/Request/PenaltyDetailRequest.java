@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.UUID;
 
 @Data
@@ -16,6 +17,7 @@ public class PenaltyDetailRequest {
     private UUID id;
     private Double amount;
     private String description;
+    private String imageUrl;
     private LocalDateTime createdAt;
     private UUID policiesId;
     private UUID penaltyId;

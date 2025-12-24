@@ -63,6 +63,10 @@ public class BorrowingGroupServiceImpl implements IBorrowingGroupService {
 
         // Create borrowing group
         BorrowingGroup borrowingGroup = BorrowingGroupMapper.toEntity(request, studentGroup, account);
+        // Set isActive: default to true if not specified in request
+        if (request.getIsActive() == null) {
+            borrowingGroup.setActive(true);
+        }
         BorrowingGroup savedBorrowingGroup = borrowingGroupRepository.save(borrowingGroup);
 
         return BorrowingGroupMapper.toResponse(savedBorrowingGroup);
@@ -75,6 +79,11 @@ public class BorrowingGroupServiceImpl implements IBorrowingGroupService {
 
         // Update fields
         existingBorrowingGroup.setRoles(request.getRoles());
+
+        // Update isActive if provided
+        if (request.getIsActive() != null) {
+            existingBorrowingGroup.setActive(request.getIsActive());
+        }
 
         // Update relationships if provided
         if (request.getStudentGroupId() != null) {

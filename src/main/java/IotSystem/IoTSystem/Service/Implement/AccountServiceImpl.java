@@ -30,6 +30,9 @@ import IotSystem.IoTSystem.Repository.WalletRepository;
 import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
 import IotSystem.IoTSystem.Repository.PenaltyDetailRepository;
 import IotSystem.IoTSystem.Service.IAccountService;
+import IotSystem.IoTSystem.Service.INotificationService;
+import IotSystem.IoTSystem.Model.Request.NotificationRequest;
+import IotSystem.IoTSystem.Model.Entities.Enum.NotificationSubType;
 import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -102,6 +105,9 @@ public class AccountServiceImpl implements IAccountService {
 
     @Autowired
     private PenaltyDetailRepository penaltyDetailRepository;
+
+    @Autowired
+    private INotificationService notificationService;
 
 
     //lấy user hiện tại của hệ thống
@@ -294,11 +300,31 @@ public class AccountServiceImpl implements IAccountService {
         }
 
         if(role.getName().equals("LECTURER")){
-            account.setLecturerCode(request.getLecturerCode());
+            // Update lecturerCode if provided in request
+            if (request.getLecturerCode() != null && !request.getLecturerCode().trim().isEmpty()) {
+                account.setLecturerCode(request.getLecturerCode().trim());
+            } else if (account.getRole() != null && !account.getRole().getName().equals("LECTURER")) {
+                // If changing from non-LECTURER role to LECTURER and lecturerCode not provided, set to null
+                account.setLecturerCode(null);
+            }
+            // If already LECTURER and lecturerCode not provided, keep existing value
             account.setStudentCode(null); // Clear studentCode if changing from student to lecturer
         }
 
         accountRepository.save(account);
+
+        // If classCode is provided and account is STUDENT, update class assignment
+        if (role.getName().equals("STUDENT") && request.getClassCode() != null && !request.getClassCode().trim().isEmpty()) {
+            updateStudentClassAssignment(account, request.getClassCode().trim());
+        } else if (role.getName().equals("STUDENT") && (request.getClassCode() == null || request.getClassCode().trim().isEmpty())) {
+            // If classCode is empty/null, remove all class assignments for this student
+            removeAllClassAssignmentsForStudent(account);
+        }
+
+        // If classCode is provided and account is LECTURER, assign lecturer to class
+        if (role.getName().equals("LECTURER") && request.getClassCode() != null && !request.getClassCode().trim().isEmpty()) {
+            assignLecturerToClass(account, request.getClassCode().trim(), request.getSemester());
+        }
 
         return ResponseRegisterMapper.toResponse(account);
 
@@ -471,6 +497,7 @@ public class AccountServiceImpl implements IAccountService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ProfileResponse createAStudent(RegisterRequest request) {
         Account account = new Account();
         if (accountRepository.existsByEmail(request.getUsername())) {
@@ -506,10 +533,116 @@ public class AccountServiceImpl implements IAccountService {
         account.setWallet(wallet);
 
         accountRepository.save(account);
+
+        // If classCode is provided, assign student to class
+        if (request.getClassCode() != null && !request.getClassCode().trim().isEmpty()) {
+            assignStudentToClass(account, request.getClassCode().trim());
+        }
+
         return AccountMapper.toProfileResponse(account);
     }
 
+    /**
+     * Update student class assignment by classCode
+     * Removes all existing class assignments for the student and creates a new one
+     * If class doesn't exist, create it with a random lecturer
+     * @param account The student account to assign
+     * @param classCode The class code to assign the student to
+     */
+    private void updateStudentClassAssignment(Account account, String classCode) {
+        // First, remove all existing class assignments for this student
+        removeAllClassAssignmentsForStudent(account);
+
+        // Then assign student to the new class
+        assignStudentToClass(account, classCode);
+    }
+
+    /**
+     * Remove all class assignments for a student
+     * @param account The student account
+     */
+    private void removeAllClassAssignmentsForStudent(Account account) {
+        try {
+            List<ClassAssignment> existingAssignments = classAssignmentRepository.findStudentAssignmentsByAccount(account);
+            for (ClassAssignment assignment : existingAssignments) {
+                classAssignmentRepository.delete(assignment);
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Could not remove existing class assignments for student: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Assign student to class by classCode
+     * If class doesn't exist, create it with a random lecturer
+     * @param account The student account to assign
+     * @param classCode The class code to assign the student to
+     */
+    private void assignStudentToClass(Account account, String classCode) {
+        try {
+            // Find class by class code, or create it if it doesn't exist
+            Classes clazz = classesRepository.findByClassCode(classCode).orElseGet(() -> {
+                // Create new class if it doesn't exist
+                Classes newClass = new Classes();
+                newClass.setClassCode(classCode);
+                newClass.setSemester(null); // Default to null if not specified
+                newClass.setStatus(true); // Default to active
+
+                // Set a random lecturer as the teacher for this class
+                List<Account> lecturers = accountRepository.findAll().stream()
+                        .filter(acc -> acc.getRole() != null && "LECTURER".equals(acc.getRole().getName()))
+                        .filter(acc -> acc.getIsActive() != null && acc.getIsActive())
+                        .collect(java.util.stream.Collectors.toList());
+
+                if (lecturers.isEmpty()) {
+                    throw new RuntimeException("No active lecturers found. Cannot create class without a lecturer.");
+                }
+
+                Account randomLecturer = lecturers.get(new java.util.Random().nextInt(lecturers.size()));
+                newClass.setAccount(randomLecturer);
+
+                Classes savedClass = classesRepository.save(newClass);
+
+                // Create ClassAssignment for lecturer when creating new class
+                Optional<ClassAssignment> existingLecturerAssignment =
+                        classAssignmentRepository.findByClazzAndAccount(savedClass, randomLecturer);
+
+                if (existingLecturerAssignment.isEmpty()) {
+                    ClassAssignment lecturerAssignment = new ClassAssignment();
+                    lecturerAssignment.setClazz(savedClass);
+                    lecturerAssignment.setAccount(randomLecturer);
+                    lecturerAssignment.setRole(randomLecturer.getRole());
+                    classAssignmentRepository.save(lecturerAssignment);
+                }
+
+                return savedClass;
+            });
+
+            // Check if assignment already exists for student
+            Optional<ClassAssignment> existingAssignment =
+                    classAssignmentRepository.findByClazzAndAccount(clazz, account);
+
+            if (existingAssignment.isEmpty()) {
+                // Create new class assignment for student
+                ClassAssignment assignment = new ClassAssignment();
+                assignment.setClazz(clazz);
+                assignment.setAccount(account);
+                assignment.setRole(account.getRole());
+                classAssignmentRepository.save(assignment);
+            }
+        } catch (Exception e) {
+            // Log error but don't fail the entire student creation
+            // If class assignment fails, student is still created
+            System.err.println("Warning: Could not assign student to class '" + classCode + "': " + e.getMessage());
+            e.printStackTrace();
+            // Optionally, you can throw exception to rollback student creation
+            // throw new RuntimeException("Could not assign student to class '" + classCode + "': " + e.getMessage());
+        }
+    }
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ProfileResponse createALecturer(RegisterRequest request) {
         Account account = new Account();
         if (accountRepository.existsByEmail(request.getUsername())) {
@@ -544,7 +677,83 @@ public class AccountServiceImpl implements IAccountService {
         account.setWallet(wallet);
 
         accountRepository.save(account);
+
+        // If classCode is provided, create class and assign lecturer to it
+        if (request.getClassCode() != null && !request.getClassCode().trim().isEmpty()) {
+            assignLecturerToClass(account, request.getClassCode().trim(), request.getSemester());
+        }
+
         return AccountMapper.toProfileResponse(account);
+    }
+
+    /**
+     * Assign lecturer to class by classCode
+     * If class doesn't exist, create it with this lecturer as teacher
+     * @param account The lecturer account to assign
+     * @param classCode The class code to assign the lecturer to
+     * @param semester The semester to set for the class (optional)
+     */
+    private void assignLecturerToClass(Account account, String classCode, String semester) {
+        try {
+            // Find class by class code, or create it if it doesn't exist
+            Classes clazz = classesRepository.findByClassCode(classCode).orElseGet(() -> {
+                // Create new class if it doesn't exist
+                Classes newClass = new Classes();
+                newClass.setClassCode(classCode);
+                // Set semester if provided, otherwise default to null
+                newClass.setSemester(semester != null && !semester.trim().isEmpty() ? semester.trim() : null);
+                newClass.setStatus(true); // Default to active
+                newClass.setAccount(account); // Set lecturer as teacher
+
+                Classes savedClass = classesRepository.save(newClass);
+
+                // Create ClassAssignment for lecturer when creating new class
+                Optional<ClassAssignment> existingLecturerAssignment =
+                        classAssignmentRepository.findByClazzAndAccount(savedClass, account);
+
+                if (existingLecturerAssignment.isEmpty()) {
+                    ClassAssignment lecturerAssignment = new ClassAssignment();
+                    lecturerAssignment.setClazz(savedClass);
+                    lecturerAssignment.setAccount(account);
+                    lecturerAssignment.setRole(account.getRole());
+                    classAssignmentRepository.save(lecturerAssignment);
+                }
+
+                return savedClass;
+            });
+
+            // If class already exists and semester is provided, update semester
+            if (semester != null && !semester.trim().isEmpty()) {
+                String trimmedSemester = semester.trim();
+                if (clazz.getSemester() == null || !trimmedSemester.equals(clazz.getSemester())) {
+                    clazz.setSemester(trimmedSemester);
+                    classesRepository.save(clazz);
+                }
+            }
+
+            // Check if assignment already exists for lecturer
+            Optional<ClassAssignment> existingAssignment =
+                    classAssignmentRepository.findByClazzAndAccount(clazz, account);
+
+            if (existingAssignment.isEmpty()) {
+                // Create new class assignment for lecturer
+                ClassAssignment assignment = new ClassAssignment();
+                assignment.setClazz(clazz);
+                assignment.setAccount(account);
+                assignment.setRole(account.getRole());
+                classAssignmentRepository.save(assignment);
+
+                // Also update the class's teacher if it doesn't have one
+                if (clazz.getAccount() == null) {
+                    clazz.setAccount(account);
+                    classesRepository.save(clazz);
+                }
+            }
+        } catch (Exception e) {
+            // Log error but don't fail the entire lecturer creation
+            System.err.println("Warning: Could not assign lecturer to class '" + classCode + "': " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -582,34 +791,28 @@ public class AccountServiceImpl implements IAccountService {
                 throw new RuntimeException("Failed to delete student groups: " + e.getMessage(), e);
             }
 
-            // 3. Delete Classes (where account is teacher)
-            // First, find all classes for this account
-            try {
-                List<Classes> classesToDelete = classesRepository.findAll().stream()
-                        .filter(cls -> cls.getAccount() != null && cls.getAccount().getId().equals(accountId))
-                        .toList();
+            // 3. Update Classes (where account is teacher) - set account to null and status to inactive
+            // If account is LECTURER, update classes instead of deleting them
+            if (account.getRole() != null && "LECTURER".equalsIgnoreCase(account.getRole().getName())) {
+                try {
+                    List<Classes> classesToUpdate = classesRepository.findAll().stream()
+                            .filter(cls -> cls.getAccount() != null && cls.getAccount().getId().equals(accountId))
+                            .toList();
 
-                // For each class, delete all related ClassAssignments first
-                for (Classes clazz : classesToDelete) {
-                    // Delete all ClassAssignments for this class
-                    List<ClassAssignment> assignments = classAssignmentRepository.findByClazz(clazz);
-                    for (ClassAssignment assignment : assignments) {
-                        classAssignmentRepository.delete(assignment);
+                    // Update each class: set account to null and status to false (inactive)
+                    for (Classes clazz : classesToUpdate) {
+                        clazz.setAccount(null);  // Set lecturer to N/A
+                        clazz.setStatus(false);  // Set status to Inactive
+                        classesRepository.save(clazz);
                     }
+                    classesRepository.flush();
+                } catch (Exception e) {
+                    System.err.println("Warning: Error updating classes for account " + accountId + ": " + e.getMessage());
+                    throw new RuntimeException("Failed to update classes: " + e.getMessage(), e);
                 }
-                classAssignmentRepository.flush();
-
-                // Now delete the classes
-                for (Classes clazz : classesToDelete) {
-                    classesRepository.delete(clazz);
-                }
-                classesRepository.flush();
-            } catch (Exception e) {
-                System.err.println("Warning: Error deleting classes for account " + accountId + ": " + e.getMessage());
-                throw new RuntimeException("Failed to delete classes: " + e.getMessage(), e);
             }
 
-            // 4. Delete remaining ClassAssignments (where account is student/lecturer but not class owner)
+            // 4. Delete ClassAssignments (where account is student/lecturer)
             try {
                 classAssignmentRepository.findAll().stream()
                         .filter(ca -> ca.getAccount() != null && ca.getAccount().getId().equals(accountId))

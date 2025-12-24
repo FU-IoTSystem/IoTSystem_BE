@@ -18,6 +18,7 @@ public class PenaltyDetailMapper {
         PenaltyDetail detail = new PenaltyDetail();
         detail.setAmount(request.getAmount());
         detail.setDescription(request.getDescription());
+        detail.setImageUrl(request.getImageUrl());
 
         // Handle createdAt conversion (Date -> LocalDateTime). If null, let service set current time.
         if (request.getCreatedAt() != null) {
@@ -38,6 +39,7 @@ public class PenaltyDetailMapper {
         response.setId(entity.getId());
         response.setAmount(entity.getAmount());
         response.setDescription(entity.getDescription());
+        response.setImageUrl(entity.getImageUrl());
 
         // Convert LocalDateTime -> Date for response consistency
         if (entity.getCreatedAt() != null) {
@@ -59,6 +61,9 @@ public class PenaltyDetailMapper {
         }
         if (request.getDescription() != null) {
             existing.setDescription(request.getDescription());
+        }
+        if (request.getImageUrl() != null) {
+            existing.setImageUrl(request.getImageUrl());
         }
         if (request.getCreatedAt() != null) {
             existing.setCreatedAt(request.getCreatedAt());

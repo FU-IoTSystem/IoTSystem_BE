@@ -3,6 +3,7 @@ package IotSystem.IoTSystem.Controller;
 import IotSystem.IoTSystem.Model.Entities.Enum.Status.HTTPStatus;
 import IotSystem.IoTSystem.Model.Entities.WalletTransaction;
 import IotSystem.IoTSystem.Model.Request.TopUpRequest;
+import IotSystem.IoTSystem.Model.Request.TransferRequest;
 import IotSystem.IoTSystem.Model.Response.ApiResponse;
 import IotSystem.IoTSystem.Model.Response.TransactionHistoryResponse;
 import IotSystem.IoTSystem.Service.IWalletTransactionService;
@@ -68,6 +69,51 @@ public class WalletTransactionController {
             ApiResponse<WalletTransaction> errorResponse = new ApiResponse<>();
             errorResponse.setStatus(HTTPStatus.InternalServerError);
             errorResponse.setMessage("Failed to process top-up: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @PostMapping("/transfer")
+    public ResponseEntity<ApiResponse<WalletTransaction>> transfer(@RequestBody TransferRequest request) {
+        try {
+            // Validate request
+            if (request.getRecipientEmail() == null || request.getRecipientEmail().trim().isEmpty()) {
+                ApiResponse<WalletTransaction> errorResponse = new ApiResponse<>();
+                errorResponse.setStatus(HTTPStatus.BadRequest);
+                errorResponse.setMessage("Recipient email is required");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+
+            // Validate amount
+            if (request.getAmount() == null || request.getAmount() < 10000) {
+                ApiResponse<WalletTransaction> errorResponse = new ApiResponse<>();
+                errorResponse.setStatus(HTTPStatus.BadRequest);
+                errorResponse.setMessage("Amount must be at least 10,000 VND");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+
+            // Create transfer transaction
+            WalletTransaction transaction = service.transfer(
+                    request.getRecipientEmail(),
+                    request.getAmount(),
+                    request.getDescription()
+            );
+
+            ApiResponse<WalletTransaction> response = new ApiResponse<>();
+            response.setStatus(HTTPStatus.Ok);
+            response.setMessage("Transfer successful");
+            response.setData(transaction);
+
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            ApiResponse<WalletTransaction> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus(HTTPStatus.BadRequest);
+            errorResponse.setMessage(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            ApiResponse<WalletTransaction> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus(HTTPStatus.InternalServerError);
+            errorResponse.setMessage("Failed to process transfer: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }

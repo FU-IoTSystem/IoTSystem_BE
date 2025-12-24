@@ -2,13 +2,20 @@ package IotSystem.IoTSystem.Service.Implement;
 
 import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
+import IotSystem.IoTSystem.Model.Entities.Enum.NotificationSubType;
 import IotSystem.IoTSystem.Model.Entities.Enum.Status.Wallet_Transaction_Status;
 import IotSystem.IoTSystem.Model.Entities.Enum.Wallet_Transaction_Type;
 import IotSystem.IoTSystem.Model.Entities.Penalty;
 import IotSystem.IoTSystem.Model.Entities.Wallet;
 import IotSystem.IoTSystem.Model.Entities.WalletTransaction;
+import IotSystem.IoTSystem.Model.Request.NotificationRequest;
 import IotSystem.IoTSystem.Model.Response.TransactionHistoryResponse;
-import IotSystem.IoTSystem.Repository.*;
+import IotSystem.IoTSystem.Repository.AccountRepository;
+import IotSystem.IoTSystem.Repository.BorrowingRequestRepository;
+import IotSystem.IoTSystem.Repository.PenaltyRepository;
+import IotSystem.IoTSystem.Repository.WalletRepository;
+import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
+import IotSystem.IoTSystem.Service.INotificationService;
 import IotSystem.IoTSystem.Service.IWalletTransactionService;
 import IotSystem.IoTSystem.Service.WebSocketService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +51,9 @@ public class WalletTransactionServiceImpl implements IWalletTransactionService {
     @Autowired
     private WebSocketService webSocketService;
 
+    @Autowired
+    private INotificationService notificationService;
+
     @Override
     public List<TransactionHistoryResponse> getAll() {
         List<WalletTransaction> transactions = walletTransactionRepository.findAllExceptTopUp();
@@ -55,6 +65,7 @@ public class WalletTransactionServiceImpl implements IWalletTransactionService {
             response.setId(transaction.getId());
             response.setType(transaction.getTransactionType() != null ? transaction.getTransactionType().name() : null);
             response.setAmount(transaction.getAmount());
+            response.setPreviousBalance(transaction.getPreviousBalance());
             response.setDescription(transaction.getDescription());
             response.setStatus(transaction.getTransactionStatus() != null ? transaction.getTransactionStatus().name() : null);
             response.setCreatedAt(transaction.getCreatedAt());
@@ -188,7 +199,6 @@ public class WalletTransactionServiceImpl implements IWalletTransactionService {
         transaction = walletTransactionRepository.save(transaction);
 
         // Update wallet balance
-
         BigDecimal newBalance = currentBalance.add(BigDecimal.valueOf(amount));
         wallet.setBalance(newBalance);
         wallet.setUpdatedAt(LocalDateTime.now());
@@ -220,6 +230,187 @@ public class WalletTransactionServiceImpl implements IWalletTransactionService {
         return transaction;
     }
 
+    @Override
+    @Transactional
+    public WalletTransaction transfer(String recipientEmail, Double amount, String description) {
+        // Get current user (sender)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String senderEmail = auth.getName();
+        Account senderAccount = accountRepository.findByEmail(senderEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Validate amount
+        if (amount == null || amount < 10000) {
+            throw new RuntimeException("Amount must be at least 10,000 VND");
+        }
+
+        // Validate recipient email exists
+        if (recipientEmail == null || recipientEmail.trim().isEmpty()) {
+            throw new RuntimeException("Recipient email is required");
+        }
+
+        if (!accountRepository.existsByEmail(recipientEmail.trim())) {
+            throw new RuntimeException("Recipient email does not exist in the system");
+        }
+
+        // Get sender wallet
+        Wallet senderWallet = senderAccount.getWallet();
+        if (senderWallet == null) {
+            throw new RuntimeException("Sender wallet not found");
+        }
+
+        // Check if sender has sufficient balance
+        BigDecimal senderBalance = senderWallet.getBalance() != null ? senderWallet.getBalance() : BigDecimal.ZERO;
+        if (senderBalance.compareTo(BigDecimal.valueOf(amount)) < 0) {
+            throw new RuntimeException("Insufficient balance. Current balance: " + senderBalance.doubleValue() + " VND");
+        }
+
+        // Get recipient account
+        Account recipientAccount = accountRepository.findByEmail(recipientEmail.trim())
+                .orElseThrow(() -> new RuntimeException("Recipient not found"));
+
+        // Check if recipient is the same as sender
+        if (recipientAccount.getId().equals(senderAccount.getId())) {
+            throw new RuntimeException("Cannot transfer to yourself");
+        }
+
+        // Get recipient wallet
+        Wallet recipientWallet = recipientAccount.getWallet();
+        if (recipientWallet == null) {
+            throw new RuntimeException("Recipient wallet not found");
+        }
+
+        // Get current balance before transaction for sender
+        Double senderPreviousBalance = senderBalance.doubleValue();
+
+        // Create transaction for sender (outgoing transfer - negative amount)
+        WalletTransaction senderTransaction = new WalletTransaction();
+        senderTransaction.setAmount(-amount); // Negative amount for sender
+        senderTransaction.setPreviousBalance(senderPreviousBalance);
+        senderTransaction.setTransactionType(Wallet_Transaction_Type.TRANSFER);
+        senderTransaction.setTransactionStatus(Wallet_Transaction_Status.COMPLETED);
+        senderTransaction.setDescription(description != null ?
+                description + " (To: " + recipientEmail + ")" :
+                "Transfer to " + recipientEmail);
+        senderTransaction.setPaymentMethod("Wallet Transfer");
+        senderTransaction.setWallet(senderWallet);
+        senderTransaction.setCreatedAt(LocalDateTime.now());
+        senderTransaction.setUpdatedAt(LocalDateTime.now());
+
+        senderTransaction = walletTransactionRepository.save(senderTransaction);
+
+        // Update sender wallet balance
+        BigDecimal newSenderBalance = senderBalance.subtract(BigDecimal.valueOf(amount));
+        senderWallet.setBalance(newSenderBalance);
+        senderWallet.setUpdatedAt(LocalDateTime.now());
+        walletRepository.save(senderWallet);
+
+        // Get current balance before transaction for recipient
+        BigDecimal recipientBalance = recipientWallet.getBalance() != null ? recipientWallet.getBalance() : BigDecimal.ZERO;
+        Double recipientPreviousBalance = recipientBalance.doubleValue();
+
+        // Create transaction for recipient (incoming transfer - positive amount)
+        WalletTransaction recipientTransaction = new WalletTransaction();
+        recipientTransaction.setAmount(amount); // Positive amount for recipient
+        recipientTransaction.setPreviousBalance(recipientPreviousBalance);
+        recipientTransaction.setTransactionType(Wallet_Transaction_Type.TRANSFER);
+        recipientTransaction.setTransactionStatus(Wallet_Transaction_Status.COMPLETED);
+        recipientTransaction.setDescription(description != null ?
+                description + " (From: " + senderEmail + ")" :
+                "Transfer from " + senderEmail);
+        recipientTransaction.setPaymentMethod("Wallet Transfer");
+        recipientTransaction.setWallet(recipientWallet);
+        recipientTransaction.setCreatedAt(LocalDateTime.now());
+        recipientTransaction.setUpdatedAt(LocalDateTime.now());
+
+        recipientTransaction = walletTransactionRepository.save(recipientTransaction);
+
+        // Update recipient wallet balance
+        BigDecimal newRecipientBalance = recipientBalance.add(BigDecimal.valueOf(amount));
+        recipientWallet.setBalance(newRecipientBalance);
+        recipientWallet.setUpdatedAt(LocalDateTime.now());
+        walletRepository.save(recipientWallet);
+
+        // Send WebSocket updates to sender
+        try {
+            TransactionHistoryResponse senderTransactionResponse = new TransactionHistoryResponse();
+            senderTransactionResponse.setId(senderTransaction.getId());
+            senderTransactionResponse.setType(senderTransaction.getTransactionType().name());
+            senderTransactionResponse.setAmount(senderTransaction.getAmount());
+            senderTransactionResponse.setPreviousBalance(senderTransaction.getPreviousBalance());
+            senderTransactionResponse.setDescription(senderTransaction.getDescription());
+            senderTransactionResponse.setStatus(senderTransaction.getTransactionStatus().name());
+            senderTransactionResponse.setCreatedAt(senderTransaction.getCreatedAt());
+            senderTransactionResponse.setUpdatedAt(senderTransaction.getUpdatedAt());
+
+            java.util.Map<String, Object> senderWalletUpdate = new java.util.HashMap<>();
+            senderWalletUpdate.put("balance", newSenderBalance.doubleValue());
+            senderWalletUpdate.put("transaction", senderTransactionResponse);
+
+            webSocketService.sendWalletUpdateToUser(senderAccount.getId().toString(), senderWalletUpdate);
+            webSocketService.sendWalletTransactionToUser(senderAccount.getId().toString(), senderTransactionResponse);
+        } catch (Exception e) {
+            System.err.println("Error sending WebSocket update to sender: " + e.getMessage());
+        }
+
+        // Send WebSocket updates to recipient
+        try {
+            TransactionHistoryResponse recipientTransactionResponse = new TransactionHistoryResponse();
+            recipientTransactionResponse.setId(recipientTransaction.getId());
+            recipientTransactionResponse.setType(recipientTransaction.getTransactionType().name());
+            recipientTransactionResponse.setAmount(recipientTransaction.getAmount());
+            recipientTransactionResponse.setPreviousBalance(recipientTransaction.getPreviousBalance());
+            recipientTransactionResponse.setDescription(recipientTransaction.getDescription());
+            recipientTransactionResponse.setStatus(recipientTransaction.getTransactionStatus().name());
+            recipientTransactionResponse.setCreatedAt(recipientTransaction.getCreatedAt());
+            recipientTransactionResponse.setUpdatedAt(recipientTransaction.getUpdatedAt());
+
+            java.util.Map<String, Object> recipientWalletUpdate = new java.util.HashMap<>();
+            recipientWalletUpdate.put("balance", newRecipientBalance.doubleValue());
+            recipientWalletUpdate.put("transaction", recipientTransactionResponse);
+
+            webSocketService.sendWalletUpdateToUser(recipientAccount.getId().toString(), recipientWalletUpdate);
+            webSocketService.sendWalletTransactionToUser(recipientAccount.getId().toString(), recipientTransactionResponse);
+        } catch (Exception e) {
+            System.err.println("Error sending WebSocket update to recipient: " + e.getMessage());
+        }
+
+        // Create notification for sender
+        try {
+            NotificationRequest senderNotificationRequest = new NotificationRequest();
+            senderNotificationRequest.setSubType(NotificationSubType.TRANSFER_SENT);
+            senderNotificationRequest.setUserId(senderAccount.getId());
+            String formattedAmount = String.format("%,.0f", amount);
+            String senderMessage = "Bạn đã chuyển " + formattedAmount + " VND đến " + recipientEmail;
+            if (description != null && !description.trim().isEmpty()) {
+                senderMessage += " - " + description;
+            }
+            senderNotificationRequest.setMessage(senderMessage);
+            notificationService.create(senderNotificationRequest);
+        } catch (Exception e) {
+            System.err.println("Error creating notification for sender: " + e.getMessage());
+        }
+
+        // Create notification for recipient
+        try {
+            NotificationRequest recipientNotificationRequest = new NotificationRequest();
+            recipientNotificationRequest.setSubType(NotificationSubType.TRANSFER_RECEIVED);
+            recipientNotificationRequest.setUserId(recipientAccount.getId());
+            String formattedAmount = String.format("%,.0f", amount);
+            String recipientMessage = "Bạn đã nhận " + formattedAmount + " VND từ " + senderEmail;
+            if (description != null && !description.trim().isEmpty()) {
+                recipientMessage += " - " + description;
+            }
+            recipientNotificationRequest.setMessage(recipientMessage);
+            notificationService.create(recipientNotificationRequest);
+        } catch (Exception e) {
+            System.err.println("Error creating notification for recipient: " + e.getMessage());
+        }
+
+        // Return sender transaction as the main transaction
+        return senderTransaction;
+    }
+
     public void delete(UUID id) {
         walletTransactionRepository.deleteById(id);
     }
@@ -244,6 +435,7 @@ public class WalletTransactionServiceImpl implements IWalletTransactionService {
                 response.setId(transaction.getId());
                 response.setType(transaction.getTransactionType().name());
                 response.setAmount(transaction.getAmount());
+                response.setPreviousBalance(transaction.getPreviousBalance());
                 response.setDescription(transaction.getDescription());
                 response.setStatus(transaction.getTransactionStatus().name());
                 response.setCreatedAt(transaction.getCreatedAt());

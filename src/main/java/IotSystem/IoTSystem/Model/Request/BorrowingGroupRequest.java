@@ -16,4 +16,5 @@ public class BorrowingGroupRequest {
     private UUID studentGroupId;
     private UUID accountId;
     private GroupRoles roles;
+    private Boolean isActive;
 }

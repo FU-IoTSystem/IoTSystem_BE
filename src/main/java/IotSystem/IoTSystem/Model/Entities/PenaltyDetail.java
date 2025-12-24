@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.UUID;
 
 @Entity
@@ -21,20 +22,23 @@ public class PenaltyDetail extends Base {
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
-    
+
     @Column(name = "amount")
     private Double amount;
-    
+
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
-    
+
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-    
+
     @ManyToOne
     @JoinColumn(name = "policies_id")
     private PenaltyPolicies policies;
-    
+
     @ManyToOne
     @JoinColumn(name = "penalty_id")
     private Penalty penalty;

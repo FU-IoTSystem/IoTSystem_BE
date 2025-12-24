@@ -27,4 +27,11 @@ public interface ClassAssignemntRepository extends JpaRepository<ClassAssignment
     // Find all class assignments by class where account has STUDENT role
     @Query("SELECT ca FROM ClassAssignment ca WHERE ca.clazz = :clazz AND ca.account.role.name = 'STUDENT'")
     List<ClassAssignment> findStudentAssignmentsByClass(Classes clazz);
+
+    // Find all class assignments by account
+    List<ClassAssignment> findByAccount(Account account);
+
+    // Find all class assignments by account with STUDENT role
+    @Query("SELECT ca FROM ClassAssignment ca WHERE ca.account = :account AND ca.account.role.name = 'STUDENT'")
+    List<ClassAssignment> findStudentAssignmentsByAccount(Account account);
 }

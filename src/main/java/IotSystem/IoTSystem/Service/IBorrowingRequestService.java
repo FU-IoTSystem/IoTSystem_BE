@@ -4,6 +4,7 @@ import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
 import IotSystem.IoTSystem.Model.Request.BorrowingRequestCreateRequest;
 import IotSystem.IoTSystem.Model.Request.ComponentRentalRequest;
 import IotSystem.IoTSystem.Model.Response.BorrowingRequestResponse;
+import IotSystem.IoTSystem.Model.Response.BorrowPenaltyStatsResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,4 +27,6 @@ public interface IBorrowingRequestService {
     List<BorrowingRequestResponse> getByUser(UUID userID);
 
     List<BorrowingRequestResponse> getByStatuses(List<String> statuses);
+
+    List<BorrowPenaltyStatsResponse> getBorrowPenaltyStats();
 }
