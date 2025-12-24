@@ -40,30 +40,24 @@ public class KitComponentServiceImpl implements IKitComponentService {
 
     @Override
     public KitComponentResponse createKitComponent(KitComponentRequest kitComponentRequest) {
-        // Support both kit-scoped components and global components (kitId can be null)
-        Kits kit = null;
-        if (kitComponentRequest.getKitId() != null) {
-            Optional<Kits> result = kitsRepository.findById(kitComponentRequest.getKitId());
-            if (result.isEmpty()) {
-                throw new ResourceNotFoundException("KitId not found: " + kitComponentRequest.getKitId());
-            }
-            kit = result.get();
-        }
+        Optional<Kits> result = kitsRepository.findById(kitComponentRequest.getKitId());
+        if (result.isPresent()) {
+            Kits kit = result.get();
+            Kit_Component kitComponent = KitComponentMapper.toEntity(kitComponentRequest, kit);
+            kitComponentRepository.save(kitComponent);
 
-        Kit_Component kitComponent = KitComponentMapper.toEntity(kitComponentRequest, kit);
-        kitComponentRepository.save(kitComponent);
-
-        // If component is attached to a kit, recalculate kit amount; skip for global components
-        if (kit != null) {
+            // Recalculate kit amount after adding component
             List<Kit_Component> allComponents = kitComponentRepository.findByKitId(kit.getId());
             float kitAmount = (float) allComponents.stream()
                     .mapToDouble(c -> c.getPricePerCom() != null ? c.getPricePerCom() : 0.0)
                     .sum();
             kit.setAmount(kitAmount);
             kitsRepository.save(kit);
-        }
 
-        return KitComponentMapper.toResponse(kitComponent);
+            return KitComponentMapper.toResponse(kitComponent);
+        } else {
+            throw new RuntimeException("KitId Not Found");
+        }
     }
 
     @Override
@@ -73,10 +67,7 @@ public class KitComponentServiceImpl implements IKitComponentService {
 
     @Override
     public List<KitComponentResponse> getAllKitComponents() {
-        return kitComponentRepository.findAll()
-                .stream()
-                .map(KitComponentMapper::toResponse)
-                .toList();
+        return List.of();
     }
 
     @Override
@@ -85,40 +76,32 @@ public class KitComponentServiceImpl implements IKitComponentService {
         Kits kit = entity.getKit();
         kitComponentRepository.delete(entity);
 
-        // For kit-scoped components, recalculate kit amount; for global components (kit == null), just return empty response
-        if (kit != null) {
-            List<Kit_Component> allComponents = kitComponentRepository.findByKitId(kit.getId());
-            float kitAmount = (float) allComponents.stream()
-                    .mapToDouble(c -> c.getPricePerCom() != null ? c.getPricePerCom() : 0.0)
-                    .sum();
-            kit.setAmount(kitAmount);
-            kitsRepository.save(kit);
+        // Recalculate kit amount after deleting component
+        List<Kit_Component> allComponents = kitComponentRepository.findByKitId(kit.getId());
+        float kitAmount = (float) allComponents.stream()
+                .mapToDouble(c -> c.getPricePerCom() != null ? c.getPricePerCom() : 0.0)
+                .sum();
+        kit.setAmount(kitAmount);
+        kitsRepository.save(kit);
 
-            return KitResponseMapper.toResponse(kit, kit.getComponents());
-        } else {
-            // Global component delete: no kit to recalculate
-            return KitResponse.builder().build();
-        }
+        return KitResponseMapper.toResponse(kit, kit.getComponents());
     }
 
     @Override
     public KitComponentResponse updateKitComponent(UUID id, KitComponentRequest kitComponentRequest) {
         Kit_Component component = kitComponentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Kit Component ID not found: " + id));
-        Kits existingKit = component.getKit();
 
-        KitComponentMapper.updateEntity(kitComponentRequest, component, existingKit);
+        KitComponentMapper.updateEntity(kitComponentRequest, component, component.getKit());
         Kit_Component updatedComponent = kitComponentRepository.save(component);
 
-        // Recalculate kit amount only when the component belongs to a kit
+        // Recalculate kit amount after updating component
         Kits kit = updatedComponent.getKit();
-        if (kit != null) {
-            List<Kit_Component> allComponents = kitComponentRepository.findByKitId(kit.getId());
-            float kitAmount = (float) allComponents.stream()
-                    .mapToDouble(c -> c.getPricePerCom() != null ? c.getPricePerCom() : 0.0)
-                    .sum();
-            kit.setAmount(kitAmount);
-            kitsRepository.save(kit);
-        }
+        List<Kit_Component> allComponents = kitComponentRepository.findByKitId(kit.getId());
+        float kitAmount = (float) allComponents.stream()
+                .mapToDouble(c -> c.getPricePerCom() != null ? c.getPricePerCom() : 0.0)
+                .sum();
+        kit.setAmount(kitAmount);
+        kitsRepository.save(kit);
 
         return KitComponentMapper.toResponse(updatedComponent);
     }
@@ -177,6 +160,7 @@ public class KitComponentServiceImpl implements IKitComponentService {
                         .message("Kit not found: " + kitId)
                         .build();
             }
+            Kits kit = kitOptional.get();
 
             // Process each row (skip header row)
             for (Row row : sheet) {
@@ -231,15 +215,13 @@ public class KitComponentServiceImpl implements IKitComponentService {
 
             workbook.close();
 
-            // If kit is specified, recalculate kit amount based on its components
-            if (kit != null) {
-                List<Kit_Component> allComponents = kitComponentRepository.findByKitId(kit.getId());
-                float kitAmount = (float) allComponents.stream()
-                        .mapToDouble(c -> c.getPricePerCom() != null ? c.getPricePerCom() : 0.0)
-                        .sum();
-                kit.setAmount(kitAmount);
-                kitsRepository.save(kit);
-            }
+            // Recalculate kit amount
+            List<Kit_Component> allComponents = kitComponentRepository.findByKitId(kit.getId());
+            float kitAmount = (float) allComponents.stream()
+                    .mapToDouble(c -> c.getPricePerCom() != null ? c.getPricePerCom() : 0.0)
+                    .sum();
+            kit.setAmount(kitAmount);
+            kitsRepository.save(kit);
 
         } catch (IOException e) {
             errors.add("Error reading Excel file: " + e.getMessage());
