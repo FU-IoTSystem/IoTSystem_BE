@@ -142,21 +142,12 @@ public class KitComponentServiceImpl implements IKitComponentService {
                 throw new IOException("File content is empty");
             }
 
-            // Validate file extension
-            if (fileName == null || (!fileName.toLowerCase().endsWith(".xlsx") && !fileName.toLowerCase().endsWith(".xls"))) {
-                throw new IOException("Invalid file format. Please upload a .xls or .xlsx file.");
-            }
-
             // Determine file type and create workbook
             Workbook workbook;
-            try {
-                if (fileName.toLowerCase().endsWith(".xlsx")) {
-                    workbook = new XSSFWorkbook(new ByteArrayInputStream(fileBytes));
-                } else {
-                    workbook = new HSSFWorkbook(new ByteArrayInputStream(fileBytes));
-                }
-            } catch (Exception e) {
-                throw new IOException("Failed to read Excel file. Please ensure the file is a valid Excel format: " + e.getMessage());
+            if (fileName != null && fileName.toLowerCase().endsWith(".xlsx")) {
+                workbook = new XSSFWorkbook(new ByteArrayInputStream(fileBytes));
+            } else {
+                workbook = new HSSFWorkbook(new ByteArrayInputStream(fileBytes));
             }
 
             // Get sheet by name if specified, otherwise use first sheet
@@ -177,66 +168,32 @@ public class KitComponentServiceImpl implements IKitComponentService {
                 sheet = workbook.getSheetAt(0); // Get first sheet if no sheet name specified
             }
 
-            if (sheet == null) {
+            // Get kit
+            Optional<Kits> kitOptional = kitsRepository.findById(kitId);
+            if (kitOptional.isEmpty()) {
                 workbook.close();
-                throw new IOException("Excel file does not contain any sheets");
-            }
-
-            // Validate file format by checking header row
-            if (!validateComponentFileFormat(sheet)) {
-                workbook.close();
-                throw new IOException("Invalid file format. The file does not appear to be a component import file. " +
-                        "Please check that the header row contains expected columns (name, quantity, etc.).");
-            }
-
-            // If kitId is provided, validate kit and import as kit-scoped components
-            Kits kit = null;
-            if (kitId != null) {
-                Optional<Kits> kitOptional = kitsRepository.findById(kitId);
-                if (kitOptional.isEmpty()) {
-                    workbook.close();
-                    return ExcelImportResponse.builder()
-                            .success(false)
-                            .message("Kit not found: " + kitId)
-                            .build();
-                }
-                kit = kitOptional.get();
+                return ExcelImportResponse.builder()
+                        .success(false)
+                        .message("Kit not found: " + kitId)
+                        .build();
             }
 
             // Process each row (skip header row)
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) continue; // Skip header row
 
-                // Check if row is empty (all cells are empty or null)
-                boolean isEmptyRow = true;
-                for (int i = 0; i < row.getLastCellNum(); i++) {
-                    String cellValue = getCellValueAsString(row.getCell(i));
-                    if (cellValue != null && !cellValue.trim().isEmpty()) {
-                        isEmptyRow = false;
-                        break;
-                    }
-                }
-
-                if (isEmptyRow) {
-                    continue; // Skip empty rows
-                }
-
                 totalRows++;
 
                 try {
-                    // Excel columns: index, name, link, quantity, priceperComp, image_url
+                    // Excel columns: index, name, link, quantity
                     // Column A: index (optional, can be used for ordering)
                     // Column B: name (required)
                     // Column C: link (optional)
                     // Column D: quantity (required)
-                    // Column E: priceperComp (optional, default 0.0)
-                    // Column F: image_url (optional)
 
                     String componentName = getCellValueAsString(row.getCell(1)); // Column B: name
                     String link = getCellValueAsString(row.getCell(2)); // Column C: link
                     String quantityStr = getCellValueAsString(row.getCell(3)); // Column D: quantity
-                    String pricePerCompStr = getCellValueAsString(row.getCell(4)); // Column E: priceperComp
-                    String imageUrl = getCellValueAsString(row.getCell(5)); // Column F: image_url
 
                     // Validate required fields
                     if (componentName == null || componentName.trim().isEmpty()) {
@@ -247,43 +204,11 @@ public class KitComponentServiceImpl implements IKitComponentService {
                     if (quantityStr != null && !quantityStr.trim().isEmpty()) {
                         try {
                             quantity = Integer.parseInt(quantityStr.trim());
-                            if (quantity <= 0) {
-                                throw new RuntimeException("Quantity must be greater than 0");
-                            }
                         } catch (NumberFormatException e) {
                             throw new RuntimeException("Invalid quantity format: " + quantityStr);
                         }
                     } else {
                         throw new RuntimeException("Quantity is required");
-                    }
-
-                    // Parse pricePerComp (optional)
-                    Double pricePerComp = 0.0; // Default price
-                    if (pricePerCompStr != null && !pricePerCompStr.trim().isEmpty()) {
-                        try {
-                            pricePerComp = Double.parseDouble(pricePerCompStr.trim());
-                            if (pricePerComp < 0) {
-                                throw new RuntimeException("Price per component cannot be negative");
-                            }
-                        } catch (NumberFormatException e) {
-                            throw new RuntimeException("Invalid priceperComp format: " + pricePerCompStr);
-                        }
-                    }
-
-                    // Validate URL format for image_url (optional)
-                    if (imageUrl != null && !imageUrl.trim().isEmpty()) {
-                        imageUrl = imageUrl.trim();
-                        if (!isValidUrl(imageUrl)) {
-                            throw new RuntimeException("Invalid image_url format. Must be a valid URL: " + imageUrl);
-                        }
-                    }
-
-                    // Validate URL format for link (optional)
-                    if (link != null && !link.trim().isEmpty()) {
-                        link = link.trim();
-                        if (!isValidUrl(link)) {
-                            throw new RuntimeException("Invalid link format. Must be a valid URL: " + link);
-                        }
                     }
 
                     // Create component
@@ -293,15 +218,9 @@ public class KitComponentServiceImpl implements IKitComponentService {
                     component.setQuantityTotal(quantity);
                     component.setQuantityAvailable(quantity);
                     component.setLink(link != null ? link.trim() : null);
-                    component.setImageUrl(imageUrl != null && !imageUrl.trim().isEmpty() ? imageUrl.trim() : null);
                     component.setStatus("AVAILABLE");
-                    component.setPricePerCom(pricePerComp);
-                    // If kit is not null, associate component with kit, otherwise keep it global (kit = null)
-                    if (kit != null) {
-                        component.setKit(kit);
-                    } else {
-                        component.setKit(null);
-                    }
+                    component.setPricePerCom(0.0); // Default price, can be updated later
+                    component.setKit(kit);
 
                     kitComponentRepository.save(component);
                     successCount++;
@@ -337,45 +256,6 @@ public class KitComponentServiceImpl implements IKitComponentService {
                 .message(String.format("Processed %d rows: %d successful, %d errors",
                         totalRows, successCount, errors.size()))
                 .build();
-    }
-
-    /**
-     * Validate file format by checking header row
-     * @param sheet Excel sheet to validate
-     * @return true if header row matches expected format, false otherwise
-     */
-    private boolean validateComponentFileFormat(Sheet sheet) {
-        Row headerRow = sheet.getRow(0);
-        if (headerRow == null) {
-            return false;
-        }
-
-        // Check if header contains expected keywords (case insensitive)
-        String colB = getCellValueAsString(headerRow.getCell(1)); // Column B: name
-        String colD = getCellValueAsString(headerRow.getCell(3)); // Column D: quantity
-
-        // At least name and quantity columns should be present
-        boolean hasName = colB != null && (colB.toLowerCase().contains("name") ||
-                colB.toLowerCase().contains("tên"));
-        boolean hasQuantity = colD != null && (colD.toLowerCase().contains("quantity") ||
-                colD.toLowerCase().contains("số lượng") ||
-                colD.toLowerCase().contains("qty"));
-
-        return hasName && hasQuantity;
-    }
-
-    /**
-     * Validate URL format using simple pattern
-     * @param url URL string to validate
-     * @return true if URL format is valid, false otherwise
-     */
-    private boolean isValidUrl(String url) {
-        if (url == null || url.trim().isEmpty()) {
-            return false;
-        }
-        // Simple URL validation pattern
-        String urlPattern = "^(https?|ftp)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
-        return url.trim().matches(urlPattern);
     }
 
     private String getCellValueAsString(Cell cell) {
