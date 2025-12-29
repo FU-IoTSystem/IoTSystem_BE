@@ -14,8 +14,16 @@ public class ClassResponseMapper {
         response.setStatus(classes.isStatus());
         response.setSemester(classes.getSemester());
         response.setTeacherId(teacherID);
-        response.setTeacherEmail(classes.getAccount().getEmail());
-        response.setTeacherName(classes.getAccount().getFullName());
+
+        // Handle null account (when lecturer is deleted, account becomes null)
+        if (classes.getAccount() != null) {
+            response.setTeacherEmail(classes.getAccount().getEmail());
+            response.setTeacherName(classes.getAccount().getFullName());
+        } else {
+            response.setTeacherEmail(null);
+            response.setTeacherName("N/A");
+        }
+
         response.setCreatedAt(classes.getCreatedAt());
         response.setUpdatedAt(classes.getUpdatedAt());
 

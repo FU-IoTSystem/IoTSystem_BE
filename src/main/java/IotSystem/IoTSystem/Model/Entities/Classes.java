@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -27,9 +29,9 @@ public class Classes extends Base {
     private String semester;
 
     private boolean status;
-    // FK đến giảng viên
+    // FK đến giảng viên (nullable - có thể null khi lecturer bị xóa)
     @ManyToOne
-    @JoinColumn(name = "account_id", nullable = false)
+    @JoinColumn(name = "account_id", nullable = true)
     private Account account;
 }
 
