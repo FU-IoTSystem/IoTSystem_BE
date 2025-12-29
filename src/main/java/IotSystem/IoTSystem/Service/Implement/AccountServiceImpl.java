@@ -300,14 +300,7 @@ public class AccountServiceImpl implements IAccountService {
         }
 
         if(role.getName().equals("LECTURER")){
-            // Update lecturerCode if provided in request
-            if (request.getLecturerCode() != null && !request.getLecturerCode().trim().isEmpty()) {
-                account.setLecturerCode(request.getLecturerCode().trim());
-            } else if (account.getRole() != null && !account.getRole().getName().equals("LECTURER")) {
-                // If changing from non-LECTURER role to LECTURER and lecturerCode not provided, set to null
-                account.setLecturerCode(null);
-            }
-            // If already LECTURER and lecturerCode not provided, keep existing value
+            account.setLecturerCode(request.getLecturerCode());
             account.setStudentCode(null); // Clear studentCode if changing from student to lecturer
         }
 
@@ -323,7 +316,7 @@ public class AccountServiceImpl implements IAccountService {
 
         // If classCode is provided and account is LECTURER, assign lecturer to class
         if (role.getName().equals("LECTURER") && request.getClassCode() != null && !request.getClassCode().trim().isEmpty()) {
-            assignLecturerToClass(account, request.getClassCode().trim(), request.getSemester());
+            assignLecturerToClass(account, request.getClassCode().trim());
         }
 
         return ResponseRegisterMapper.toResponse(account);
@@ -680,7 +673,7 @@ public class AccountServiceImpl implements IAccountService {
 
         // If classCode is provided, create class and assign lecturer to it
         if (request.getClassCode() != null && !request.getClassCode().trim().isEmpty()) {
-            assignLecturerToClass(account, request.getClassCode().trim(), request.getSemester());
+            assignLecturerToClass(account, request.getClassCode().trim());
         }
 
         return AccountMapper.toProfileResponse(account);
@@ -691,17 +684,15 @@ public class AccountServiceImpl implements IAccountService {
      * If class doesn't exist, create it with this lecturer as teacher
      * @param account The lecturer account to assign
      * @param classCode The class code to assign the lecturer to
-     * @param semester The semester to set for the class (optional)
      */
-    private void assignLecturerToClass(Account account, String classCode, String semester) {
+    private void assignLecturerToClass(Account account, String classCode) {
         try {
             // Find class by class code, or create it if it doesn't exist
             Classes clazz = classesRepository.findByClassCode(classCode).orElseGet(() -> {
                 // Create new class if it doesn't exist
                 Classes newClass = new Classes();
                 newClass.setClassCode(classCode);
-                // Set semester if provided, otherwise default to null
-                newClass.setSemester(semester != null && !semester.trim().isEmpty() ? semester.trim() : null);
+                newClass.setSemester(null); // Default to null if not specified
                 newClass.setStatus(true); // Default to active
                 newClass.setAccount(account); // Set lecturer as teacher
 
@@ -721,15 +712,6 @@ public class AccountServiceImpl implements IAccountService {
 
                 return savedClass;
             });
-
-            // If class already exists and semester is provided, update semester
-            if (semester != null && !semester.trim().isEmpty()) {
-                String trimmedSemester = semester.trim();
-                if (clazz.getSemester() == null || !trimmedSemester.equals(clazz.getSemester())) {
-                    clazz.setSemester(trimmedSemester);
-                    classesRepository.save(clazz);
-                }
-            }
 
             // Check if assignment already exists for lecturer
             Optional<ClassAssignment> existingAssignment =

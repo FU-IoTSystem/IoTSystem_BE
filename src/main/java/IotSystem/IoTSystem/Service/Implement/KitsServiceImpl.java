@@ -2,6 +2,8 @@ package IotSystem.IoTSystem.Service.Implement;
 
 
 import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
+import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
+import IotSystem.IoTSystem.Model.Entities.DamageReport;
 import IotSystem.IoTSystem.Model.Entities.Enum.KitType;
 import IotSystem.IoTSystem.Model.Entities.Kit_Component;
 import IotSystem.IoTSystem.Model.Entities.Kits;
@@ -10,6 +12,8 @@ import IotSystem.IoTSystem.Model.Mappers.KitResponseMapper;
 import IotSystem.IoTSystem.Model.Request.*;
 import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
 import IotSystem.IoTSystem.Model.Response.KitResponse;
+import IotSystem.IoTSystem.Repository.BorrowingRequestRepository;
+import IotSystem.IoTSystem.Repository.DamageReportRepository;
 import IotSystem.IoTSystem.Repository.KitComponentRepository;
 import IotSystem.IoTSystem.Repository.KitsRepository;
 import IotSystem.IoTSystem.Service.IKitsService;
@@ -30,6 +34,12 @@ public class KitsServiceImpl implements IKitsService {
 
     @Autowired
     private final KitComponentRepository kitComponentRepository;
+
+    @Autowired
+    private final BorrowingRequestRepository borrowingRequestRepository;
+
+    @Autowired
+    private final DamageReportRepository damageReportRepository;
 
 
     @Override
@@ -92,7 +102,24 @@ public class KitsServiceImpl implements IKitsService {
 
     @Override
     public void deleteKit(UUID kitId) {
+        // Check if kit exists
+        Kits kit = kitRepository.findById(kitId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kit not found with ID: " + kitId));
 
+        // Check if kit is being used in any borrowing requests
+        List<BorrowingRequest> borrowingRequests = borrowingRequestRepository.findByKitId(kitId);
+        if (!borrowingRequests.isEmpty()) {
+            throw new RuntimeException("Cannot delete kit. Kit is being used in " + borrowingRequests.size() + " borrowing request(s)");
+        }
+
+        // Check if kit has any damage reports
+        List<DamageReport> damageReports = damageReportRepository.findByKitId(kitId);
+        if (!damageReports.isEmpty()) {
+            throw new RuntimeException("Cannot delete kit. Kit has " + damageReports.size() + " damage report(s)");
+        }
+
+        // Delete kit (components will be deleted automatically due to cascade)
+        kitRepository.delete(kit);
     }
 
     @Override
