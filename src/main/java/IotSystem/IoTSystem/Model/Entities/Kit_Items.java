@@ -1,7 +1,6 @@
 package IotSystem.IoTSystem.Model.Entities;
 
 
-
 import IotSystem.IoTSystem.Model.Entities.Enum.Kit_Items_Types;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
