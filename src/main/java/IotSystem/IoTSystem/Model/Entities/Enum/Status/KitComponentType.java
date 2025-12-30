@@ -1,7 +1,7 @@
 package IotSystem.IoTSystem.Model.Entities.Enum.Status;
 
 public enum KitComponentType {
-    WHITE, // add this if needed
-    BLACK,
-    RED
+    BOX, // add this if needed
+    SET,
+    UNIT
 }
