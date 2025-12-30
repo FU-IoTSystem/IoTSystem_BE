@@ -1,6 +1,5 @@
 package IotSystem.IoTSystem.Service;
 
-import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
 import IotSystem.IoTSystem.Model.Request.ClassAssignmentRequest;
 import IotSystem.IoTSystem.Model.Response.ClassAssignmentResponse;
 import IotSystem.IoTSystem.Model.Response.ClassResponse;
@@ -15,7 +14,7 @@ public interface IClassAssignmentService {
 
     ClassAssignmentResponse create(ClassAssignmentRequest request);
 
-    ClassAssignment update(UUID id, ClassAssignment assignment);
+    ClassAssignmentResponse update(UUID id, ClassAssignmentRequest request);
 
     void delete(UUID id);
 

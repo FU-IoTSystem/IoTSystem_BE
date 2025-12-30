@@ -7,6 +7,8 @@ import IotSystem.IoTSystem.Model.Response.KitComponentBorrowResponse;
 import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class  KitComponentMapper {
 
@@ -15,8 +17,12 @@ public class  KitComponentMapper {
         entity.setComponentName(request.getComponentName());
         entity.setComponentType(request.getComponentType());
         entity.setDescription(request.getDescription());
-        entity.setQuantityTotal(request.getQuantityTotal());
-        entity.setQuantityAvailable(request.getQuantityAvailable());
+        // Validate quantity fields before setting
+        Integer quantityTotal = request.getQuantityTotal();
+        Integer quantityAvailable = request.getQuantityAvailable();
+        validateQuantities(quantityTotal, quantityAvailable);
+        entity.setQuantityTotal(quantityTotal);
+        entity.setQuantityAvailable(quantityAvailable);
         entity.setPricePerCom(request.getPricePerCom());
         entity.setStatus(request.getStatus());
         entity.setImageUrl(request.getImageUrl());
@@ -35,6 +41,17 @@ public class  KitComponentMapper {
         if (request.getDescription() != null) {
             existingEntity.setDescription(request.getDescription());
         }
+        // Calculate effective quantities (existing value if null in request)
+        Integer newQuantityTotal = request.getQuantityTotal() != null
+                ? request.getQuantityTotal()
+                : existingEntity.getQuantityTotal();
+        Integer newQuantityAvailable = request.getQuantityAvailable() != null
+                ? request.getQuantityAvailable()
+                : existingEntity.getQuantityAvailable();
+
+        // Validate quantity relationship before applying changes
+        validateQuantities(newQuantityTotal, newQuantityAvailable);
+
         if (request.getQuantityTotal() != null) {
             existingEntity.setQuantityTotal(request.getQuantityTotal());
         }
@@ -84,6 +101,23 @@ public class  KitComponentMapper {
         response.setQuantityAvailable(entity.getQuantityAvailable());
         response.setImageUrl(entity.getImageUrl());
         return response;
+    }
+
+    /**
+     * Validate that quantityTotal and quantityAvailable have a consistent relationship.
+     * - Both must be null or non-negative when provided
+     * - quantityAvailable must not be greater than quantityTotal
+     */
+    private static void validateQuantities(Integer quantityTotal, Integer quantityAvailable) {
+        if (quantityTotal != null && quantityTotal < 0) {
+            throw new IllegalArgumentException("quantityTotal cannot be negative");
+        }
+        if (quantityAvailable != null && quantityAvailable < 0) {
+            throw new IllegalArgumentException("quantityAvailable cannot be negative");
+        }
+        if (quantityTotal != null && quantityAvailable != null && quantityAvailable > quantityTotal) {
+            throw new IllegalArgumentException("quantityAvailable cannot be greater than quantityTotal");
+        }
     }
 
 }
