@@ -7,6 +7,8 @@ import IotSystem.IoTSystem.Model.Request.KitComponentRequest;
 import IotSystem.IoTSystem.Model.Request.KitCreationRequest;
 import IotSystem.IoTSystem.Model.Request.KitRequest;
 import IotSystem.IoTSystem.Model.Request.KitSingleCreateRequest;
+import IotSystem.IoTSystem.Model.Response.KitBorrowResponse;
+import IotSystem.IoTSystem.Model.Response.KitResponse;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -23,8 +25,12 @@ public class KitMapper {
         kit.setStatus(request.getStatus());
         kit.setDescription(request.getDescription());
         kit.setImageUrl(request.getImageUrl());
-        kit.setQuantityTotal(request.getQuantityTotal());
-        kit.setQuantityAvailable(request.getQuantityAvailable());
+        // Validate quantity fields before setting
+        Integer quantityTotal = request.getQuantityTotal();
+        Integer quantityAvailable = request.getQuantityAvailable();
+        validateQuantities(quantityTotal, quantityAvailable);
+        kit.setQuantityTotal(quantityTotal);
+        kit.setQuantityAvailable(quantityAvailable);
         return kit;
     }
 
@@ -33,8 +39,24 @@ public class KitMapper {
         existingKit.setDescription(request.getDescription());
         existingKit.setStatus(request.getStatus());
         existingKit.setType(KitType.valueOf(request.getType()));
-        existingKit.setQuantityAvailable(request.getQuantityAvailable());
-        existingKit.setQuantityTotal(request.getQuantityTotal());
+        // Calculate effective quantities (existing value if null in request)
+        Integer newQuantityTotal = request.getQuantityTotal() != null
+                ? request.getQuantityTotal()
+                : existingKit.getQuantityTotal();
+        Integer newQuantityAvailable = request.getQuantityAvailable() != null
+                ? request.getQuantityAvailable()
+                : existingKit.getQuantityAvailable();
+
+        // Validate quantity relationship before applying changes
+        validateQuantities(newQuantityTotal, newQuantityAvailable);
+
+        // Only update if request has new values
+        if (request.getQuantityTotal() != null) {
+            existingKit.setQuantityTotal(request.getQuantityTotal());
+        }
+        if (request.getQuantityAvailable() != null) {
+            existingKit.setQuantityAvailable(request.getQuantityAvailable());
+        }
         existingKit.setImageUrl(request.getImageUrl());
         existingKit.setUpdatedAt(LocalDateTime.now());
     }
@@ -62,8 +84,12 @@ public class KitMapper {
         kit.setStatus(request.getStatus());
         kit.setDescription(request.getDescription());
         kit.setImageUrl(request.getImageUrl());
-        kit.setQuantityTotal(request.getQuantityTotal());
-        kit.setQuantityAvailable(request.getQuantityAvailable());
+        // Validate quantity fields before setting
+        Integer quantityTotal = request.getQuantityTotal();
+        Integer quantityAvailable = request.getQuantityAvailable();
+        validateQuantities(quantityTotal, quantityAvailable);
+        kit.setQuantityTotal(quantityTotal);
+        kit.setQuantityAvailable(quantityAvailable);
         return kit;
     }
 
@@ -80,6 +106,23 @@ public class KitMapper {
         component.setImageUrl(req.getImageUrl());
         component.setKit(kit);
         return component;
+    }
+
+    /**
+     * Validate that quantityTotal and quantityAvailable have a consistent relationship.
+     * - Both must be null or non-negative when provided
+     * - quantityAvailable must not be greater than quantityTotal
+     */
+    private static void validateQuantities(Integer quantityTotal, Integer quantityAvailable) {
+        if (quantityTotal != null && quantityTotal < 0) {
+            throw new IllegalArgumentException("quantityTotal cannot be negative");
+        }
+        if (quantityAvailable != null && quantityAvailable < 0) {
+            throw new IllegalArgumentException("quantityAvailable cannot be negative");
+        }
+        if (quantityTotal != null && quantityAvailable != null && quantityAvailable > quantityTotal) {
+            throw new IllegalArgumentException("quantityAvailable cannot be greater than quantityTotal");
+        }
     }
 
 }
