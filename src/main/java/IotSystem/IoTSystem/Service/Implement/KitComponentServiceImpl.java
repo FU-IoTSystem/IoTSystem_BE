@@ -224,19 +224,22 @@ public class KitComponentServiceImpl implements IKitComponentService {
                 totalRows++;
 
                 try {
-                    // Excel columns: index, name, link, quantity, priceperComp, image_url
-                    // Column A: index (optional, can be used for ordering)
-                    // Column B: name (required)
-                    // Column C: link (optional)
-                    // Column D: quantity (required)
-                    // Column E: priceperComp (optional, default 0.0)
-                    // Column F: image_url (optional)
+                    // Excel columns (by index):
+                    // Column A: name (required)
+                    // Column B: type (optional, Box/Set/Unit)
+                    // Column C: quantity (required)
+                    // Column D: pricePerComp (optional, default 0.0)
+                    // Column E: description (optional)
+                    // Column F: image URL (optional)
+                    // Column G: link (optional)
 
-                    String componentName = getCellValueAsString(row.getCell(1)); // Column B: name
-                    String link = getCellValueAsString(row.getCell(2)); // Column C: link
-                    String quantityStr = getCellValueAsString(row.getCell(3)); // Column D: quantity
-                    String pricePerCompStr = getCellValueAsString(row.getCell(4)); // Column E: priceperComp
-                    String imageUrl = getCellValueAsString(row.getCell(5)); // Column F: image_url
+                    String componentName = getCellValueAsString(row.getCell(0)); // Column A: name
+                    String typeStr       = getCellValueAsString(row.getCell(1)); // Column B: type
+                    String quantityStr   = getCellValueAsString(row.getCell(2)); // Column C: quantity
+                    String pricePerCompStr = getCellValueAsString(row.getCell(3)); // Column D: pricePerComp
+                    String description   = getCellValueAsString(row.getCell(4)); // Column E: description
+                    String imageUrl      = getCellValueAsString(row.getCell(5)); // Column F: image URL
+                    String link          = getCellValueAsString(row.getCell(6)); // Column G: link
 
                     // Validate required fields
                     if (componentName == null || componentName.trim().isEmpty()) {
@@ -286,12 +289,30 @@ public class KitComponentServiceImpl implements IKitComponentService {
                         }
                     }
 
+                    // Determine component type from typeStr (optional, default UNIT)
+                    KitComponentType componentType = KitComponentType.UNIT;
+                    if (typeStr != null && !typeStr.trim().isEmpty()) {
+                        String normalizedType = typeStr.trim().toLowerCase();
+                        // Hỗ trợ cả tiếng Anh và dạng viết thường/hoa
+                        if (normalizedType.equals("box") || normalizedType.equals("hộp")) {
+                            // Map Box type
+                            componentType = KitComponentType.BOX;
+                        } else if (normalizedType.equals("set") || normalizedType.equals("bộ")) {
+                            componentType = KitComponentType.SET;
+                        } else if (normalizedType.equals("unit") || normalizedType.equals("đơn") || normalizedType.equals("single")) {
+                            componentType = KitComponentType.UNIT;
+                        } else {
+                            throw new RuntimeException("Invalid component type: " + typeStr + ". Expected: Box, Set, Unit");
+                        }
+                    }
+
                     // Create component
                     Kit_Component component = new Kit_Component();
                     component.setComponentName(componentName.trim());
-                    component.setComponentType(KitComponentType.RED); // Default type, can be changed later
+                    component.setComponentType(componentType);
                     component.setQuantityTotal(quantity);
                     component.setQuantityAvailable(quantity);
+                    component.setDescription(description != null && !description.trim().isEmpty() ? description.trim() : null);
                     component.setLink(link != null ? link.trim() : null);
                     component.setImageUrl(imageUrl != null && !imageUrl.trim().isEmpty() ? imageUrl.trim() : null);
                     component.setStatus("AVAILABLE");
@@ -351,16 +372,22 @@ public class KitComponentServiceImpl implements IKitComponentService {
         }
 
         // Check if header contains expected keywords (case insensitive)
-        String colB = getCellValueAsString(headerRow.getCell(1)); // Column B: name
-        String colD = getCellValueAsString(headerRow.getCell(3)); // Column D: quantity
+        String colA = getCellValueAsString(headerRow.getCell(0)); // Column A: name
+        String colB = getCellValueAsString(headerRow.getCell(1)); // Column B: type
+        String colC = getCellValueAsString(headerRow.getCell(2)); // Column C: quantity
+        String colD = getCellValueAsString(headerRow.getCell(3)); // Column D: pricePerComp
+        String colE = getCellValueAsString(headerRow.getCell(4)); // Column E: description
+        String colF = getCellValueAsString(headerRow.getCell(5)); // Column F: image URL
+        String colG = getCellValueAsString(headerRow.getCell(6)); // Column G: link
 
-        // At least name and quantity columns should be present
-        boolean hasName = colB != null && (colB.toLowerCase().contains("name") ||
-                colB.toLowerCase().contains("tên"));
-        boolean hasQuantity = colD != null && (colD.toLowerCase().contains("quantity") ||
-                colD.toLowerCase().contains("số lượng") ||
-                colD.toLowerCase().contains("qty"));
-
+        // At minimum, name and quantity columns should be present
+        boolean hasName = colA != null && (colA.toLowerCase().contains("name") ||
+                colA.toLowerCase().contains("tên"));
+        boolean hasQuantity = colC != null && (colC.toLowerCase().contains("quantity") ||
+                colC.toLowerCase().contains("số lượng") ||
+                colC.toLowerCase().contains("qty"));
+        // Optional but recommended: type, price, description, image, link
+        // Không bắt buộc để tránh làm hỏng file cũ, chỉ kiểm nhẹ nếu có
         return hasName && hasQuantity;
     }
 
