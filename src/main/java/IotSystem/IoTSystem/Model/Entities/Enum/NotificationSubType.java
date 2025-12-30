@@ -7,6 +7,8 @@ public enum NotificationSubType {
     // Giao dịch ví
     DEPOSIT_SUCCESS(NotificationType.DEPOSIT),
     DEPOSIT_FAILED(NotificationType.DEPOSIT),
+    TRANSFER_SENT(NotificationType.DEPOSIT),
+    TRANSFER_RECEIVED(NotificationType.DEPOSIT),
 
     // Thuê kit/component
     RENTAL_SUCCESS(NotificationType.SYSTEM),
