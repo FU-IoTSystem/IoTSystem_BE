@@ -123,6 +123,14 @@ public class NotificationServiceImpl implements INotificationService {
                 defaultTitle = "Nạp tiền thất bại";
                 defaultMessage = "Giao dịch nạp tiền không thành công. Vui lòng thử lại hoặc liên hệ hỗ trợ.";
             }
+            case TRANSFER_SENT -> {
+                defaultTitle = "Chuyển tiền thành công";
+                defaultMessage = "Bạn đã chuyển tiền thành công.";
+            }
+            case TRANSFER_RECEIVED -> {
+                defaultTitle = "Nhận tiền thành công";
+                defaultMessage = "Bạn đã nhận tiền chuyển từ người dùng khác.";
+            }
             case OVERDUE_RETURN -> {
                 defaultTitle = "Cảnh báo: Trễ hạn trả kit";
                 defaultMessage = "Bạn có đơn mượn kit đã quá hạn. Vui lòng trả kit sớm để tránh phát sinh thêm phí phạt.";
