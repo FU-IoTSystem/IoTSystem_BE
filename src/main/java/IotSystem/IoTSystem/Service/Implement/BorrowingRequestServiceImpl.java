@@ -6,6 +6,7 @@ import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.BorrowingGroup;
 import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
 import IotSystem.IoTSystem.Model.Entities.ClassAssignment;
+import IotSystem.IoTSystem.Model.Entities.DamageReport;
 import IotSystem.IoTSystem.Model.Entities.StudentGroup;
 import IotSystem.IoTSystem.Model.Entities.Enum.KitType;
 import IotSystem.IoTSystem.Model.Entities.Enum.RequestType;
@@ -27,6 +28,7 @@ import IotSystem.IoTSystem.Repository.AccountRepository;
 import IotSystem.IoTSystem.Repository.BorrowingGroupRepository;
 import IotSystem.IoTSystem.Repository.BorrowingRequestRepository;
 import IotSystem.IoTSystem.Repository.ClassAssignemntRepository;
+import IotSystem.IoTSystem.Repository.DamageReportRepository;
 import IotSystem.IoTSystem.Repository.KitComponentRepository;
 import IotSystem.IoTSystem.Repository.KitsRepository;
 import IotSystem.IoTSystem.Repository.PenaltyRepository;
@@ -35,7 +37,6 @@ import IotSystem.IoTSystem.Repository.StudentGroupRepository;
 import IotSystem.IoTSystem.Repository.WalletRepository;
 import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
 import IotSystem.IoTSystem.Service.IBorrowingRequestService;
-
 import IotSystem.IoTSystem.Service.WebSocketService;
 import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,6 +89,9 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
 
     @Autowired
     private StudentGroupRepository studentGroupRepository;
+
+    @Autowired
+    private DamageReportRepository damageReportRepository;
 
 
     @Override
@@ -499,19 +503,33 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
                 existing.setActualReturnDate(request.getActualReturnDate());
             }
 
-            // Restore kit quantity when returned
+            // Check if there are any approved damage reports for this borrowing request
+            List<DamageReport> damageReports = damageReportRepository.findAll().stream()
+                    .filter(report -> report.getBorrowRequest() != null &&
+                            report.getBorrowRequest().getId().equals(existing.getId()) &&
+                            report.getStatus() != null &&
+                            report.getStatus().toString().equals("APPROVED"))
+                    .collect(Collectors.toList());
+
+            boolean hasApprovedDamageReport = !damageReports.isEmpty();
+
+            // Restore kit quantity when returned (only if no approved damage report)
             if (existing.getKit() != null && existing.getRequestType() == RequestType.BORROW_KIT) {
                 Kits kit = existing.getKit();
-                kit.setQuantityAvailable(kit.getQuantityAvailable() + 1);
 
-                // If quantity available was 0 and now becomes > 0, set status back to AVAILABLE
-                if (kit.getQuantityAvailable() > 0 && kit.getStatus() != null && kit.getStatus().equals("IN_USE")) {
-                    kit.setStatus("AVAILABLE");
+                // Only restore quantity if there's no approved damage report
+                if (!hasApprovedDamageReport) {
+                    kit.setQuantityAvailable(kit.getQuantityAvailable() + 1);
+
+                    // If quantity available was 0 and now becomes > 0, set status back to AVAILABLE
+                    if (kit.getQuantityAvailable() > 0 && kit.getStatus() != null && kit.getStatus().equals("IN_USE")) {
+                        kit.setStatus("AVAILABLE");
+                    }
                 }
                 kitsRepository.save(kit);
             }
 
-            // Restore component quantity when returned
+            // Restore component quantity when returned (only if no approved damage report)
             if (existing.getRequestType() == RequestType.BORROW_COMPONENT) {
                 List<RequestKitComponent> requestComponents = requestKitComponentRepository.findByRequestId(existing.getId());
                 if (!requestComponents.isEmpty()) {
@@ -519,9 +537,11 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
                         Kit_Component component = kitComponentRepository.findById(reqComponent.getKitComponentsId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Component not found with ID: " + reqComponent.getKitComponentsId()));
 
-                        // Restore quantity when returned
-                        component.setQuantityAvailable(component.getQuantityAvailable() + reqComponent.getQuantity());
-                        kitComponentRepository.save(component);
+                        // Only restore quantity if there's no approved damage report
+                        if (!hasApprovedDamageReport) {
+                            component.setQuantityAvailable(component.getQuantityAvailable() + reqComponent.getQuantity());
+                            kitComponentRepository.save(component);
+                        }
                     }
                 }
             }
