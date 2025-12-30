@@ -16,4 +16,5 @@ public class RegisterRequest {
     private String phoneNumber;
     private String fullName;
     private String classCode;
+    private String semester;
 }
