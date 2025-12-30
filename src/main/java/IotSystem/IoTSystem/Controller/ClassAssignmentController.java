@@ -75,8 +75,9 @@ public class ClassAssignmentController {
     }
 
     @PutMapping("/{id}")
-    public ClassAssignment update(@PathVariable UUID id, @RequestBody ClassAssignment assignment) {
-        return classAssignmentService.update(id, assignment);
+    public ResponseEntity<ClassAssignmentResponse> update(@PathVariable UUID id, @RequestBody ClassAssignmentRequest request) {
+        ClassAssignmentResponse response = classAssignmentService.update(id, request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")

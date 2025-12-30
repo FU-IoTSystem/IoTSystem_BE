@@ -111,9 +111,61 @@ public class ClassAssignmentServiceImpl implements IClassAssignmentService {
         return ClassAssignmentMapper.toResponse(assignment);
     }
 
+    // Update existing class assignment (change class and/or account)
     @Override
-    public ClassAssignment update(UUID id, ClassAssignment assignment) {
-        return null;
+    public ClassAssignmentResponse update(UUID id, ClassAssignmentRequest request) {
+        // Find existing assignment
+        ClassAssignment existingAssignment = classAssignemntRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Class assignment not found with id: " + id));
+
+        // Check if class exists
+        Classes classes = classesRepository.findById(request.getClassId()).orElseThrow(()
+                -> new ResourceNotFoundException("Class not found with id: " + request.getClassId()));
+
+        // Check if account exists
+        Account account = accountRepository.findById(request.getAccountId()).orElseThrow(()
+                -> new ResourceNotFoundException("Did not found the Student/ Lecturer: " + request.getAccountId()));
+
+        // Get roles
+        Roles lecturerRole = rolesRepository.findByName("LECTURER")
+                .orElseThrow(() -> new ResourceNotFoundException("LECTURER role not found"));
+        Roles studentRole = rolesRepository.findByName("STUDENT")
+                .orElseThrow(() -> new ResourceNotFoundException("STUDENT role not found"));
+
+        // If updating to a lecturer assignment, ensure there is only one lecturer per class
+        if (account.getRole() != null && account.getRole().getId().equals(lecturerRole.getId())) {
+            List<ClassAssignment> existingLecturerAssignments = classAssignemntRepository.findByClazz(classes).stream()
+                    .filter(ca -> !ca.getId().equals(existingAssignment.getId())) // exclude current assignment
+                    .filter(ca -> ca.getAccount() != null
+                            && ca.getAccount().getRole() != null
+                            && ca.getAccount().getRole().getId().equals(lecturerRole.getId()))
+                    .collect(Collectors.toList());
+
+            if (!existingLecturerAssignments.isEmpty()) {
+                throw new RuntimeException("Class already has a lecturer assigned");
+            }
+        }
+
+        // For students: validate that old class is inactive before joining new class
+        if (account.getRole() != null && account.getRole().getId().equals(studentRole.getId())) {
+            List<ClassAssignment> existingAssignments = classAssignemntRepository.findByAccount(account);
+
+            boolean hasActiveClass = existingAssignments.stream()
+                    .filter(assignment -> !assignment.getId().equals(existingAssignment.getId())) // exclude current
+                    .anyMatch(assignment -> assignment.getClazz() != null && assignment.getClazz().isStatus());
+
+            if (hasActiveClass) {
+                throw new RuntimeException("Student is already in an active class. Please wait until your current class becomes inactive before joining a new class.");
+            }
+        }
+
+        // Update assignment data
+        existingAssignment.setAccount(account);
+        existingAssignment.setRole(account.getRole());
+        existingAssignment.setClazz(classes);
+
+        ClassAssignment saved = classAssignemntRepository.save(existingAssignment);
+        return ClassAssignmentMapper.toResponse(saved);
     }
 
     @Override
