@@ -40,6 +40,10 @@ public class BorrowingGroupMapper {
                 .accountPhone(entity.getAccount() != null ? entity.getAccount().getPhone() : null)
                 .studentCode(entity.getAccount() != null ? entity.getAccount().getStudentCode() : null)
                 .isActive(entity.isActive())
+                .classCode(entity.getStudentGroup() != null && entity.getStudentGroup().getClazz() != null
+                        ? entity.getStudentGroup().getClazz().getClassCode() : null)
+                .semester(entity.getStudentGroup() != null && entity.getStudentGroup().getClazz() != null
+                        ? entity.getStudentGroup().getClazz().getSemester() : null)
                 .build();
     }
 

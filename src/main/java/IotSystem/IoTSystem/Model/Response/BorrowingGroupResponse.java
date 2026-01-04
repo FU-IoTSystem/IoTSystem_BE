@@ -34,4 +34,8 @@ public class BorrowingGroupResponse {
 
     // Active status
     private Boolean isActive;
+
+    // Additional Class Details
+    private String classCode;
+    private String semester;
 }
