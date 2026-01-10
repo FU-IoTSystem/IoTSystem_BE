@@ -71,10 +71,17 @@ public class KitComponentServiceImpl implements IKitComponentService {
         return null;
     }
 
+    @Autowired
+    private IotSystem.IoTSystem.Repository.RequestKitComponentRepository requestKitComponentRepository;
+
+    @Autowired
+    private IotSystem.IoTSystem.Repository.BorrowingRequestRepository borrowingRequestRepository;
+
     @Override
     public List<KitComponentResponse> getAllKitComponents() {
         return kitComponentRepository.findAll()
                 .stream()
+                .filter(c -> c.getStatus() == null || !c.getStatus().equals("DELETED"))
                 .map(KitComponentMapper::toResponse)
                 .toList();
     }
@@ -83,12 +90,57 @@ public class KitComponentServiceImpl implements IKitComponentService {
     public KitResponse deleteKitComponent(UUID id) {
         Kit_Component entity = kitComponentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Kit Component ID not found: " + id));
         Kits kit = entity.getKit();
+
+        // Check if component is in use
+        List<IotSystem.IoTSystem.Model.Entities.RequestKitComponent> usageList = requestKitComponentRepository.findByKitComponentsId(id);
+
+        if (!usageList.isEmpty()) {
+            // Check for any active requests (PENDING, APPROVED)
+            boolean hasActiveRequests = usageList.stream().anyMatch(usage -> {
+                IotSystem.IoTSystem.Model.Entities.BorrowingRequest req = borrowingRequestRepository.findById(usage.getRequestId()).orElse(null);
+                if (req != null) {
+                    String status = req.getStatus();
+                    return "PENDING".equalsIgnoreCase(status) || "APPROVED".equalsIgnoreCase(status);
+                }
+                return false;
+            });
+
+            if (hasActiveRequests) {
+                throw new RuntimeException("Cannot delete component that is currently in use or requested. Please resolve related requests first.");
+            }
+
+            // Soft delete: Update status to DELETED
+            entity.setStatus("DELETED");
+            entity.setQuantityAvailable(0); // Optional: ensure no further borrowing
+            kitComponentRepository.save(entity);
+
+            // Return response (similar to successful delete but entity remains)
+            if (kit != null) {
+                // Recalculate kit amount (excluding deleted components if desired, or keep them?
+                // Usually soft deleted items should probably not contribute to price if they are 'gone')
+                List<Kit_Component> allComponents = kitComponentRepository.findByKitId(kit.getId());
+                float kitAmount = (float) allComponents.stream()
+                        .filter(c -> !"DELETED".equals(c.getStatus()))
+                        .mapToDouble(c -> c.getPricePerCom() != null ? c.getPricePerCom() : 0.0)
+                        .sum();
+                kit.setAmount(kitAmount);
+                kitsRepository.save(kit);
+
+                return KitResponseMapper.toResponse(kit, kit.getComponents());
+            } else {
+                return KitResponse.builder().build();
+            }
+        }
+
+        // If no usage, hard delete
         kitComponentRepository.delete(entity);
 
         // For kit-scoped components, recalculate kit amount; for global components (kit == null), just return empty response
         if (kit != null) {
             List<Kit_Component> allComponents = kitComponentRepository.findByKitId(kit.getId());
             float kitAmount = (float) allComponents.stream()
+                    // Filter out deleted ones just in case mixed state
+                    .filter(c -> !"DELETED".equals(c.getStatus()))
                     .mapToDouble(c -> c.getPricePerCom() != null ? c.getPricePerCom() : 0.0)
                     .sum();
             kit.setAmount(kitAmount);

@@ -37,6 +37,7 @@ import IotSystem.IoTSystem.Repository.StudentGroupRepository;
 import IotSystem.IoTSystem.Repository.WalletRepository;
 import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
 import IotSystem.IoTSystem.Service.IBorrowingRequestService;
+import IotSystem.IoTSystem.Service.Implement.QRCodeService;
 import IotSystem.IoTSystem.Service.WebSocketService;
 import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -180,12 +181,6 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         Kit_Component component = kitComponentRepository.findById(request.getKitComponentsId())
                 .orElseThrow(() -> new ResourceNotFoundException("Component not found with ID: " + request.getKitComponentsId()));
 
-        // Get kit from component
-        Kits kit = component.getKit();
-        if (kit == null) {
-            throw new RuntimeException("Kit not found for this component");
-        }
-
         // Check availability - but don't subtract yet, wait for admin approval
         if (component.getQuantityAvailable() < request.getQuantity()) {
             throw new RuntimeException("Not enough components available. Required: " + request.getQuantity() + ", Available: " + component.getQuantityAvailable());
@@ -196,7 +191,6 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         // Create borrowing request for component
         BorrowingRequest borrowingRequest = new BorrowingRequest();
         borrowingRequest.setRequestedBy(account);
-        borrowingRequest.setKit(kit); // Set kit reference
         borrowingRequest.setReason(request.getReason());
         borrowingRequest.setDepositAmount(request.getDepositAmount());
         borrowingRequest.setExpectReturnDate(request.getExpectReturnDate());
