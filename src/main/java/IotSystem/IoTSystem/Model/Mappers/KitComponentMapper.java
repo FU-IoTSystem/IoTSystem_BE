@@ -26,6 +26,7 @@ public class  KitComponentMapper {
         entity.setPricePerCom(request.getPricePerCom());
         entity.setStatus(request.getStatus());
         entity.setImageUrl(request.getImageUrl());
+        entity.setSeriNumber(request.getSeriNumber());
         entity.setLink(request.getLink());
         entity.setKit(kit);
         return entity;
@@ -67,6 +68,9 @@ public class  KitComponentMapper {
         if (request.getImageUrl() != null) {
             existingEntity.setImageUrl(request.getImageUrl());
         }
+        if (request.getSeriNumber() != null) {
+            existingEntity.setSeriNumber(request.getSeriNumber());
+        }
         if (request.getLink() != null) {
             existingEntity.setLink(request.getLink());
         }
@@ -86,6 +90,7 @@ public class  KitComponentMapper {
         response.setPricePerCom(entity.getPricePerCom());
         response.setStatus(entity.getStatus());
         response.setImageUrl(entity.getImageUrl());
+        response.setSeriNumber(entity.getSeriNumber());
         response.setLink(entity.getLink());
         if (entity.getKit() != null) {
             response.setKitId(entity.getKit().getId());

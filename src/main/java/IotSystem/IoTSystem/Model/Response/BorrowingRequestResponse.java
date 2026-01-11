@@ -31,7 +31,7 @@ public class BorrowingRequestResponse {
     private KitResponse kit;
     private AccountInfo requestedBy;
 //    private String penaltyDescription;
-    
+
     @Data
     @Builder
     @NoArgsConstructor
@@ -41,5 +41,8 @@ public class BorrowingRequestResponse {
         private String email;
         private String fullName;
         private String phone;
+        private String studentCode;
+        private String lecturerCode;
+        private String role;
     }
 }
