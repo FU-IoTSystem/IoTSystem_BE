@@ -283,7 +283,7 @@ public class KitComponentServiceImpl implements IKitComponentService {
                     // Column D: pricePerComp (optional, default 0.0)
                     // Column E: description (optional)
                     // Column F: image URL (optional)
-                    // Column G: link (optional)
+                    // Column G: seri_number (optional)
 
                     String componentName = getCellValueAsString(row.getCell(0)); // Column A: name
                     String typeStr       = getCellValueAsString(row.getCell(1)); // Column B: type
@@ -292,6 +292,7 @@ public class KitComponentServiceImpl implements IKitComponentService {
                     String description   = getCellValueAsString(row.getCell(4)); // Column E: description
                     String imageUrl      = getCellValueAsString(row.getCell(5)); // Column F: image URL
                     String link          = getCellValueAsString(row.getCell(6)); // Column G: link
+                    String seri_number   = getCellValueAsString(row.getCell(7)); // Column H: seri_number
 
                     // Validate required fields
                     if (componentName == null || componentName.trim().isEmpty()) {
@@ -341,6 +342,11 @@ public class KitComponentServiceImpl implements IKitComponentService {
                         }
                     }
 
+                    // Clean up seri_number (optional)
+                    if (seri_number != null) {
+                        seri_number = seri_number.trim();
+                    }
+
                     // Determine component type from typeStr (optional, default UNIT)
                     KitComponentType componentType = KitComponentType.UNIT;
                     if (typeStr != null && !typeStr.trim().isEmpty()) {
@@ -365,6 +371,7 @@ public class KitComponentServiceImpl implements IKitComponentService {
                     component.setQuantityTotal(quantity);
                     component.setQuantityAvailable(quantity);
                     component.setDescription(description != null && !description.trim().isEmpty() ? description.trim() : null);
+                    component.setSeriNumber(seri_number != null ? seri_number : null);
                     component.setLink(link != null ? link.trim() : null);
                     component.setImageUrl(imageUrl != null && !imageUrl.trim().isEmpty() ? imageUrl.trim() : null);
                     component.setStatus("AVAILABLE");
@@ -431,6 +438,7 @@ public class KitComponentServiceImpl implements IKitComponentService {
         String colE = getCellValueAsString(headerRow.getCell(4)); // Column E: description
         String colF = getCellValueAsString(headerRow.getCell(5)); // Column F: image URL
         String colG = getCellValueAsString(headerRow.getCell(6)); // Column G: link
+        String colH = getCellValueAsString(headerRow.getCell(7)); // Column H: seri_number
 
         // At minimum, name and quantity columns should be present
         boolean hasName = colA != null && (colA.toLowerCase().contains("name") ||
