@@ -8,7 +8,7 @@ import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
-import java.util.Date;
+
 import java.util.UUID;
 
 @Entity
@@ -25,6 +25,9 @@ public class PenaltyDetail extends Base {
 
     @Column(name = "amount")
     private Double amount;
+
+    @Column(name = "quantity")
+    private int quantity;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;

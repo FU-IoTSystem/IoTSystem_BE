@@ -17,6 +17,9 @@ public class PenaltyDetailMapper {
     public PenaltyDetail toEntity(PenaltyDetailRequest request, PenaltyPolicies policies, Penalty penalty) {
         PenaltyDetail detail = new PenaltyDetail();
         detail.setAmount(request.getAmount());
+        if(request.getQuantity() != null) {
+            detail.setQuantity(request.getQuantity());
+        }
         detail.setDescription(request.getDescription());
         detail.setImageUrl(request.getImageUrl());
 
@@ -38,6 +41,7 @@ public class PenaltyDetailMapper {
         PenaltyDetailResponse response = new PenaltyDetailResponse();
         response.setId(entity.getId());
         response.setAmount(entity.getAmount());
+        response.setQuantity(entity.getQuantity());
         response.setDescription(entity.getDescription());
         response.setImageUrl(entity.getImageUrl());
 
@@ -58,6 +62,9 @@ public class PenaltyDetailMapper {
     public void updateEntity(PenaltyDetailRequest request, PenaltyDetail existing, PenaltyPolicies policies, Penalty penalty) {
         if (request.getAmount() != null) {
             existing.setAmount(request.getAmount());
+        }
+        if (request.getQuantity() != null) {
+            existing.setQuantity(request.getQuantity());
         }
         if (request.getDescription() != null) {
             existing.setDescription(request.getDescription());

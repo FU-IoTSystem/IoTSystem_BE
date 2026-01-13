@@ -16,6 +16,7 @@ import java.util.UUID;
 public class PenaltyDetailRequest {
     private UUID id;
     private Double amount;
+    private Integer quantity;
     private String description;
     private String imageUrl;
     private LocalDateTime createdAt;
