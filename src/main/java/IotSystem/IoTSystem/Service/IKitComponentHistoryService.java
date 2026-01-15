@@ -11,5 +11,6 @@ public interface IKitComponentHistoryService {
     List<KitComponentHistoryResponse> getAll();
     List<KitComponentHistoryResponse> getByKitId(UUID kitId);
     List<KitComponentHistoryResponse> getByComponentId(UUID componentId);
+    List<KitComponentHistoryResponse> getGlobalComponentsHistory();
 }
 

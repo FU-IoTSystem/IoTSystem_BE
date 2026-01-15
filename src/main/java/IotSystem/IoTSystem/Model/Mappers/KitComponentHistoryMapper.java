@@ -21,7 +21,8 @@ public class KitComponentHistoryMapper {
                 .action(history.getAction())
                 .oldStatus(history.getOldStatus())
                 .newStatus(history.getNewStatus())
-                .note(history.getNote())
+                .imgUrl(history.getImgUrl())
+
                 .penaltyDetailId(history.getPenaltyDetail() != null ? history.getPenaltyDetail().getId() : null)
                 .penaltyDetailImageUrl(history.getPenaltyDetail() != null ? history.getPenaltyDetail().getImageUrl() : null)
                 .createdAt(history.getCreatedAt())

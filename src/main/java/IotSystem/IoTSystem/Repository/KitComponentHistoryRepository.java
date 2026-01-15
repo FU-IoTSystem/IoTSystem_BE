@@ -11,6 +11,7 @@ import java.util.UUID;
 public interface KitComponentHistoryRepository extends JpaRepository<KitComponentHistory, UUID> {
     List<KitComponentHistory> findByKitIdOrderByCreatedAtDesc(UUID kitId);
     List<KitComponentHistory> findByComponentIdOrderByCreatedAtDesc(UUID componentId);
+    List<KitComponentHistory> findByKitIsNullOrderByCreatedAtDesc();
     List<KitComponentHistory> findAllByOrderByCreatedAtDesc();
 }
 

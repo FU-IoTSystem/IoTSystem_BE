@@ -41,5 +41,11 @@ public class KitComponentHistoryController {
         List<KitComponentHistoryResponse> responses = kitComponentHistoryService.getByComponentId(componentId);
         return ResponseEntity.ok(responses);
     }
+
+    @GetMapping("/global")
+    public ResponseEntity<List<KitComponentHistoryResponse>> getGlobalComponentsHistory() {
+        List<KitComponentHistoryResponse> responses = kitComponentHistoryService.getGlobalComponentsHistory();
+        return ResponseEntity.ok(responses);
+    }
 }
 
