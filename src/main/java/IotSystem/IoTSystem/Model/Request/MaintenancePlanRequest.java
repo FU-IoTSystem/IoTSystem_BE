@@ -10,7 +10,7 @@ import java.util.UUID;
 @Data
 public class MaintenancePlanRequest {
     private MaintenanceScope scope;
-    private UUID targetId;
+
     private Date scheduledDate;
     private MaintenanceStatus status;
     private String createdBy;

@@ -37,7 +37,7 @@ import IotSystem.IoTSystem.Repository.StudentGroupRepository;
 import IotSystem.IoTSystem.Repository.WalletRepository;
 import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
 import IotSystem.IoTSystem.Service.IBorrowingRequestService;
-import IotSystem.IoTSystem.Service.Implement.QRCodeService;
+
 import IotSystem.IoTSystem.Service.WebSocketService;
 import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -159,6 +159,7 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         // Send real-time notification to admins about new rental request
         try {
             webSocketService.sendRentalRequestToAdmins(response);
+            webSocketService.sendSystemUpdate("RENTAL", "CREATE");
         } catch (Exception e) {
             System.err.println("Error sending WebSocket notification: " + e.getMessage());
         }
@@ -225,6 +226,7 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         // Send real-time notification to admins about new component rental request
         try {
             webSocketService.sendRentalRequestToAdmins(response);
+            webSocketService.sendSystemUpdate("RENTAL", "CREATE");
         } catch (Exception e) {
             System.err.println("Error sending WebSocket notification: " + e.getMessage());
         }
@@ -657,6 +659,7 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         // Send real-time update to admins
         try {
             webSocketService.sendRentalRequestToAdmins(response);
+            webSocketService.sendSystemUpdate("RENTAL", "UPDATE");
         } catch (Exception e) {
             System.err.println("Error sending WebSocket notification: " + e.getMessage());
         }

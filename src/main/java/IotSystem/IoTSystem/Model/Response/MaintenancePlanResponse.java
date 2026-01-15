@@ -13,7 +13,6 @@ import java.util.UUID;
 public class MaintenancePlanResponse {
     private UUID id;
     private MaintenanceScope scope;
-    private UUID targetId;
     private java.util.Date scheduledDate;
     private MaintenanceStatus status;
     private String createdBy;

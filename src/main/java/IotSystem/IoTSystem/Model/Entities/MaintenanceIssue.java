@@ -24,6 +24,9 @@ public class MaintenanceIssue extends Base {
     @Column(name = "issue_type")
     private MaintenanceIssueType issueType;
 
+    @Column(name = "component_id")
+    private UUID componentId;
+
     private int quantity;
 
     @ManyToOne(fetch = FetchType.LAZY)
