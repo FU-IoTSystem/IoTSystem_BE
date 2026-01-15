@@ -17,7 +17,6 @@ public class MaintenanceMapper {
     public static MaintenancePlan toMaintenancePlanEntity(MaintenancePlanRequest request) {
         MaintenancePlan plan = new MaintenancePlan();
         plan.setScope(request.getScope());
-        plan.setTargetId(request.getTargetId());
         plan.setScheduledDate(request.getScheduledDate());
         plan.setStatus(request.getStatus());
         plan.setCreatedBy(request.getCreatedBy());
@@ -31,7 +30,6 @@ public class MaintenanceMapper {
         return MaintenancePlanResponse.builder()
                 .id(plan.getId())
                 .scope(plan.getScope())
-                .targetId(plan.getTargetId())
                 .scheduledDate(plan.getScheduledDate())
                 .status(plan.getStatus())
                 .createdBy(plan.getCreatedBy())
@@ -45,6 +43,7 @@ public class MaintenanceMapper {
         MaintenanceIssue issue = new MaintenanceIssue();
         issue.setIssueType(request.getIssueType());
         issue.setMaintenancePlan(plan);
+        issue.setComponentId(request.getComponentId());
         if (request.getQuantity() != null) {
             issue.setQuantity(request.getQuantity());
         }
@@ -56,6 +55,7 @@ public class MaintenanceMapper {
                 .id(issue.getId())
                 .issueType(issue.getIssueType())
                 .maintenancePlanId(issue.getMaintenancePlan().getId())
+                .componentId(issue.getComponentId())
                 .quantity(issue.getQuantity())
                 .build();
     }

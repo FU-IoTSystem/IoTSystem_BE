@@ -10,4 +10,5 @@ public class MaintenanceIssueRequest {
     private MaintenanceIssueType issueType;
     private Integer quantity;
     private UUID maintenancePlanId;
+    private UUID componentId;
 }

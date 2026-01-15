@@ -16,9 +16,10 @@ public class RequestKitComponentResponse {
     private String componentName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
+
     // Component details
     private String componentType;
     private String description;
+    private Double price;
 }
 

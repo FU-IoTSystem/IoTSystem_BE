@@ -33,6 +33,8 @@ public class BorrowingRequestMapper {
                                     .build())
                             .collect(java.util.stream.Collectors.toList())
             );
+
+            kitResponse.setKitName(kitResponse.getComponents().get(0).getComponentName());
         }
 
         return BorrowingRequestResponse.builder()

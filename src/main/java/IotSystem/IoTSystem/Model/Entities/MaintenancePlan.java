@@ -25,8 +25,7 @@ public class MaintenancePlan extends Base {
     @Enumerated(EnumType.STRING)
     private MaintenanceScope scope;
 
-    @Column(name = "target_id")
-    private UUID targetId;
+
 
     @Column(name = "scheduled_date")
     private Date scheduledDate;
