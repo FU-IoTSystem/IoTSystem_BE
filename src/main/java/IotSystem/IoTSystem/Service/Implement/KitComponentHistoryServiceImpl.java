@@ -13,6 +13,7 @@ import IotSystem.IoTSystem.Repository.KitComponentRepository;
 import IotSystem.IoTSystem.Repository.KitsRepository;
 import IotSystem.IoTSystem.Repository.PenaltyDetailRepository;
 import IotSystem.IoTSystem.Service.IKitComponentHistoryService;
+import IotSystem.IoTSystem.Service.WebSocketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,15 +30,26 @@ public class KitComponentHistoryServiceImpl implements IKitComponentHistoryServi
     private final KitsRepository kitsRepository;
     private final KitComponentRepository kitComponentRepository;
     private final PenaltyDetailRepository penaltyDetailRepository;
+    private final WebSocketService webSocketService;
 
     @Override
     @Transactional
     public KitComponentHistoryResponse create(KitComponentHistoryRequest request) {
-        Kits kit = kitsRepository.findById(request.getKitId())
-                .orElseThrow(() -> new ResourceNotFoundException("Kit not found with ID: " + request.getKitId()));
-
         Kit_Component component = kitComponentRepository.findById(request.getComponentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Component not found with ID: " + request.getComponentId()));
+
+        Kits kit;
+        if (request.getKitId() != null) {
+            kit = kitsRepository.findById(request.getKitId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Kit not found with ID: " + request.getKitId()));
+        } else {
+            // If kitId is not provided (e.g. from virtual kit context), try to get from component
+            if (component.getKit() != null) {
+                kit = component.getKit();
+            } else {
+                throw new IllegalArgumentException("Cannot create history: Kit ID is missing and component does not belong to a kit.");
+            }
+        }
 
         PenaltyDetail penaltyDetail = null;
         if (request.getPenaltyDetailId() != null) {
@@ -56,6 +68,8 @@ public class KitComponentHistoryServiceImpl implements IKitComponentHistoryServi
                 .build();
 
         history = historyRepository.save(history);
+
+        webSocketService.sendSystemUpdate("HISTORY", "CREATE");
 
         return KitComponentHistoryMapper.toResponse(history);
     }

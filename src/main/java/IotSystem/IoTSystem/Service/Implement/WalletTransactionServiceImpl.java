@@ -221,8 +221,8 @@ public class WalletTransactionServiceImpl implements IWalletTransactionService {
             walletUpdate.put("balance", newBalance.doubleValue());
             walletUpdate.put("transaction", transactionResponse);
 
-            webSocketService.sendWalletUpdateToUser(account.getId().toString(), walletUpdate);
             webSocketService.sendWalletTransactionToUser(account.getId().toString(), transactionResponse);
+            webSocketService.sendSystemUpdate("TRANSACTION", "UPDATE");
         } catch (Exception e) {
             System.err.println("Error sending WebSocket update: " + e.getMessage());
         }
@@ -369,8 +369,8 @@ public class WalletTransactionServiceImpl implements IWalletTransactionService {
             recipientWalletUpdate.put("balance", newRecipientBalance.doubleValue());
             recipientWalletUpdate.put("transaction", recipientTransactionResponse);
 
-            webSocketService.sendWalletUpdateToUser(recipientAccount.getId().toString(), recipientWalletUpdate);
             webSocketService.sendWalletTransactionToUser(recipientAccount.getId().toString(), recipientTransactionResponse);
+            webSocketService.sendSystemUpdate("TRANSACTION", "UPDATE");
         } catch (Exception e) {
             System.err.println("Error sending WebSocket update to recipient: " + e.getMessage());
         }
