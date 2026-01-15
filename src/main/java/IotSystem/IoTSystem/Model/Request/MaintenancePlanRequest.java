@@ -14,4 +14,5 @@ public class MaintenancePlanRequest {
     private Date scheduledDate;
     private MaintenanceStatus status;
     private String createdBy;
+    private String reason;
 }

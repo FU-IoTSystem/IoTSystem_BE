@@ -4,10 +4,15 @@ import IotSystem.IoTSystem.Exception.ResourceNotFoundException;
 import IotSystem.IoTSystem.Model.Entities.Account;
 import IotSystem.IoTSystem.Model.Entities.BorrowingRequest;
 import IotSystem.IoTSystem.Model.Entities.Penalty;
+import IotSystem.IoTSystem.Model.Entities.PenaltyPolicies;
 import IotSystem.IoTSystem.Model.Entities.PenaltyDetail;
+import IotSystem.IoTSystem.Model.Entities.Kits;
+import IotSystem.IoTSystem.Model.Entities.Kit_Component;
+import IotSystem.IoTSystem.Model.Entities.RequestKitComponent;
 import IotSystem.IoTSystem.Model.Entities.Wallet;
 import IotSystem.IoTSystem.Model.Entities.WalletTransaction;
 import IotSystem.IoTSystem.Model.Mappers.PenaltyMapper;
+import IotSystem.IoTSystem.Model.Entities.Enum.RequestType;
 import IotSystem.IoTSystem.Model.Request.PenaltyRequest;
 import IotSystem.IoTSystem.Model.Response.PenaltyResponse;
 import IotSystem.IoTSystem.Model.Response.TransactionHistoryResponse;
@@ -45,6 +50,15 @@ public class PenaltyServiceImpl implements IPenaltyService {
     private WalletRepository walletRepository;
     @Autowired
     private WalletTransactionRepository walletTransactionRepository;
+
+    @Autowired
+    private RequestKitComponentRepository requestKitComponentRepository;
+
+    @Autowired
+    private KitComponentRepository kitComponentRepository;
+
+    @Autowired
+    private KitsRepository kitsRepository;
 
     @Autowired
     private WebSocketService webSocketService;
@@ -90,7 +104,14 @@ public class PenaltyServiceImpl implements IPenaltyService {
                 new ResourceNotFoundException("Did not found the Student/Lecturer: " + request.getAccountId()));
 
         BorrowingRequest borrowingRequest = borrowingRequestRepository.findById(request.getBorrowRequestId()).orElseThrow(() ->
-                new ResourceNotFoundException("Did not found the Student/Lecturer: " + request.getBorrowRequestId()));
+                new ResourceNotFoundException("Did not found the Borrowing Request: " + request.getBorrowRequestId()));
+
+        if (request.getPolicyId() != null) {
+            PenaltyPolicies policy = penaltyPoliciesRepository.findById(request.getPolicyId()).orElse(null);
+            if (policy != null) {
+                penalty.setPolicies(policy);
+            }
+        }
 
         penalty.setAccount(account);
         penalty.setRequest(borrowingRequest);
@@ -101,30 +122,32 @@ public class PenaltyServiceImpl implements IPenaltyService {
         penalty.setKit_type(request.getKitType());
         penalty.setTotal_ammount(request.getTotalAmount());
 
+        // Base entity fields usually handled by JPA auditing, but we can set them explicitely if needed or if Auditing is not enabled
+        penalty.setCreatedAt(java.time.LocalDateTime.now());
+
         penalty = penaltyRepository.save(penalty);
 
         // Send WebSocket update to user
         try {
             PenaltyResponse penaltyResponse = PenaltyMapper.toResponse(penalty);
             webSocketService.sendPenaltyUpdateToUser(account.getId().toString(), penaltyResponse);
+            webSocketService.sendSystemUpdate("PENALTY", "CREATE");
         } catch (Exception e) {
             System.err.println("Error sending WebSocket penalty update: " + e.getMessage());
         }
-
-        // Rental fee is handled in penalty payment logic, not as a separate penalty detail
-        // No need to create penalty detail for rental fee here
 
         return PenaltyMapper.toResponse(penalty);
     }
 
     @Override
     public Penalty update(UUID id, Penalty penalty) {
+        webSocketService.sendSystemUpdate("PENALTY", "UPDATE");
         return null;
     }
 
     @Override
     public void delete(UUID id) {
-
+        webSocketService.sendSystemUpdate("PENALTY", "DELETE");
     }
 
     @Transactional
@@ -393,5 +416,43 @@ public class PenaltyServiceImpl implements IPenaltyService {
         // Update penalty
         penalty.setResolved(true);
         penaltyRepository.save(penalty);
+
+        // Update component/kit status/quantity if penalty involves damage/loss
+        // Logic: Return process (BorrowingRequestServiceImpl) usually restores quantity (+1)
+        // If penalty is for Damage/Lost, we must reverse that (+1 -> -1) to reflect the item is gone/broken
+        // User request: "if it had [damage/lost], so remove available kit plus 1" -> imply -1 correction
+
+        List<PenaltyDetail> details = penaltyDetailRepository.findByPenaltyId(penaltyId);
+
+        boolean hasDamageOrLost = details.stream()
+                .anyMatch(d -> (d.getDescription() != null && (d.getDescription().toLowerCase().contains("damage") || d.getDescription().toLowerCase().contains("lost"))) ||
+                        (d.getPolicies() != null && (d.getPolicies().getPolicyName().toLowerCase().contains("damage") || d.getPolicies().getPolicyName().toLowerCase().contains("lost"))));
+
+        webSocketService.sendSystemUpdate("PENALTY", "UPDATE");
+
+        if (hasDamageOrLost) {
+            BorrowingRequest req = penalty.getRequest();
+            if (req != null) {
+                if (req.getRequestType() == RequestType.BORROW_KIT && req.getKit() != null) {
+                    Kits kit = req.getKit();
+                    // Check if quantity > 0 before subtracting to avoid negative
+                    if (kit.getQuantityAvailable() > 0) {
+                        kit.setQuantityAvailable(kit.getQuantityAvailable() - 1);
+                        kitsRepository.save(kit);
+                        System.out.println("Actuated stock for Kit " + kit.getId() + ": -1 due to Damage/Lost penalty.");
+                    }
+                } else if (req.getRequestType() == RequestType.BORROW_COMPONENT) {
+                    List<RequestKitComponent> requestComponents = requestKitComponentRepository.findByRequestId(req.getId());
+                    for (RequestKitComponent rkc : requestComponents) {
+                        Kit_Component comp = kitComponentRepository.findById(rkc.getKitComponentsId()).orElse(null);
+                        if (comp != null && comp.getQuantityAvailable() > 0) {
+                            comp.setQuantityAvailable(comp.getQuantityAvailable() - rkc.getQuantity()); // Subtract quantity
+                            kitComponentRepository.save(comp);
+                            System.out.println("Actuated stock for Component " + comp.getId() + ": -" + rkc.getQuantity() + " due to Damage/Lost penalty.");
+                        }
+                    }
+                }
+            }
+        }
     }
 }

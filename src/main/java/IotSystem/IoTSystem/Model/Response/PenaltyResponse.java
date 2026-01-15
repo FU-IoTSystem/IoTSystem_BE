@@ -25,4 +25,5 @@ public class PenaltyResponse {
     private String accountEmail;
     private UUID policyId;
     private String policyName;
+    private String userCode;
 }

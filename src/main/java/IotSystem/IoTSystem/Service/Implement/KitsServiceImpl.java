@@ -17,6 +17,7 @@ import IotSystem.IoTSystem.Repository.DamageReportRepository;
 import IotSystem.IoTSystem.Repository.KitComponentRepository;
 import IotSystem.IoTSystem.Repository.KitsRepository;
 import IotSystem.IoTSystem.Service.IKitsService;
+import IotSystem.IoTSystem.Service.WebSocketService; // Import WebSocketService
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class KitsServiceImpl implements IKitsService {
     @Autowired
     private final DamageReportRepository damageReportRepository;
 
+    private final WebSocketService webSocketService; // Injected via @RequiredArgsConstructor
 
     @Override
     public KitResponse createKitWithComponents(KitCreationRequest request) {
@@ -57,6 +59,8 @@ public class KitsServiceImpl implements IKitsService {
                 .sum();
         savedKit.setAmount(kitAmount);
         kitRepository.save(savedKit);
+
+        webSocketService.sendSystemUpdate("KIT", "CREATE");
 
         // Trả về response DTO
         return KitResponseMapper.toResponse(savedKit, components);
@@ -97,6 +101,9 @@ public class KitsServiceImpl implements IKitsService {
         Kits kit = kitRepository.findById(kitId).orElseThrow(() -> new ResourceNotFoundException("Did not found Kit ID: " + kitId));
         KitMapper.updateKit(kit, request);
         Kits updating = kitRepository.save(kit);
+
+        webSocketService.sendSystemUpdate("KIT", "UPDATE");
+
         return KitResponseMapper.toResponse(updating, updating.getComponents());
     }
 
@@ -120,6 +127,7 @@ public class KitsServiceImpl implements IKitsService {
 
         // Delete kit (components will be deleted automatically due to cascade)
         kitRepository.delete(kit);
+        webSocketService.sendSystemUpdate("KIT", "DELETE");
     }
 
     @Override
@@ -131,6 +139,7 @@ public class KitsServiceImpl implements IKitsService {
     public KitResponse createSingleKit(KitSingleCreateRequest request) {
         Kits kits = KitMapper.toKitSingleEntity(request);
         Kits savedKit = kitRepository.save(kits);
+        webSocketService.sendSystemUpdate("KIT", "CREATE");
         return KitResponseMapper.toResponse(savedKit, List.of());
     }
 
@@ -141,6 +150,8 @@ public class KitsServiceImpl implements IKitsService {
 
         Kit_Component component = KitMapper.toComponentEntity(request.getComponent(), kit);
         Kit_Component saved = kitComponentRepository.save(component);
+
+        webSocketService.sendSystemUpdate("KIT", "UPDATE"); // Kit updated (component added)
 
         // Recalculate kit amount after adding component
         List<Kit_Component> allComponents = kitComponentRepository.findByKitId(kit.getId());

@@ -21,6 +21,9 @@ public class MaintenanceMapper {
         plan.setScheduledDate(request.getScheduledDate());
         plan.setStatus(request.getStatus());
         plan.setCreatedBy(request.getCreatedBy());
+        if (request.getReason() != null) {
+            plan.setReason(request.getReason());
+        }
         return plan;
     }
 
@@ -32,6 +35,7 @@ public class MaintenanceMapper {
                 .scheduledDate(plan.getScheduledDate())
                 .status(plan.getStatus())
                 .createdBy(plan.getCreatedBy())
+                .reason(plan.getReason())
                 .createdAt(plan.getCreatedAt())
                 .updatedAt(plan.getUpdatedAt())
                 .build();

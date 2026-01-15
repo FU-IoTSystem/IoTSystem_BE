@@ -6,8 +6,6 @@ import IotSystem.IoTSystem.Model.Request.NotificationRequest;
 import IotSystem.IoTSystem.Model.Response.ApiResponse;
 import IotSystem.IoTSystem.Model.Response.NotificationResponse;
 import IotSystem.IoTSystem.Service.INotificationService;
-import com.beust.ah.A;
-import org.aspectj.weaver.ast.Not;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

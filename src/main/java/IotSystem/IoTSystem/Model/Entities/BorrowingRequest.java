@@ -75,6 +75,8 @@ public class BorrowingRequest extends Base {
     private Penalty penalties;
 
 
+    @OneToMany(mappedBy = "borrowingRequest", fetch = FetchType.LAZY)
+    private List<RequestKitComponent> requestKitComponents;
 }
 
 

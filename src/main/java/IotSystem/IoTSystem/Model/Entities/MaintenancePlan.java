@@ -36,4 +36,7 @@ public class MaintenancePlan extends Base {
 
     @Column(name = "created_by")
     private String createdBy;
+
+    @Column(name = "reason")
+    private String reason;
 }

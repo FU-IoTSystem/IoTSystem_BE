@@ -24,11 +24,15 @@ public class MaintenanceService {
     private MaintenancePlanRepository maintenancePlanRepository;
 
     @Autowired
+    private WebSocketService webSocketService;
+
+    @Autowired
     private MaintenanceIssueRepository maintenanceIssueRepository;
 
     public MaintenancePlanResponse createMaintenancePlan(MaintenancePlanRequest request) {
         MaintenancePlan plan = MaintenanceMapper.toMaintenancePlanEntity(request);
         plan = maintenancePlanRepository.save(plan);
+        webSocketService.sendSystemUpdate("MAINTENANCE", "CREATE");
         return MaintenanceMapper.toMaintenancePlanResponse(plan);
     }
 
@@ -43,20 +47,46 @@ public class MaintenanceService {
         return MaintenanceMapper.toMaintenancePlanResponse(plan);
     }
 
+    public MaintenancePlanResponse updateMaintenancePlan(UUID id, MaintenancePlanRequest request) {
+        MaintenancePlan plan = maintenancePlanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Maintenance Plan not found with id: " + id));
+
+        plan.setScheduledDate(request.getScheduledDate());
+        plan.setStatus(request.getStatus());
+        plan.setTargetId(request.getTargetId());
+        // Scope should ideally not be changed, or if it is ensure TargetId matches new scope logic
+        // For now allowing TargetId update.
+        if (request.getReason() != null) {
+            plan.setReason(request.getReason());
+        }
+
+        plan = maintenancePlanRepository.save(plan);
+        webSocketService.sendSystemUpdate("MAINTENANCE", "UPDATE");
+        return MaintenanceMapper.toMaintenancePlanResponse(plan);
+    }
+
+    public void deleteMaintenancePlan(UUID id) {
+        if (!maintenancePlanRepository.existsById(id)) {
+            throw new RuntimeException("Maintenance Plan not found with id: " + id);
+        }
+        maintenancePlanRepository.deleteById(id);
+        webSocketService.sendSystemUpdate("MAINTENANCE", "DELETE");
+    }
+
     public MaintenanceIssueResponse createMaintenanceIssue(MaintenanceIssueRequest request) {
         MaintenancePlan plan = maintenancePlanRepository.findById(request.getMaintenancePlanId())
                 .orElseThrow(() -> new RuntimeException("Maintenance Plan not found with id: " + request.getMaintenancePlanId()));
-        
+
         MaintenanceIssue issue = MaintenanceMapper.toMaintenanceIssueEntity(request, plan);
         issue = maintenanceIssueRepository.save(issue);
         return MaintenanceMapper.toMaintenanceIssueResponse(issue);
     }
-    
+
     public List<MaintenanceIssueResponse> getAllMaintenanceIssues() {
         List<MaintenanceIssue> issues = maintenanceIssueRepository.findAll();
         return MaintenanceMapper.toMaintenanceIssueResponseList(issues);
     }
-    
+
     public List<MaintenanceIssueResponse> getIssuesByPlan(UUID planId) {
         List<MaintenanceIssue> issues = maintenanceIssueRepository.findByMaintenancePlan_Id(planId);
         return MaintenanceMapper.toMaintenanceIssueResponseList(issues);
