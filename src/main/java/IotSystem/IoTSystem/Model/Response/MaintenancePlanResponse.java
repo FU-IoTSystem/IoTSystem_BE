@@ -17,6 +17,7 @@ public class MaintenancePlanResponse {
     private java.util.Date scheduledDate;
     private MaintenanceStatus status;
     private String createdBy;
+    private String reason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

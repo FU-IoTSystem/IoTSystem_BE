@@ -310,30 +310,54 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
 
     /**
      * Validate leader rental limits
-     * Leaders can rent maximum 1 kit
-     * They can only send a new request when their previous request is REJECTED
+     * Leaders can rent maximum 1 kit per group
+     * A group can only have 1 active rental total (regardless of who requested it)
      */
     private void validateLeaderRentalLimits(Account account) {
-        // Check if account is a leader (has LEADER role in any BorrowingGroup)
-        boolean isLeader = borrowingGroupRepository.findByAccountId(account.getId())
+        // Find all groups where this account is a LEADER
+        List<BorrowingGroup> leaderGroups = borrowingGroupRepository.findByAccountId(account.getId())
                 .stream()
-                .anyMatch(bg -> bg.getRoles() == GroupRoles.LEADER);
+                .filter(bg -> bg.getRoles() == GroupRoles.LEADER)
+                .collect(Collectors.toList());
 
-        if (!isLeader) {
+        if (leaderGroups.isEmpty()) {
             return; // Not a leader, skip validation
         }
 
-        // Get all active borrowing requests for this leader (excluding REJECTED and RETURNED)
-        List<BorrowingRequest> activeRequests = borrowingRequestRepository.findByRequestedById(account.getId())
-                .stream()
-                .filter(req -> req.getRequestType() == RequestType.BORROW_KIT) // Only check kit rentals, not component rentals
-                .filter(req -> req.getStatus() != null && !req.getStatus().equalsIgnoreCase("REJECTED")) // Exclude rejected requests
-                .filter(req -> req.getStatus() != null && !req.getStatus().equalsIgnoreCase("RETURNED")) // Exclude returned requests
-                .collect(Collectors.toList());
+        // For each group the user leads, check if ANY member has an active rental
+        for (BorrowingGroup leaderBg : leaderGroups) {
+            StudentGroup group = leaderBg.getStudentGroup();
+            if (group == null) continue;
 
-        // Leader can only have 1 active request at a time
-        if (!activeRequests.isEmpty()) {
-            throw new RuntimeException("Leader can only rent 1 kit at a time. You already have an active rental request. Please wait until your current request is approved, rejected, or returned before requesting another kit.");
+            // Find all members of this group
+            List<BorrowingGroup> groupMembers = borrowingGroupRepository.findByStudentGroupId(group.getId());
+
+            // Check each member for active rentals
+            for (BorrowingGroup memberBg : groupMembers) {
+                if (memberBg.getAccount() == null) continue;
+
+                UUID memberId = memberBg.getAccount().getId();
+
+                // Get active requests for this member
+                List<BorrowingRequest> activeRequests = borrowingRequestRepository.findByRequestedById(memberId)
+                        .stream()
+                        .filter(req -> req.getRequestType() == RequestType.BORROW_KIT) // Only check kit rentals
+                        .filter(req -> req.getStatus() != null && !req.getStatus().equalsIgnoreCase("REJECTED"))
+                        .filter(req -> req.getStatus() != null && !req.getStatus().equalsIgnoreCase("RETURNED"))
+                        .collect(Collectors.toList());
+
+                if (!activeRequests.isEmpty()) {
+                    BorrowingRequest existing = activeRequests.get(0);
+                    // If the existing request belongs to the current user, use "You" in message, else use member name
+                    String requesterName = existing.getRequestedBy().getId().equals(account.getId())
+                            ? "You"
+                            : existing.getRequestedBy().getFullName();
+
+                    throw new RuntimeException("Group '" + (group.getGroupName() != null ? group.getGroupName() : "Unknown") +
+                            "' already has an active rental (requested by " + requesterName +
+                            "). A group can only rent 1 kit at a time.");
+                }
+            }
         }
     }
 

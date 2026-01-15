@@ -64,8 +64,26 @@ public class WebSocketService {
     /**
      * Send group update to specific user (for lecturers)
      */
+    /**
+     * Send group update to specific user (for lecturers)
+     */
     public void sendGroupUpdateToUser(String userId, Object groupUpdate) {
         messagingTemplate.convertAndSend("/queue/groups/" + userId, groupUpdate);
+    }
+
+    /**
+     * Send global system update notification to all clients
+     * entity: "KIT", "COMPONENT", "REQUEST", "PENALTY", "MAINTENANCE", etc.
+     * action: "CREATE", "UPDATE", "DELETE"
+     */
+    public void sendSystemUpdate(String entity, String action) {
+        // Simple DTO for system update
+        java.util.Map<String, String> updateMsg = new java.util.HashMap<>();
+        updateMsg.put("entity", entity);
+        updateMsg.put("action", action);
+        updateMsg.put("timestamp", java.time.LocalDateTime.now().toString());
+
+        messagingTemplate.convertAndSend("/topic/system-updates", updateMsg);
     }
 }
 

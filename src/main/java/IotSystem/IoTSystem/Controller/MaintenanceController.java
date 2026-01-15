@@ -35,6 +35,17 @@ public class MaintenanceController {
         return ResponseEntity.ok(maintenanceService.getMaintenancePlanById(id));
     }
 
+    @PutMapping("/plans/{id}")
+    public ResponseEntity<MaintenancePlanResponse> updatePlan(@PathVariable UUID id, @RequestBody MaintenancePlanRequest request) {
+        return ResponseEntity.ok(maintenanceService.updateMaintenancePlan(id, request));
+    }
+
+    @DeleteMapping("/plans/{id}")
+    public ResponseEntity<Void> deletePlan(@PathVariable UUID id) {
+        maintenanceService.deleteMaintenancePlan(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/issues")
     public ResponseEntity<MaintenanceIssueResponse> createIssue(@RequestBody MaintenanceIssueRequest request) {
         return ResponseEntity.ok(maintenanceService.createMaintenanceIssue(request));
