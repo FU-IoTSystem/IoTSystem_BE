@@ -46,6 +46,9 @@ public class PenaltyDetailServiceImpl implements IPenaltyDetailService {
     public PenaltyDetail create(PenaltyDetailRequest request) {
         PenaltyDetail detail = new PenaltyDetail();
         detail.setAmount(request.getAmount());
+        if(request.getQuantity() != null){
+            detail.setQuantity(request.getQuantity());
+        }
         detail.setDescription(request.getDescription());
         detail.setImageUrl(request.getImageUrl());
 
@@ -88,6 +91,10 @@ public class PenaltyDetailServiceImpl implements IPenaltyDetailService {
 
         if (request.getAmount() != null) {
             detail.setAmount(request.getAmount());
+        }
+
+        if (request.getQuantity() != null) {
+            detail.setQuantity(request.getQuantity());
         }
 
         if (request.getDescription() != null) {
