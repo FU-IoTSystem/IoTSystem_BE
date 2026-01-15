@@ -38,7 +38,7 @@ public class KitComponentHistoryServiceImpl implements IKitComponentHistoryServi
         Kit_Component component = kitComponentRepository.findById(request.getComponentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Component not found with ID: " + request.getComponentId()));
 
-        Kits kit;
+        Kits kit = null;
         if (request.getKitId() != null) {
             kit = kitsRepository.findById(request.getKitId())
                     .orElseThrow(() -> new ResourceNotFoundException("Kit not found with ID: " + request.getKitId()));
@@ -46,8 +46,6 @@ public class KitComponentHistoryServiceImpl implements IKitComponentHistoryServi
             // If kitId is not provided (e.g. from virtual kit context), try to get from component
             if (component.getKit() != null) {
                 kit = component.getKit();
-            } else {
-                throw new IllegalArgumentException("Cannot create history: Kit ID is missing and component does not belong to a kit.");
             }
         }
 
@@ -63,7 +61,8 @@ public class KitComponentHistoryServiceImpl implements IKitComponentHistoryServi
                 .action(request.getAction())
                 .oldStatus(request.getOldStatus())
                 .newStatus(request.getNewStatus())
-                .note(request.getNote())
+                .imgUrl(request.getImgUrl())
+
                 .penaltyDetail(penaltyDetail)
                 .build();
 
@@ -91,6 +90,13 @@ public class KitComponentHistoryServiceImpl implements IKitComponentHistoryServi
     @Override
     public List<KitComponentHistoryResponse> getByComponentId(UUID componentId) {
         return historyRepository.findByComponentIdOrderByCreatedAtDesc(componentId).stream()
+                .map(KitComponentHistoryMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<KitComponentHistoryResponse> getGlobalComponentsHistory() {
+        return historyRepository.findByKitIsNullOrderByCreatedAtDesc().stream()
                 .map(KitComponentHistoryMapper::toResponse)
                 .collect(Collectors.toList());
     }

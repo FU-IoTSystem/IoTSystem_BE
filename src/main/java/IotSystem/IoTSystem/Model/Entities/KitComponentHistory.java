@@ -25,7 +25,7 @@ public class KitComponentHistory extends Base {
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "kit_id", nullable = false)
+    @JoinColumn(name = "kit_id", nullable = true)
     private Kits kit;
 
     @ManyToOne
@@ -41,8 +41,10 @@ public class KitComponentHistory extends Base {
     @Column(name = "new_status")
     private String newStatus;
 
-    @Column(name = "note", columnDefinition = "TEXT")
-    private String note;
+    @Column(name = "img_url", columnDefinition = "TEXT")
+    private String imgUrl;
+
+
 
     @ManyToOne
     @JoinColumn(name = "penalty_detail_id")

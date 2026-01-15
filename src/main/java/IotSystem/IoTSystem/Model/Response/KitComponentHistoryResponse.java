@@ -21,7 +21,7 @@ public class KitComponentHistoryResponse {
     private String action;
     private String oldStatus;
     private String newStatus;
-    private String note;
+    private String imgUrl;
     private UUID penaltyDetailId;
     private String penaltyDetailImageUrl;
     private LocalDateTime createdAt;
