@@ -53,9 +53,7 @@ public class MaintenanceService {
 
         plan.setScheduledDate(request.getScheduledDate());
         plan.setStatus(request.getStatus());
-        plan.setTargetId(request.getTargetId());
-        // Scope should ideally not be changed, or if it is ensure TargetId matches new scope logic
-        // For now allowing TargetId update.
+
         if (request.getReason() != null) {
             plan.setReason(request.getReason());
         }

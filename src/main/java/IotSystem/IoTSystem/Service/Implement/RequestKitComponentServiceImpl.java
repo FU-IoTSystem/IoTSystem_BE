@@ -134,6 +134,7 @@ public class RequestKitComponentServiceImpl implements IRequestKitComponentServi
             response.setComponentType(entity.getKitComponent().getComponentType() != null ?
                     entity.getKitComponent().getComponentType().name() : null);
             response.setDescription(entity.getKitComponent().getDescription());
+            response.setPrice(entity.getKitComponent().getPricePerCom());
         }
 
         return response;

@@ -183,6 +183,8 @@ public class KitsServiceImpl implements IKitsService {
         kit.setAmount(kitAmount);
         kitRepository.save(kit);
 
+        webSocketService.sendSystemUpdate("KIT", "UPDATE");
+
         return KitResponseMapper.toComponentResponseList(savedList);
     }
 

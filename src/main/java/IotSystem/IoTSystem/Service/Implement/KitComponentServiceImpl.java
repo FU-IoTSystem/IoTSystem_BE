@@ -13,6 +13,7 @@ import IotSystem.IoTSystem.Model.Response.KitResponse;
 import IotSystem.IoTSystem.Repository.KitComponentRepository;
 import IotSystem.IoTSystem.Repository.KitsRepository;
 import IotSystem.IoTSystem.Service.IKitComponentService;
+import IotSystem.IoTSystem.Service.WebSocketService;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -36,6 +37,8 @@ public class KitComponentServiceImpl implements IKitComponentService {
     KitComponentRepository kitComponentRepository;
     @Autowired
     KitsRepository kitsRepository;
+    @Autowired
+    private WebSocketService webSocketService;
 
 
     @Override
@@ -62,6 +65,8 @@ public class KitComponentServiceImpl implements IKitComponentService {
             kit.setAmount(kitAmount);
             kitsRepository.save(kit);
         }
+
+        webSocketService.sendSystemUpdate("COMPONENT", "CREATE");
 
         return KitComponentMapper.toResponse(kitComponent);
     }
@@ -126,8 +131,11 @@ public class KitComponentServiceImpl implements IKitComponentService {
                 kit.setAmount(kitAmount);
                 kitsRepository.save(kit);
 
+                webSocketService.sendSystemUpdate("COMPONENT", "DELETE");
+
                 return KitResponseMapper.toResponse(kit, kit.getComponents());
             } else {
+                webSocketService.sendSystemUpdate("COMPONENT", "DELETE");
                 return KitResponse.builder().build();
             }
         }
@@ -146,9 +154,12 @@ public class KitComponentServiceImpl implements IKitComponentService {
             kit.setAmount(kitAmount);
             kitsRepository.save(kit);
 
+            webSocketService.sendSystemUpdate("COMPONENT", "DELETE");
+
             return KitResponseMapper.toResponse(kit, kit.getComponents());
         } else {
             // Global component delete: no kit to recalculate
+            webSocketService.sendSystemUpdate("COMPONENT", "DELETE");
             return KitResponse.builder().build();
         }
     }
@@ -171,6 +182,8 @@ public class KitComponentServiceImpl implements IKitComponentService {
             kit.setAmount(kitAmount);
             kitsRepository.save(kit);
         }
+
+        webSocketService.sendSystemUpdate("COMPONENT", "UPDATE");
 
         return KitComponentMapper.toResponse(updatedComponent);
     }
@@ -401,6 +414,8 @@ public class KitComponentServiceImpl implements IKitComponentService {
                 kit.setAmount(kitAmount);
                 kitsRepository.save(kit);
             }
+
+            webSocketService.sendSystemUpdate("COMPONENT", "UPDATE");
 
         } catch (IOException e) {
             errors.add("Error reading Excel file: " + e.getMessage());
