@@ -92,6 +92,15 @@ public class KitComponentServiceImpl implements IKitComponentService {
     }
 
     @Override
+    public List<KitComponentResponse> getKitComponentsWithoutKit() {
+        return kitComponentRepository.findByKitIsNull()
+                .stream()
+                .filter(c -> c.getStatus() == null || !c.getStatus().equals("DELETED"))
+                .map(KitComponentMapper::toResponse)
+                .toList();
+    }
+
+    @Override
     public KitResponse deleteKitComponent(UUID id) {
         Kit_Component entity = kitComponentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Kit Component ID not found: " + id));
         Kits kit = entity.getKit();

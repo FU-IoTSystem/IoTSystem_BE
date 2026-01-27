@@ -19,6 +19,9 @@ public interface IKitComponentService {
 
     List<KitComponentResponse> getAllKitComponents();
 
+    List<KitComponentResponse> getKitComponentsWithoutKit();
+
+
     KitResponse deleteKitComponent(UUID id);
 
     KitComponentResponse updateKitComponent(UUID id, @Valid KitComponentRequest kitComponentRequest);

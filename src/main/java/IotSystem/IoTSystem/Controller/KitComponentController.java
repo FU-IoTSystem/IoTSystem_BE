@@ -46,6 +46,13 @@ public class KitComponentController {
         return ResponseEntity.ok(kitComponents);
     }
 
+    @Operation(summary = "Get Components Without Kit", description = "Get all components that are not assigned to any kit")
+    @GetMapping("/no-kit")
+    public ResponseEntity<List<KitComponentResponse>> getComponentsWithoutKit() {
+        List<KitComponentResponse> components = kitComponentService.getKitComponentsWithoutKit();
+        return ResponseEntity.ok(components);
+    }
+
     @Operation(summary = "Delete KitComponent", description = "Delete KitComponent")
     @DeleteMapping
     public ResponseEntity<KitResponse> deleteKitComponent(@RequestParam("id") UUID id) {
