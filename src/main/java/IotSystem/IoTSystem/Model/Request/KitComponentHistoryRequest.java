@@ -18,6 +18,7 @@ public class KitComponentHistoryRequest {
     private String oldStatus;
     private String newStatus;
     private String imgUrl;
+    private Integer quantity;
     private UUID penaltyDetailId;
 }
 

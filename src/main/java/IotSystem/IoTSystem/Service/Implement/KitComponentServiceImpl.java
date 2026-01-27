@@ -292,7 +292,7 @@ public class KitComponentServiceImpl implements IKitComponentService {
                     // Excel columns (by index):
                     // Column A: name (required)
                     // Column B: type (optional, Box/Set/Unit)
-                    // Column C: quantity (required)
+                    // Column C: quantityTotal (required)
                     // Column D: pricePerComp (optional, default 0.0)
                     // Column E: description (optional)
                     // Column F: image URL (optional)
@@ -317,13 +317,13 @@ public class KitComponentServiceImpl implements IKitComponentService {
                         try {
                             quantity = Integer.parseInt(quantityStr.trim());
                             if (quantity <= 0) {
-                                throw new RuntimeException("Quantity must be greater than 0");
+                                throw new RuntimeException("Quantity Total must be greater than 0");
                             }
                         } catch (NumberFormatException e) {
                             throw new RuntimeException("Invalid quantity format: " + quantityStr);
                         }
                     } else {
-                        throw new RuntimeException("Quantity is required");
+                        throw new RuntimeException("Quantity Total is required");
                     }
 
                     // Parse pricePerComp (optional)
@@ -460,7 +460,8 @@ public class KitComponentServiceImpl implements IKitComponentService {
                 colA.toLowerCase().contains("tên"));
         boolean hasQuantity = colC != null && (colC.toLowerCase().contains("quantity") ||
                 colC.toLowerCase().contains("số lượng") ||
-                colC.toLowerCase().contains("qty"));
+                colC.toLowerCase().contains("qty") ||
+                colC.toLowerCase().contains("total"));
         // Optional but recommended: type, price, description, image, link
         // Không bắt buộc để tránh làm hỏng file cũ, chỉ kiểm nhẹ nếu có
         return hasName && hasQuantity;

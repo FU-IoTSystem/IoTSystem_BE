@@ -14,6 +14,8 @@ public interface IPenaltyService {
 
     List<PenaltyResponse> getAll(boolean isResolved);
 
+    List<PenaltyResponse> getAll();
+
     PenaltyResponse create(PenaltyRequest request);
 
     Penalty update(UUID id, Penalty penalty);

@@ -37,7 +37,6 @@ import IotSystem.IoTSystem.Repository.StudentGroupRepository;
 import IotSystem.IoTSystem.Repository.WalletRepository;
 import IotSystem.IoTSystem.Repository.WalletTransactionRepository;
 import IotSystem.IoTSystem.Service.IBorrowingRequestService;
-
 import IotSystem.IoTSystem.Service.WebSocketService;
 import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -125,7 +124,7 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         BorrowingRequest borrow = new BorrowingRequest();
         borrow.setKit(kit);
 
-        // Rental fee is 100% of kit amount
+        // Rental fee is 2/3 (66%) of kit amount
         double deposit_amount = kit.getAmount();
 
         borrow.setDepositAmount(deposit_amount);
@@ -146,7 +145,8 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         try {
             String qrCodeData = generateQRCodeText(account, kit, borrow);
             String qrCodeBase64 = QRCodeService.generateQRCodeBase64(qrCodeData);
-            borrow.setQrCode(qrCodeBase64);
+            // Add data URI prefix for React Native Image component
+            borrow.setQrCode("data:image/png;base64," + qrCodeBase64);
         } catch (WriterException | IOException e) {
             System.err.println("Error generating QR code: " + e.getMessage());
             // Continue without QR code if generation fails
@@ -193,6 +193,7 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         BorrowingRequest borrowingRequest = new BorrowingRequest();
         borrowingRequest.setRequestedBy(account);
         borrowingRequest.setReason(request.getReason());
+        // Rental fee is 2/3 (66%) of component price
         borrowingRequest.setDepositAmount(request.getDepositAmount());
         borrowingRequest.setExpectReturnDate(request.getExpectReturnDate());
         borrowingRequest.setStatus("PENDING");
@@ -202,7 +203,8 @@ public class BorrowingRequestServiceImpl implements IBorrowingRequestService {
         try {
             String qrCodeData = generateComponentQRCodeText(account, component, borrowingRequest, request);
             String qrCodeBase64 = QRCodeService.generateQRCodeBase64(qrCodeData);
-            borrowingRequest.setQrCode(qrCodeBase64);
+            // Add data URI prefix for React Native Image component
+            borrowingRequest.setQrCode("data:image/png;base64," + qrCodeBase64);
         } catch (Exception e) {
             System.err.println("Error generating QR code: " + e.getMessage());
         }

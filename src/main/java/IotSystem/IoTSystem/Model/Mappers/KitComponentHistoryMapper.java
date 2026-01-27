@@ -22,6 +22,7 @@ public class KitComponentHistoryMapper {
                 .oldStatus(history.getOldStatus())
                 .newStatus(history.getNewStatus())
                 .imgUrl(history.getImgUrl())
+                .quantity(history.getQuantity())
 
                 .penaltyDetailId(history.getPenaltyDetail() != null ? history.getPenaltyDetail().getId() : null)
                 .penaltyDetailImageUrl(history.getPenaltyDetail() != null ? history.getPenaltyDetail().getImageUrl() : null)

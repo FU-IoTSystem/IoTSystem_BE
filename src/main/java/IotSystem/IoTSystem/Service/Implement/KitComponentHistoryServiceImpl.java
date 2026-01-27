@@ -62,6 +62,7 @@ public class KitComponentHistoryServiceImpl implements IKitComponentHistoryServi
                 .oldStatus(request.getOldStatus())
                 .newStatus(request.getNewStatus())
                 .imgUrl(request.getImgUrl())
+                .quantity(request.getQuantity())
 
                 .penaltyDetail(penaltyDetail)
                 .build();

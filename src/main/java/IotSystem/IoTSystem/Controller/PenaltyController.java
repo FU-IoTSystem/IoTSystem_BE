@@ -48,6 +48,30 @@ public class PenaltyController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/unresolved")
+    public ResponseEntity<ApiResponse<List<PenaltyResponse>>> getUnresolvedPenalties() {
+        ApiResponse<List<PenaltyResponse>> response = new ApiResponse<>();
+        List<PenaltyResponse> penaltyResponses = penaltyService.getAll(false);
+        response.setData(penaltyResponses);
+        response.setMessage("Fetch unresolved penalties successfully");
+        response.setStatus(HTTPStatus.Ok);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/getAll")
+    public ResponseEntity<ApiResponse<List<PenaltyResponse>>> getAll(){
+
+        ApiResponse<List<PenaltyResponse>> response = new ApiResponse<>();
+
+        List<PenaltyResponse> penaltyResponses = penaltyService.getAll();
+
+        response.setData(penaltyResponses);
+        response.setMessage("Fetch all penalties successfully");
+        response.setStatus(HTTPStatus.Ok);
+
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{id}")
     public Penalty getById(@PathVariable UUID id) {
         return penaltyService.getById(id);
