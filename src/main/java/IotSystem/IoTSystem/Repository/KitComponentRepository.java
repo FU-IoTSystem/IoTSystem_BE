@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface KitComponentRepository extends JpaRepository<Kit_Component, UUID> {
 
     List<Kit_Component> findByKitId(UUID kitId);
+
+    List<Kit_Component> findByKitIsNull();
 }
