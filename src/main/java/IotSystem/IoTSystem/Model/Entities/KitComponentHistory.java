@@ -44,6 +44,9 @@ public class KitComponentHistory extends Base {
     @Column(name = "img_url", columnDefinition = "TEXT")
     private String imgUrl;
 
+    @Column(name = "quantity")
+    private Integer quantity;
+
 
 
     @ManyToOne

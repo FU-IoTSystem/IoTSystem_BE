@@ -57,6 +57,9 @@ public class KitMapper {
         if (request.getQuantityAvailable() != null) {
             existingKit.setQuantityAvailable(request.getQuantityAvailable());
         }
+        if (request.getAmount() != null) {
+            existingKit.setAmount(request.getAmount());
+        }
         existingKit.setImageUrl(request.getImageUrl());
         existingKit.setUpdatedAt(LocalDateTime.now());
     }

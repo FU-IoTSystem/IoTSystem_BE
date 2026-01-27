@@ -97,6 +97,12 @@ public class PenaltyServiceImpl implements IPenaltyService {
     }
 
     @Override
+    public List<PenaltyResponse> getAll() {
+        List<Penalty> penalties = penaltyRepository.findAll();
+        return penalties.stream().map(PenaltyMapper::toResponse).toList();
+    }
+
+    @Override
     public PenaltyResponse create(PenaltyRequest request) {
         Penalty penalty = new Penalty();
 

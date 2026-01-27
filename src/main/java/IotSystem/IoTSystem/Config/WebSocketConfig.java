@@ -26,9 +26,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // Register the /ws endpoint, enabling SockJS fallback options
+        // Disable JSONP transport as it doesn't support origin checking
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")
-                .withSockJS();
+                .withSockJS()
+                .setTransportHandlers(
+                        new org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler(new org.springframework.web.socket.server.support.DefaultHandshakeHandler()),
+                        new org.springframework.web.socket.sockjs.transport.handler.XhrStreamingTransportHandler(),
+                        new org.springframework.web.socket.sockjs.transport.handler.XhrPollingTransportHandler()
+                );
     }
 
     @Override

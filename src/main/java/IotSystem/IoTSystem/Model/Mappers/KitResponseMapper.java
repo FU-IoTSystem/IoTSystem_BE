@@ -1,10 +1,10 @@
 package IotSystem.IoTSystem.Model.Mappers;
 
 
-import IotSystem.IoTSystem.Model.Entities.Kit_Component;
 import IotSystem.IoTSystem.Model.Entities.Kits;
-import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
+import IotSystem.IoTSystem.Model.Entities.Kit_Component;
 import IotSystem.IoTSystem.Model.Response.KitResponse;
+import IotSystem.IoTSystem.Model.Response.KitComponentResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -24,15 +24,7 @@ public class KitResponseMapper {
         response.setQuantityTotal(kit.getQuantityTotal());
         response.setQuantityAvailable(kit.getQuantityAvailable());
         // Chỉ set tổng pricePerCom
-        float totalAmount = 0.0f;
-        if (kit.getComponents() != null) {
-            for (Kit_Component comp : kit.getComponents()) {
-                if (comp.getPricePerCom() != null) {
-                    totalAmount += comp.getPricePerCom();
-                }
-            }
-        }
-        response.setAmount(totalAmount);
+        response.setAmount(kit.getAmount());
 
         List<KitComponentResponse> componentResponses = components.stream().map(comp -> {
             KitComponentResponse cr = new KitComponentResponse();

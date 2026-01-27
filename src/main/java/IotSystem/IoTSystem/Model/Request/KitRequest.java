@@ -13,4 +13,5 @@ public class KitRequest { //cho school staff va admin
     private String imageUrl;
     private Integer quantityTotal;
     private Integer quantityAvailable;
+    private Float amount;
 }
